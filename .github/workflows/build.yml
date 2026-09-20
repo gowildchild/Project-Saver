@@ -1,0 +1,105 @@
+name: Compile Standalone Binary
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout Source Repository Code
+      uses: actions/checkout@v4
+
+    - name: Set Up Python Environment Runtime
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Project Packaging Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller beautifulsoup4 reportlab
+
+    - name: Compile Unified Standalone Executable
+      working-directory: ./master
+      run: |
+        pyinstaller --onefile --distpath ../dist --workpath ../build project_saver.py
+
+    # Generates a professional manifest file layout at the root level dist folder
+    - name: Generate Security Release Manifest
+      shell: bash
+      run: |
+        cd dist
+        RAW_HASH=$(certutil -hashfile project_saver.exe SHA1 | sed -n '2p' | tr -d '[:space:]')
+        
+        echo "==================================================" > manifest.txt
+        echo "📦 PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
+        echo "==================================================" >> manifest.txt
+        echo "Build Timestamp : $(date -u)" >> manifest.txt
+        echo "Platform        : Windows x64 Standalone Asset" >> manifest.txt
+        echo "Application File: project_saver.exe" >> manifest.txt
+        echo "--------------------------------------------------" >> manifest.txt
+        echo "SHA-1 Checksum  : $RAW_HASH" >> manifest.txt
+        echo "==================================================" >> manifest.txt
+        
+        echo "=== GENERATED MANIFEST PREVIEW ==="
+        cat manifest.txt
+
+    - name: Upload Windows Distribution Binary Bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: project_saver-windows-x64
+        path: |
+          dist/project_saver.exe
+          dist/manifest.txt
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Source Repository Code
+      uses: actions/checkout@v4
+
+    - name: Set Up Python Environment Runtime
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Project Packaging Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller beautifulsoup4 reportlab
+
+    - name: Compile Unified Standalone Linux Binary
+      working-directory: ./master
+      run: |
+        pyinstaller --onefile --distpath ../dist --workpath ../build project_saver.py
+
+    # Generates a professional manifest file layout at the root level dist folder
+    - name: Generate Security Release Manifest
+      run: |
+        cd dist
+        RAW_HASH=$(sha1sum project_saver | awk '{print $1}')
+        
+        echo "==================================================" > manifest.txt
+        echo "📦 PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
+        echo "==================================================" >> manifest.txt
+        echo "Build Timestamp : $(date -u)" >> manifest.txt
+        echo "Platform        : Linux x64 Standalone Asset" >> manifest.txt
+        echo "Application File: project_saver" >> manifest.txt
+        echo "--------------------------------------------------" >> manifest.txt
+        echo "SHA-1 Checksum  : $RAW_HASH" >> manifest.txt
+        echo "==================================================" >> manifest.txt
+        
+        echo "=== GENERATED MANIFEST PREVIEW ==="
+        cat manifest.txt
+
+    - name: Upload Linux Distribution Binary Bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: project_saver-linux-x64
+        path: |
+          dist/project_saver
+          dist/manifest.txt
