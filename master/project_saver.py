@@ -320,7 +320,7 @@ if __name__ == "__main__":
     parser.add_argument("--config-save", default="", help="Save setup flags into configuration profile text file.")
     parser.add_argument("--about", action="store_true", help="Displays developer credits and exit.")
     parser.add_argument("--update", action="store_true", help="Queries GitHub downloads update binary and exit.")
-	parser.add_argument("--chosen-editor", default="system_default", choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool.")
+    parser.add_argument("--chosen-editor", default="system_default", choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool.")
 
     temp_args = sys.argv[1:]
     loaded_file_args = []
