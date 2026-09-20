@@ -113,14 +113,16 @@ $SingleFileConfig = @{
 } | ConvertTo-Json
 
 $JsonPath = Join-Path $InstallDir "singlefile-project-saver-config.json"
-Set-Content -Path $JsonPath -Value $SingleFileConfig -Encoding UTF8
-
 $CfgPath = Join-Path $InstallDir "project_saver.cfg"
+
+# STACKOVERFLOW FIX: Native .NET methods force 100% pure, BOM-less UTF-8 writing to disk
+[System.IO.File]::WriteAllText($JsonPath, $SingleFileConfig)
+
 $CfgContent = @(
     "token=$NewToken"
     "export_folder=$ExportFolder"
 )
-$CfgContent | Set-Content -Path $CfgPath
+[System.IO.File]::WriteAllLines($CfgPath, $CfgContent)
 
 # 8. Generate Desktop Shortcut natively via Windows Shell API objects
 $WshShell = New-Object -ComObject WScript.Shell
@@ -150,53 +152,43 @@ Write-Host "  │ Location Locked  : AppData\Local\ProjectSaver              │
 Write-Host "  │ Created By       : Gunther Voet                            │" -ForegroundColor Green
 Write-Host "  └────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
 
-# ====================================================================================
 # 9. AUTOMATED WINDOWS TASK SCHEDULER INTERACTIVE STARTUP REGISTRATION
-# ====================================================================================
 Write-Host "[*] Registering automated interactive logon startup triggers..." -ForegroundColor Cyan
 
 $TaskName = "ProjectSaverDaemon"
 $TaskDescription = "Launches Project Saver interactive updater countdown and background port service daemon on user logon."
 
-# Verify if an old instance configuration task is already tracked inside system tables, and clear it out gracefully
 $ExistingTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 if ($ExistingTask) {
-    Write-Host "[*] Removing legacy task scheduling definitions..."
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false | Out-Null
 }
 
 try {
-    # 1. Define the execution boundary parameters to run natively when your specific user logs in
     $Trigger = New-ScheduledTaskTrigger -AtLogOn
-
-    # 2. Configure the action loop to boot your application executable directly inside a visible console wrapper frame
-    # Crucial trick: We point arguments directly to powershell executing your path to prevent invisible background process hang blocks
     $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Normal -Command & '$BinPath'"
-
-    # 3. Establish structural policy controls to allow processing on laptops/battery power scopes cleanly
     $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Compatibility Win8
 
-    # 4. Inject the interactive configuration variables natively straight into the local Task Scheduler database engine
     Register-ScheduledTask -TaskName $TaskName -Trigger $Trigger -Action $Action -Settings $Settings -Description $TaskDescription | Out-Null
-    
     Write-Host "[+] Interactive startup automation tasks registered successfully!" -ForegroundColor Green
-    Write-Host "    -> Project Saver will now boot visibly inside a prompt window on your next Windows Logon." -ForegroundColor Gray
 } catch {
-    Write-Host "[-] Automation Error: Could not provision scheduled task triggers. Run installer as Admin if required." -ForegroundColor Red
+    Write-Host "[-] Automation Error: Could not provision scheduled task triggers." -ForegroundColor Red
 }
 
-Write-Host "📂 QUICK NAVIGATION LINKS" -ForegroundColor Cyan
+# ====================================================================================
+# 10. INTERACTIVE POST-INSTALL WORKSPACE NAVIGATION DASHBOARD
+# ====================================================================================
+Write-Host "`n📂 QUICK NAVIGATION LINKS" -ForegroundColor Cyan
 Write-Host "------------------------------------------------------------"
-Write-Host " -> Press [A] to instantly open the Application Core Folder" -ForegroundColor Yellow
-Write-Host " -> Press [E] to instantly open the Export Files Folder" -ForegroundColor Yellow
+Write-Host " -> Press [A] to open the Application Core Folder" -ForegroundColor Yellow
+Write-Host " -> Press [E] to open the Export Files Folder" -ForegroundColor Yellow
 Write-Host " -> Press [Enter] to exit this installer setup wizard safely" -ForegroundColor Gray
 Write-Host "------------------------------------------------------------"
 
-$MyDocuments = [Environment]::GetFolderPath('MyDocuments')
-$ExportFolder = Join-Path $MyDocuments "Project-Saver\export"
+# CRITICAL DRAIN FIX: Wipes out the remaining internet script data blocks from terminal memory
+while ([Console]::KeyAvailable) { [Console]::ReadKey($true) | Out-Null }
 
 while ($true) {
-    Write-Host -NoNewline "`r[?] Select navigation destination index action: "
+    Write-Host -NoNewline "`r[?] Select navigation destination: "
     $KeyInfo = [Console]::ReadKey($true)
     $KeyChar = $KeyInfo.KeyChar.ToString().ToLower()
 
@@ -205,7 +197,6 @@ while ($true) {
         Start-Process explorer.exe -ArgumentList "`"$InstallDir`""
     }
     elseif ($KeyChar -eq 'e') {
-        # Safely create the export directory profile if it doesn't exist yet so explorer doesn't throw a crash error
         if (-not (Test-Path $ExportFolder)) { 
             New-Item -ItemType Directory -Path $ExportFolder | Out-Null 
         }
@@ -217,3 +208,4 @@ while ($true) {
         break
     }
 }
+
