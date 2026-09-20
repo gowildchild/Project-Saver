@@ -15,13 +15,13 @@ You do not need to download zip archives, manage system environment folders, or 
 irm https://raw.githubusercontent.com/gowildchild/Project-Saver/install.ps1 | iex
 ```
 
-### OPTION A: Automated installer:
+### 📦 OPTION A: Automated installer:
 1. Queries the public GitHub REST API endpoint for the newest stable production.
 2. Stream-downloads the  standalone application binary appliance executable safely.
 3. Automatically provisions a unique, cryptographically secure SingleFile token connection configuration file profile.
 4. Generates a clean **Project Saver** right onto your active Windows Desktop workspace window!
 
-### 📦 Option B: Standard Windows Setup Installer Wizard (.exe)
+### 📦 OPTION B: Standard Windows Setup Installer Wizard (.exe)
 For offline nodes, air-gapped secure machines, or users who prefer a classic desktop installation layout:
 
 1. Navigate directly down to the official repository releases page: `https://github.com/gowildchild/Project-Saver/releases/tag/`.
