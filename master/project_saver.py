@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.66-golf"
+VERSION = "v0.0.70"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -91,7 +91,8 @@ class RestApiHandler(BaseHTTPRequestHandler):
                 "⚠️  SECURITY ALERT: Unauthorized Request Blocked!",
                 "---",
                 f"Source IP Network: {self.client_address[0]}",
-                "Reason: Transmission Authorization Token Mismatch."
+                "Reason: Transmission Authorization Token Mismatch.",
+				f"Token: {token} Expected: {EXPECTED_TOKEN}",
             ]
             render_better_box(alert_log, title_str="Security Warning", box_width_override=70)
             self.send_response(401)
