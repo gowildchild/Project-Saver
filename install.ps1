@@ -1,5 +1,5 @@
 # ====================================================================================
-# PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE v0.4
+# PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE v0.5
 # irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
 # ====================================================================================
 $ErrorActionPreference = "Stop"
@@ -24,7 +24,7 @@ try {
     $ReleaseData = Invoke-RestMethod -Uri $ApiUrl -Method Get -Headers @{"User-Agent"="Project-Saver-Installer"}
 } catch {
     Write-Host "[-] Network Transaction Error: Could not connect to GitHub API." -ForegroundColor Red
-    Exit
+    return
 }
 
 $LatestVersion = $ReleaseData.tag_name
@@ -36,7 +36,7 @@ $ManifestAsset = $ReleaseData.assets | Where-Object { $_.name -eq "manifest.txt"
 
 if (-not $ExeAsset -or -not $ManifestAsset) {
     Write-Host "[-] Critical Error: Missing executable or manifest file in release." -ForegroundColor Red
-    Exit
+    return
 }
 
 $TempFolder = Join-Path ([System.IO.Path]::GetTempPath()) "ProjectSaver_Setup"
@@ -58,7 +58,7 @@ $ManifestContent = Get-Content -Path $TempManifestPath
 $OfficialHashLine = $ManifestContent | Where-Object { $_.Contains("SHA-1 Checksum") }
 if (-not $OfficialHashLine) {
     Write-Host "[-] Verification Error: Manifest format is malformed or invalid." -ForegroundColor Red
-    Exit
+    return
 }
 
 $OfficialHash = ($OfficialHashLine.Split(":")[1]).Trim().ToLower()
@@ -72,7 +72,7 @@ if ($LocalHash -ne $OfficialHash) {
     Write-Host "    The downloaded application executable failed security checksum validation." -ForegroundColor Red
     Write-Host "    Installation aborted automatically to protect machine." -ForegroundColor Red
     Remove-Item $TempFolder -Recurse -Force | Out-Null
-    Exit
+    return
 }
 Write-Host "[+] Cryptographic Verification Passed: Binary file code matches perfectly." -ForegroundColor Green
 
