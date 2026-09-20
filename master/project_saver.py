@@ -159,7 +159,8 @@ class RestApiHandler(BaseHTTPRequestHandler):
             export_format=CLI_ARGS.export_format,
             export_type=CLI_ARGS.export_type,
             auto_timeout=CLI_ARGS.auto,
-            editor_override=CLI_ARGS.chosen_editor
+            editor_override=CLI_ARGS.chosen_editor,
+			app_version=VERSION
         )
 
 def set_terminal_title(title_text, run_version, run_text):
