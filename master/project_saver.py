@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.56"
+VERSION = "v0.0.58"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -201,26 +201,77 @@ def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", bo
             print(f"│ {clean_line}{padding_spaces} │")
     print("└" + "─" * box_width + "┘")
 
-def check_for_updates_silently():
-    """Queries GitHub API inside a non-blocking daemon thread to log update status alerts."""
+def check_for_startup_update_and_run():
+    """Pauses startup sequence for 30 seconds allowing an interactive, timed update check before daemon mode."""
+    import platform
+    import time
+    import sys
+    import urllib.request
+    import json
+
+    # We only use interactive keyboard prompts on Windows nodes natively
+    is_windows = platform.system().lower() == "windows"
+    if not is_windows:
+        print("[*] Project Saver core daemon processing initialized on local port 19763...")
+        return
+
+    # Import native Windows tracking library without external dependencies
+    import msvcrt
+
     api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
+    print("==================================================")
+    print("⏰ PROJECT SAVER INITIALIZATION SEQUENCE")
+    print("==================================================")
+    print(f"[*] Querying latest active release definitions from: {api_url}")
+    
     try:
         req = urllib.request.Request(api_url, headers={'User-Agent': 'Project-Saver-Startup-Engine'})
         with urllib.request.urlopen(req, timeout=3) as response:
             data = json.loads(response.read().decode('utf-8'))
             latest_version_tag = data.get("tag_name", "").strip()
-            if latest_version_tag and latest_version_tag != VERSION:
-                alert_box = [
-                    f"📢 UPDATE AVAILABLE: A newer release [{latest_version_tag}] is ready!",
-                    "---",
-                    "To automatically update your application system,",
-                    "terminate this server instance and execute the command:",
-                    "--> project_saver.exe --update"
-                ]
-                print()
-                render_better_box(alert_box, title_str="System Update Notice", box_width_override=65)
-    except:
-        pass  # Fails silently to prevent crash spikes if network links are dead on boot
+            
+            if latest_version_tag and latest_version_tag == VERSION:
+                print("[+] Running the latest version profile framework.")
+                print("[*] Advancing straight to active daemon mode...\n")
+                return
+                
+            # Intercept block: A newer release exists on the cloud
+            print(f"\n📢 UPDATE AVAILABLE: A newer release [{latest_version_tag}] is ready!")
+            countdown = 30
+            print(f"[?] Press [Y] within {countdown} seconds to execute the automated upgrade sequence.")
+            print("[*] Press [N] or do nothing to bypass and advance straight to daemon mode.")
+            print("--------------------------------------------------")
+            
+            start_time = time.time()
+            user_triggered = False
+            
+            while time.time() - start_time < countdown:
+                elapsed = int(time.time() - start_time)
+                remaining = countdown - elapsed
+                sys.stdout.write(f"\r    -> Advancing to daemon execution mode in: [{remaining:02d}s] (Press Y to intercept) ")
+                sys.stdout.flush()
+                
+                if msvcrt.kbhit():
+                    key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
+                    if key == 'y':
+                        user_triggered = True
+                        break
+                    elif key == 'n':
+                        print("\n\n[*] Update scan bypassed by user selection.")
+                        break
+                time.sleep(0.1)
+                
+            if user_triggered:
+                print("\n\n[*] Intercept triggered! Invoking secure manifest update sequence...")
+                check_and_perform_update()
+            else:
+                print("\n\n[+] Countdown finalized. Launching background listening socket loops...")
+                
+    except Exception:
+        # Fails completely silently to prevent crash spikes if network links are dead on boot/offline nodes
+        print("[-] Network Status: Could not ping GitHub API. Proceeding in offline execution mode.")
+        print("[+] Launching background listening socket loops...\n")
+
 
 def check_and_perform_update():
     """Performs manual force upgrade downloads via --update with full SHA-256 manifest validation."""
@@ -233,7 +284,7 @@ def check_and_perform_update():
     import hashlib
 
     is_windows = platform.system().lower() == "windows"
-    api_url = f"https://github.com{REPO_OWNER}/{REPO_NAME}/releases/latest"
+    api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
     print(f"[*] Initializing secure system upgrade check via: {api_url}")
     
     try:
@@ -244,7 +295,9 @@ def check_and_perform_update():
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode('utf-8'))
             latest = data.get("tag_name", "").strip()
-            if latest == VERSION:
+            
+            # If triggered manually via CLI but already matching, exit early safely
+            if latest == VERSION and "--update" in sys.argv:
                 print("[+] Already running the latest version profile framework.")
                 return
             
@@ -299,7 +352,7 @@ def check_and_perform_update():
             if computed_hash != expected_hash:
                 print("\n[🚨] SECURITY BARRICADE: SHA-256 Integrity Hash Mismatch!")
                 print("    The downloaded upgrade executable failed security checksum validation.")
-                print("    Upgrade cycle aborted automatically to protect this machine.")
+                print("    Upgrade aborted automatically to protect this machine.")
                 os.remove(temp_download_path)
                 return
             
@@ -330,7 +383,6 @@ def check_and_perform_update():
             
     except Exception as e:
         print(f"[-] Secure upgrade block failed: {e}")
-
 
 def load_config_file(filepath):
     args_list = []
