@@ -2,13 +2,14 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.67"
+$InstallVersion = "v0.0.69"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
 
 $InstallDir = Join-Path $env:USERPROFILE "AppData\Local\ProjectSaver"
-$ExportFolder = Join-Path $InstallDir "export"
+$MyDocuments = [Environment]::GetFolderPath('MyDocuments')
+$ExportFolder = Join-Path $MyDocuments "Project-Saver\export"
 $BinPath = Join-Path $InstallDir "project_saver.exe"
 $ManifestPath = Join-Path $InstallDir "manifest.txt"
 $ShortcutPath = "$([Environment]::GetFolderPath('Desktop'))\Project Saver.lnk"
@@ -114,7 +115,11 @@ $JsonPath = Join-Path $InstallDir "singlefile-project-saver-config.json"
 Set-Content -Path $JsonPath -Value $SingleFileConfig -Encoding UTF8
 
 $CfgPath = Join-Path $InstallDir "project_saver.cfg"
-"token=$NewToken" | Set-Content -Path $CfgPath
+$CfgContent = @(
+    "token=$NewToken"
+    "export_folder=$ExportVaultDir"
+)
+$CfgContent | Set-Content -Path $CfgPath
 
 # 8. Generate Desktop Shortcut natively via Windows Shell API objects
 $WshShell = New-Object -ComObject WScript.Shell
@@ -130,6 +135,7 @@ $VersionText   = "  │ Version Deployed : $LatestVersion"
 $PaddingNeeded = $BoxTotalWidth - $VersionText.Length - 1
 $PadSpaces     = " " * $PaddingNeeded
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Write-Host "`n  ┌────────────────────────────────────────────────────────────┐" -ForegroundColor Green
 Write-Host "  │   SUCCESS: Project Saver Installation Complete!            │" -ForegroundColor Green
 Write-Host "  ├────────────────────────────────────────────────────────────┤" -ForegroundColor Green
@@ -139,41 +145,8 @@ Write-Host "  │ Location Locked  : AppData\Local\ProjectSaver              │
 Write-Host "  │ Created By       : Gunther Voet                            │" -ForegroundColor Green
 Write-Host "  └────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
 
-Write-Host "📂 QUICK NAVIGATION LINKS ACCELERATOR" -ForegroundColor Cyan
-Write-Host "------------------------------------------------------------"
-Write-Host " -> Press [A] to instantly open the Application Core Folder" -ForegroundColor Yellow
-Write-Host " -> Press [E] to instantly open the Export Vault Folder" -ForegroundColor Yellow
-Write-Host " -> Press [Enter] to exit this installer setup wizard safely" -ForegroundColor Gray
-Write-Host "------------------------------------------------------------"
-
-# Establish localized path references for opening folders natively
-$ExportFolder = Join-Path $InstallDir "export"
-
-while ($true) {
-    Write-Host -NoNewline "`r[?] Select navigation destination index action: "
-    $KeyInfo = [Console]::ReadKey($true)
-    $KeyChar = $KeyInfo.KeyChar.ToString().ToLower()
-
-    if ($KeyChar -eq 'a') {
-        Write-Host "Opening Application folder...                      " -ForegroundColor Green
-        Start-Process explorer.exe -ArgumentList "`"$InstallDir`""
-    }
-    elseif ($KeyChar -eq 'e') {
-        # Safely create the export directory profile if it doesn't exist yet so explorer doesn't throw a crash error
-        if (-not (Test-Path $ExportFolder)) { 
-            New-Item -ItemType Directory -Path $ExportFolder | Out-Null 
-        }
-        Write-Host "Opening Export folder...                      " -ForegroundColor Green
-        Start-Process explorer.exe -ArgumentList "`"$ExportFolder`""
-    }
-    elseif ($KeyInfo.Key -eq 'Enter') {
-        Write-Host "Exiting installer safely. Goodbye!           " -ForegroundColor Gray
-        break
-    }
-}
-
 # ====================================================================================
-# 10. AUTOMATED WINDOWS TASK SCHEDULER INTERACTIVE STARTUP REGISTRATION
+# 9. AUTOMATED WINDOWS TASK SCHEDULER INTERACTIVE STARTUP REGISTRATION
 # ====================================================================================
 Write-Host "[*] Registering automated interactive logon startup triggers..." -ForegroundColor Cyan
 
@@ -205,4 +178,38 @@ try {
     Write-Host "    -> Project Saver will now boot visibly inside a prompt window on your next Windows Logon." -ForegroundColor Gray
 } catch {
     Write-Host "[-] Automation Error: Could not provision scheduled task triggers. Run installer as Admin if required." -ForegroundColor Red
+}
+
+Write-Host "📂 QUICK NAVIGATION LINKS" -ForegroundColor Cyan
+Write-Host "------------------------------------------------------------"
+Write-Host " -> Press [A] to instantly open the Application Core Folder" -ForegroundColor Yellow
+Write-Host " -> Press [E] to instantly open the Export Vault Folder" -ForegroundColor Yellow
+Write-Host " -> Press [Enter] to exit this installer setup wizard safely" -ForegroundColor Gray
+Write-Host "------------------------------------------------------------"
+
+# Establish localized path references for opening folders natively
+$MyDocuments = [Environment]::GetFolderPath('MyDocuments')
+$ExportFolder = Join-Path $MyDocuments "Project-Saver\export"
+
+while ($true) {
+    Write-Host -NoNewline "`r[?] Select navigation destination index action: "
+    $KeyInfo = [Console]::ReadKey($true)
+    $KeyChar = $KeyInfo.KeyChar.ToString().ToLower()
+
+    if ($KeyChar -eq 'a') {
+        Write-Host "Opening Application folder...                      " -ForegroundColor Green
+        Start-Process explorer.exe -ArgumentList "`"$InstallDir`""
+    }
+    elseif ($KeyChar -eq 'e') {
+        # Safely create the export directory profile if it doesn't exist yet so explorer doesn't throw a crash error
+        if (-not (Test-Path $ExportFolder)) { 
+            New-Item -ItemType Directory -Path $ExportFolder | Out-Null 
+        }
+        Write-Host "Opening Export folder...                      " -ForegroundColor Green
+        Start-Process explorer.exe -ArgumentList "`"$ExportFolder`""
+    }
+    elseif ($KeyInfo.Key -eq 'Enter') {
+        Write-Host "Exiting installer safely. Goodbye!           " -ForegroundColor Gray
+        break
+    }
 }
