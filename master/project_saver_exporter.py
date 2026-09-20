@@ -1,5 +1,6 @@
 import os
 import re
+import html
 
 class BaseExporter:
     def __init__(self, base_dir, safe_title, version):
