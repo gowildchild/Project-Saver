@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.53"
+$InstallVersion = "v0.54"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -112,9 +112,9 @@ $Shortcut.IconLocation = "shell32.dll,44"
 $Shortcut.Save()
 
 Write-Host "`n┌────────────────────────────────────────────────────────────┐" -ForegroundColor Green
-Write-Host "│   SUCCESS: Verified Installation Complete!                 │" -ForegroundColor Green
+Write-Host "│   SUCCESS: Project Saver Installation Complete!            │" -ForegroundColor Green
 Write-Host "├────────────────────────────────────────────────────────────┤" -ForegroundColor Green
-Write-Host "│ Version Deployed : $LatestVersion                          │" -ForegroundColor Green
+Write-Host "│ Version Deployed : $LatestVersion                                 │" -ForegroundColor Green
 Write-Host "│ Security Check   : SHA-1 Verified (Match Confirmed)        │" -ForegroundColor Green
 Write-Host "│ Location Locked  : AppData\Local\ProjectSaver              │" -ForegroundColor Green
 Write-Host "└────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
