@@ -89,6 +89,6 @@ If you boot the system manually from a command terminal, you can control your dy
 ---
 
 ## 🔒 Security Cryptographic Integrity Manifest Note
-Every automated cloud release package contains an independent, official release document file named `manifest_windows.txt` and `manifest_linux.txt`.
+Every automated cloud release package contains an independent, official release document file named `manifest.txt`.
 
-Open this file to cross-verify the compilation timestamp, system building metrics and the matching **SHA-1 integrity verification checksum** to guarantee total execution code security transparency.
+Open this file to cross-verify the compilation timestamp, system building metrics and the matching **SHA-256 integrity verification checksum** to guarantee total execution code security transparency.
