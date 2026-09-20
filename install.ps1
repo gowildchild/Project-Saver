@@ -2,13 +2,11 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.76"
+$InstallVersion = "v0.0.77"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
 
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-while ([Console]::KeyAvailable) { [Console]::ReadKey($true) | Out-Null }
 $InstallDir = Join-Path $env:USERPROFILE "AppData\Local\ProjectSaver"
 $MyDocuments = [Environment]::GetFolderPath('MyDocuments')
 $ExportFolder = Join-Path $MyDocuments "Project-Saver\export"
@@ -73,7 +71,7 @@ Write-Host "    -> Expected Hash: $OfficialHash" -ForegroundColor Yellow
 Write-Host "    -> Computed Hash: $LocalHash" -ForegroundColor Yellow
 
 if ($LocalHash -ne $OfficialHash) {
-    Write-Host "`n[🚨] SECURITY BARRICADE: SHA-256 Integrity Hash Mismatch!" -ForegroundColor Red
+    Write-Host "`n[!] SECURITY BARRICADE: SHA-256 Integrity Hash Mismatch!" -ForegroundColor Red
     Write-Host "    The downloaded application executable failed security checksum validation." -ForegroundColor Red
     Write-Host "    Installation aborted automatically to protect machine." -ForegroundColor Red
     Remove-Item $TempFolder -Recurse -Force | Out-Null
@@ -134,24 +132,40 @@ $Shortcut.Description = "Project Saver Daemon"
 $Shortcut.IconLocation = "shell32.dll,44"
 $Shortcut.Save()
 
+$TL = [string][char]0x250C  # ┌
+$TR = [string][char]0x2510  # ┐
+$BL = [string][char]0x2514  # └
+$BR = [string][char]0x2518  # ┘
+$HZ = [string][char]0x2500  # ─
+$VT = [string][char]0x2502  # │
+$DV = [string][char]0x251C  # ├
+$RV = [string][char]0x2524  # ┤
+
+# Mathematically construct the horizontal border lines out of character values
+LineHZ = HZ * 60
+TopBar = " " + TL + LineHZ + TR
+Divider = " " + DV + LineHZ + RV
+BottomBar = " " + BL + LineHZ + BR
+
+# Dynamic space padding calculation to keep the right border straight
 $BoxTotalWidth = 60
-$VersionText   = "  │ Version Deployed : $LatestVersion"
-$PaddingNeeded = $BoxTotalWidth - $VersionText.Length - 1
+VersionText = " " + VT + " Version Deployed : $LatestVersion"
+$PaddingNeeded = BoxTotalWidth - VersionText.Length - 1
 
-if ($PaddingNeeded -lt 0) { $PaddingNeeded = 0 }
-$PadSpaces     = " " * $PaddingNeeded
+if (PaddingNeeded -lt 0) PaddingNeeded = 0 }
+PadSpaces = " " * PaddingNeeded
 
-# Force the output encoding to handle the shapes locally
+# Force the local console output manager to translate strings using clean UTF-8 tables
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-Write-Host "`n  ┌────────────────────────────────────────────────────────────┐" -ForegroundColor Green
-Write-Host "  │   SUCCESS: Project Saver Installation Complete!            │" -ForegroundColor Green
-Write-Host "  ├────────────────────────────────────────────────────────────┤" -ForegroundColor Green
-Write-Host "$VersionText$PadSpaces  │" -ForegroundColor Green
-Write-Host "  │ Security Check   : SHA-256 Verified (Match Confirmed)      │" -ForegroundColor Green
-Write-Host "  │ Location Locked  : AppData\Local\ProjectSaver              │" -ForegroundColor Green
-Write-Host "  │ Created By       : Gunther Voet                            │" -ForegroundColor Green
-Write-Host "  └────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
+Write-Host "`n$TopBar" -ForegroundColor Green
+Write-Host "  $VT   SUCCESS: Project Saver Installation Complete!            $VT" -ForegroundColor Green
+Write-Host "$Divider" -ForegroundColor Green
+Write-Host "$VersionText$PadSpaces  $VT" -ForegroundColor Green
+Write-Host "  $VT Security Check   : SHA-256 Verified (Match Confirmed)      $VT" -ForegroundColor Green
+Write-Host "  $VT Location Locked  : AppData\Local\ProjectSaver              $VT" -ForegroundColor Green
+Write-Host "  $VT Created By       : Gunther Voet                            $VT" -ForegroundColor Green
+Write-Host "$BottomBar`n" -ForegroundColor Green
 
 # 9. AUTOMATED WINDOWS TASK SCHEDULER INTERACTIVE STARTUP REGISTRATION
 Write-Host "[*] Registering automated interactive logon startup triggers..." -ForegroundColor Cyan
