@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.66-charlie"
+VERSION = "v0.0.66-echo"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -101,11 +101,14 @@ class RestApiHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers.get('Content-Length', 0))
         body_bytes = self.rfile.read(content_length)
 
+        # Convert namespace to a dictionary to extract clean dash keys natively
+        cli_dict = vars(CLI_ARGS)
+
         # 1. CLIENT-SIDE RELAY FORWARDER SYSTEM
-        if CLI_ARGS.remote_address:
-            print(f"[*] Relaying capture payload to remote destination server: {CLI_ARGS.remote_address}")
+        if cli_dict.get("remote-address"):
+            print(f"[*] Relaying capture payload to remote destination server: {cli_dict['remote-address']}")
             try:
-                req = urllib.request.Request(CLI_ARGS.remote_address, data=body_bytes, headers=dict(self.headers))
+                req = urllib.request.Request(cli_dict["remote-address"], data=body_bytes, headers=dict(self.headers))
                 with urllib.request.urlopen(req) as response:
                     self.send_response(response.status)
                     for k, v in response.getheaders(): 
@@ -166,13 +169,14 @@ class RestApiHandler(BaseHTTPRequestHandler):
             html_string=html_content, 
             page_title=page_title, 
             source_origin=page_url,
-            export_folder=CLI_ARGS.export_folder,
-            export_format=CLI_ARGS.export_format,
-            export_type=CLI_ARGS.export_type,
+            export_folder=cli_dict.get("export-folder"),
+            export_format=cli_dict.get("export-format"),
+            export_type=cli_dict.get("export-type"),
             auto_timeout=CLI_ARGS.auto,
-            editor_override=CLI_ARGS.chosen_editor,
-			app_version=VERSION
+            editor_override=cli_dict.get("chosen-editor"),
+            app_version=VERSION
         )
+
 
 def check_for_updates_silently():
     """Safety placeholder to resolve historic background loop definitions."""
@@ -399,44 +403,59 @@ def check_and_perform_update():
     except Exception as e:
         print(f"[-] Secure upgrade block failed: {e}")
 
-def load_config_file(filepath):
-    args_list = []
-    if not os.path.exists(filepath): return args_list
-    with open(filepath, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"): continue
-            if "=" in line:
-                key, val = line.split("=", 1)
-                key, val = key.strip(), val.strip()
-                if val:
-                    args_list.append(f"--{key}")
-                    if val.lower() != "true": args_list.append(val)
-    return args_list
-
 def save_config_file(filepath, args_namespace):
     try:
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(f"# Project Saver {VERSION} Configuration Profile\n")
             
-            # Only save properties if they hold custom explicit text values
-            if getattr(args_namespace, 'export_folder', None):
-                f.write(f"export-folder={args_namespace.export_folder}\n")
-            if getattr(args_namespace, 'export_format', None):
-                f.write(f"export-format={args_namespace.export_format}\n")
-            if getattr(args_namespace, 'export_type', None):
-                f.write(f"export-type={args_namespace.export_type}\n")
-            if getattr(args_namespace, 'remote_address', None):
-                f.write(f"remote-address={args_namespace.remote_address}\n")
-            if getattr(args_namespace, 'chosen_editor', None):
-                f.write(f"chosen-editor={args_namespace.chosen_editor}\n")
-            if getattr(args_namespace, 'auto', None) is not None:
-                f.write(f"auto={args_namespace.auto}\n")
+            # Securely preserve your authorization token
+            if EXPECTED_TOKEN:
+                f.write(f"token={EXPECTED_TOKEN}\n")
+            
+            # Convert namespace to a dictionary to check raw dash keys directly
+            args_dict = vars(args_namespace)
+            
+            # Pure dash-only configuration lookup and output
+            if args_dict.get('export-folder'):
+                f.write(f"export-folder={args_dict['export-folder']}\n")
+            if args_dict.get('export-format'):
+                f.write(f"export-format={args_dict['export-format']}\n")
+            if args_dict.get('export-type'):
+                f.write(f"export-type={args_dict['export-type']}\n")
+            if args_dict.get('remote-address'):
+                f.write(f"remote-address={args_dict['remote-address']}\n")
+            if args_dict.get('chosen-editor'):
+                f.write(f"chosen-editor={args_dict['chosen-editor']}\n")
+            if args_dict.get('auto') is not None:
+                f.write(f"auto={args_dict['auto']}\n")
                 
         print(f"[+] Active configuration written to profile: {filepath}")
     except Exception as e:
         print(f"[-] Could not export configuration profile: {e}")
 
+
+def load_config_file(filepath):
+    args_list = []
+    if not os.path.exists(filepath): 
+        return args_list
+    with open(filepath, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"): 
+                continue
+            if "=" in line:
+                key, val = line.split("=", 1)
+                key, val = key.strip().lower(), val.strip()
+                if val:
+                    # Skip internal variables like token so argparse doesn't break
+                    if key == "token":
+                        continue
+                    # Appends exactly what is written in the file (e.g., --export-folder)
+                    args_list.append(f"--{key}")
+                    if val.lower() != "true": 
+                        args_list.append(val)
+    return args_list
+	
 def run_server():
     set_terminal_title("Project Saver", VERSION, "Server Running")
     
@@ -445,15 +464,15 @@ def run_server():
 
     server_address = ('', PORT)
     httpd = HTTPServer(server_address, RestApiHandler)
-    
-    # ─── THE INTEGRATED DAEMON STATUS readout BLOCK ───
+
+    cli_dict = vars(CLI_ARGS)
     startup_log = [
         f"Server Listening:    http://localhost:{PORT}",
         f"Security Token:      {EXPECTED_TOKEN}",
-		"---",
-        f"📂 Target Folder:    {os.path.abspath(CLI_ARGS.export_folder)}",
-        f"⚙️ Profile Mode:    {CLI_ARGS.export_type.upper()}",
-        f"🗒️ Formats Enabled: {CLI_ARGS.export_format.upper()}",
+        "---",
+        f"📂 Target Folder:    {os.path.abspath(cli_dict.get('export-folder'))}",
+        f"⚙️ Profile Mode:    {str(cli_dict.get('export-type')).upper()}",
+        f"🗒️ Formats Enabled: {str(cli_dict.get('export-format')).upper()}",
         "---",
         "💡 Quick Action:    Import singlefile-project-saver-config.json straight into SingleFile Options."
     ]
@@ -504,24 +523,26 @@ if __name__ == "__main__":
     loaded_file_args = load_config_file(active_cfg_profile) if os.path.exists(active_cfg_profile) else []
     combined_args = loaded_file_args + temp_args
     CLI_ARGS = parser.parse_args(combined_args)
+    cli_dict = vars(CLI_ARGS)
 
-    # ─── 4. APPLY DEFAULT FALLBACKS ONLY IF THEY WERE NOT SET BY FILE OR CLI ───
-    if not hasattr(CLI_ARGS, 'export_folder') or not CLI_ARGS.export_folder:
-        CLI_ARGS.export_folder = default_export_dir
+    # ─── 4. APPLY DEFAULT FALLBACKS TO PURE DASH KEYS ───
+    if "export-folder" not in cli_dict or not cli_dict["export-folder"]:
+        cli_dict["export-folder"] = default_export_dir
         
-    if not hasattr(CLI_ARGS, 'export_format') or not CLI_ARGS.export_format: 
-        CLI_ARGS.export_format = "markdown"
+    if "export-format" not in cli_dict or not cli_dict["export-format"]: 
+        cli_dict["export-format"] = "markdown"
         
-    if not hasattr(CLI_ARGS, 'export_type') or not CLI_ARGS.export_type: 
-        CLI_ARGS.export_type = "auto"
+    if "export-type" not in cli_dict or not cli_dict["export-type"]: 
+        cli_dict["export-type"] = "auto"
         
-    if not hasattr(CLI_ARGS, 'chosen_editor') or not CLI_ARGS.chosen_editor: 
-        CLI_ARGS.chosen_editor = "system_default"
+    if "chosen-editor" not in cli_dict or not cli_dict["chosen-editor"]: 
+        cli_dict["chosen-editor"] = "system_default"
         
-    if not hasattr(CLI_ARGS, 'remote_address') or CLI_ARGS.remote_address is None: 
-        CLI_ARGS.remote_address = ""
+    if "remote-address" not in cli_dict or cli_dict["remote-address"] is None: 
+        cli_dict["remote-address"] = ""
 
-    if CLI_ARGS.about:
+    # ─── 5. EXECUTE OPERATIONAL TASKS USING SAFE DIRECTORY LOOKUPS ───
+    if cli_dict.get("about"):
         about_data = [
             f"Project Saver {VERSION} - Local & Remote Web Scraping Daemon",
             "---",
@@ -536,15 +557,16 @@ if __name__ == "__main__":
         render_better_box(about_data, title_str="About \"Project Saver\"", box_width_override=70)
         sys.exit(0)
 
-    if CLI_ARGS.update:
+    if cli_dict.get("update"):
         check_and_perform_update()
         sys.exit(0)
 
-    if CLI_ARGS.config_save:
-        save_config_file(CLI_ARGS.config_save, CLI_ARGS)
+    if cli_dict.get("config-save"):
+        save_config_file(cli_dict["config-save"], CLI_ARGS)
         sys.exit(0)
 
     # Initialize the authentication token validation sequence using the verified config filename
     resolve_or_create_security_token(active_cfg_profile)
 
     run_server()
+
