@@ -142,18 +142,18 @@ $DV = [string][char]0x251C  # ├
 $RV = [string][char]0x2524  # ┤
 
 # Mathematically construct the horizontal border lines out of character values
-LineHZ = HZ * 60
-TopBar = " " + TL + LineHZ + TR
-Divider = " " + DV + LineHZ + RV
-BottomBar = " " + BL + LineHZ + BR
+$LineHZ = $HZ * 60
+$TopBar = " " + $TL + $LineHZ + $TR
+$Divider = " " + $DV + $LineHZ + $RV
+$BottomBar = " " + $BL + $LineHZ + $BR
 
 # Dynamic space padding calculation to keep the right border straight
 $BoxTotalWidth = 60
-VersionText = " " + VT + " Version Deployed : $LatestVersion"
-$PaddingNeeded = BoxTotalWidth - VersionText.Length - 1
+$VersionText = " " + $VT + " Version Deployed : $LatestVersion"
+$PaddingNeeded = $BoxTotalWidth - $VersionText.Length - 1
 
-if (PaddingNeeded -lt 0) PaddingNeeded = 0 }
-PadSpaces = " " * PaddingNeeded
+if ($PaddingNeeded -lt 0) { $PaddingNeeded = 0 }
+$PadSpaces = " " * $PaddingNeeded
 
 # Force the local console output manager to translate strings using clean UTF-8 tables
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -192,7 +192,7 @@ try {
 # ====================================================================================
 # 10. INTERACTIVE POST-INSTALL WORKSPACE NAVIGATION DASHBOARD
 # ====================================================================================
-Write-Host "`n📂 QUICK NAVIGATION LINKS" -ForegroundColor Cyan
+Write-Host "`n  QUICK NAVIGATION LINKS" -ForegroundColor Cyan
 Write-Host "------------------------------------------------------------"
 Write-Host " -> Press [A] to open the Application Core Folder" -ForegroundColor Yellow
 Write-Host " -> Press [E] to open the Export Files Folder" -ForegroundColor Yellow
