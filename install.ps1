@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.80-alpha"
+$InstallVersion = "v0.0.80-beta"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -112,6 +112,14 @@ $SingleFileConfig = @{
             "saveToRestFormApiUrlFieldName"  = "url"
         }
     }
+    # THE RULES MATRIX: Forces the extension to treat 'Project Saver' as the default choice
+    "rules" = @(
+        @{
+            "url"             = "^https?://.*" # Match every HTTP and HTTPS web address layout natively
+            "profile"         = "Project Saver"
+            "autoSaveProfile" = "__Disabled_Settings__"
+        }
+    )
 } | ConvertTo-Json -Depth 4
 
 $JsonPath = Join-Path $InstallDir "singlefile-project-saver-config.json"
