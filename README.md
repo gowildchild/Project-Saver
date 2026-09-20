@@ -11,9 +11,13 @@ An automated background documentation service logging daemon engine designed to 
 
 You do not need to download zip archives, manage system environment folders, or configure manual paths. Open a standard **PowerShell** console window and execute this single network pipeline string to fully deploy the newest operational software release build instantly:
 
+Run this command string inside a standard **PowerShell** window to install:
+
 ```powershell
-[irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex](https://gowildchild.github.io/Project-Saver/install.ps1)
+irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 ```
+
+🔗 [Click here to view the raw installation script source code](https://gowildchild.github.io/Project-Saver/install.ps1)
 
 1. Queries the public GitHub REST API endpoint for the newest stable production.
 2. Stream-downloads the  standalone application binary appliance executable safely.
