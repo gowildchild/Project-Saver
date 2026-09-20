@@ -118,7 +118,7 @@ jobs:
 
         [Icons]
         Name: "{{userdesktop}}\\Project Saver"; Filename: "{{app}}\\project_saver.exe"; WorkingDir: "{{app}}"
-        Name: "{{userstartup}}\\Project Saver Daemon"; Filename: "{{app}}\\project_saver.exe"; WorkingDir: "{{app}}"; Comment: "Launches Project Saver background daemon on boot"
+        Name: "{{userstartup}}\\Project Saver"; Filename: "{{app}}\\project_saver.exe"; WorkingDir: "{{app}}"
 
         [Run]
         Filename: "{{app}}\\project_saver.exe"; Description: "Launch Project Saver Service Daemon Now"; Flags: nowait postinstall skipifsilent
