@@ -1,7 +1,7 @@
 # 🚀 Project Saver
 
 ![GitHub Latest Release Vector Badge](https://img.shields.io/github/v/release/gowildchild/Project-Saver?color=cyan&label=Latest%20Version&style=flat-square)
-![Open Source MIT License Badge](https://img.shields.io/github/license/gowildchild/Project-Saver?color=green&style=flat-square)
+![Open Source AGPL-3.0 License Badge](https://img.shields.io/github/license/gowildchild/Project-Saver?color=green&style=flat-square)
 
 An automated background documentation service logging daemon engine designed to cleanly archive active browser sessions, code repositories, and technical documentation layouts directly into structured Markdown files, raw HTML data dumps, or professional PDF layouts.
 
@@ -15,11 +15,24 @@ You do not need to download zip archives, manage system environment folders, or 
 irm https://raw.githubusercontent.com/gowildchild/Project-Saver/install.ps1 | iex
 ```
 
-### ⚙️ What this automated installer pipeline does for you natively:
+### OPTION A: Automated installer:
 1. Queries the public GitHub REST API endpoint for the newest stable production.
 2. Stream-downloads the  standalone application binary appliance executable safely.
 3. Automatically provisions a unique, cryptographically secure SingleFile token connection configuration file profile.
 4. Generates a clean **Project Saver** right onto your active Windows Desktop workspace window!
+
+### 📦 Option B: Standard Windows Setup Installer Wizard (.exe)
+For offline nodes, air-gapped secure machines, or users who prefer a classic desktop installation layout:
+
+1. Navigate directly down to the official repository releases page: `https://github.com/gowildchild/Project-Saver/releases/tag/`.
+2. Download the packaged installation executable file asset: **`project_saver_setup.exe`**.
+3. Double-click the file to open the native **Project Saver Setup Wizard**. 
+
+*What this installation package handles for you natively:*
+* **Wizards Integration:** Safely copies the core background appliance into your user `{localappdata}` system profile.
+* **Auto-Startup Configuration:** Automatically registers a native Windows Startup connection link so the daemon launches on port `19763` every single time your computer boots up.
+* **Uninstallations:** Adds a clean entry to your Windows **Settings -> Installed Apps** dashboard, completely wiping all configurations, singlefile configuration profiles and token maps if you choose to uninstall.
+
 
 ---
 
@@ -39,7 +52,7 @@ irm https://raw.githubusercontent.com/gowildchild/Project-Saver/install.ps1 | ie
 
 To pair your desktop web browser directly with your local background logger processing loop:
 
-1. Install the official [SingleFile Web Extension Engine](https://google.com/detail/singlefile/mpiodijhokgodhhofbcjdecpffjipkle).
+1. Install the official [SingleFile Web Extension Engine](https://chromewebstore.google.com/detail/singlefile/mpiodijhokgodhhofbcjdecpffjipkle).
 2. Right-click the **SingleFile extension icon** in your toolbar and select the **Options** control panel.
 3. Scroll all the way down to the very bottom base of the settings dashboard framework configuration interface.
 4. Click the **Import Settings** configuration button.
@@ -73,6 +86,6 @@ If you boot the system manually from a command terminal, you can control your dy
 ---
 
 ## 🔒 Security Cryptographic Integrity Manifest Note
-Every automated cloud release package contains an independent, official release document file named `manifest.txt`. 
+Every automated cloud release package contains an independent, official release document file named `manifest_windows.txt` and `manifest_linux.txt`.
 
 Open this file to cross-verify the compilation timestamp, system building metrics and the matching **SHA-1 integrity verification checksum** to guarantee total execution code security transparency.
