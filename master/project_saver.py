@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.70"
+VERSION = "v0.0.71"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -486,6 +486,10 @@ def run_server():
         print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
 
 if __name__ == "__main__":
+    if os.name == 'nt':
+        import ctypes
+        ctypes.windll.kernel32.SetConsoleMode(ctypes.windll.kernel32.GetStdHandle(-11), 7)
+
     parser = argparse.ArgumentParser(
         description="Project Saver Server.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
