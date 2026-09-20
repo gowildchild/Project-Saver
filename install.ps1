@@ -2,14 +2,14 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.69"
+$InstallVersion = "v0.0.70"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
 
 $InstallDir = Join-Path $env:USERPROFILE "AppData\Local\ProjectSaver"
 $MyDocuments = [Environment]::GetFolderPath('MyDocuments')
-$ExportFilesDir = Join-Path $MyDocuments "Project-Saver\export"
+$ExportFolder = Join-Path $MyDocuments "Project-Saver\export"
 $BinPath = Join-Path $InstallDir "project_saver.exe"
 $ManifestPath = Join-Path $InstallDir "manifest.txt"
 $ShortcutPath = "$([Environment]::GetFolderPath('Desktop'))\Project Saver.lnk"
@@ -117,7 +117,7 @@ Set-Content -Path $JsonPath -Value $SingleFileConfig -Encoding UTF8
 $CfgPath = Join-Path $InstallDir "project_saver.cfg"
 $CfgContent = @(
     "token=$NewToken"
-    "export_folder=$ExportFilesDir"
+    "export_folder=$ExportFolder"
 )
 $CfgContent | Set-Content -Path $CfgPath
 
@@ -187,7 +187,6 @@ Write-Host " -> Press [E] to instantly open the Export Files Folder" -Foreground
 Write-Host " -> Press [Enter] to exit this installer setup wizard safely" -ForegroundColor Gray
 Write-Host "------------------------------------------------------------"
 
-# Establish localized path references for opening folders natively
 $MyDocuments = [Environment]::GetFolderPath('MyDocuments')
 $ExportFolder = Join-Path $MyDocuments "Project-Saver\export"
 
