@@ -275,7 +275,7 @@ def save_config_file(filepath, args_namespace):
             f.write(f"export-format={args_namespace.export_format}\n")
             f.write(f"export-type={args_namespace.export_type}\n")
             f.write(f"remote-address={args_namespace.remote_address}\n")
-			f.write(f"chosen-editor={args_namespace.chosen_editor}\n")
+            f.write(f"chosen-editor={args_namespace.chosen_editor}\n")
             if args_namespace.auto is not None: f.write(f"auto={args_namespace.auto}\n")
         print(f"[+] Active configuration written to profile: {filepath}")
     except Exception as e:
