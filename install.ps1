@@ -10,7 +10,7 @@ $RepoName  = "Project-Saver"
 $InstallDir = Join-Path env:USERPROFILE "AppData\Local\ProjectSaver"
 $BinPath = Join-Path $InstallDir "project_saver.exe"
 $ManifestPath = Join-Path $InstallDir "manifest.txt"
-$ShortcutPath = Join-Path [Environment]::GetFolderPath("Desktop") "Project Saver.lnk"
+$ShortcutPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "Project Saver.lnk"
 
 Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host "Project Saver Verified Network Setup..." -ForegroundColor Cyan
