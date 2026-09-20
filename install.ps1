@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.80-beta"
+$InstallVersion = "v0.0.80-charlie"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -130,7 +130,7 @@ $CfgPath = Join-Path $InstallDir "project_saver.cfg"
 
 $CfgContent = @(
     "token=$NewToken"
-    "export_folder=$ExportFolder"
+    "export-folder=$ExportFolder"
 )
 [System.IO.File]::WriteAllLines($CfgPath, $CfgContent)
 
@@ -159,11 +159,13 @@ $BottomBar = $BL + $LineHZ + $BR
 
 # Dynamic space padding calculation to keep the right border straight
 $BoxTotalWidth = 60
-$VersionText = $VT + " Version Deployed : $LatestVersion"
-$PaddingNeeded = $BoxTotalWidth - $VersionText.Length - 1
+$RawTextContent = " Version Deployed : $LatestVersion"
+$PaddingNeeded = $BoxTotalWidth - $RawTextContent.Length - 2
 
 if ($PaddingNeeded -lt 0) { $PaddingNeeded = 0 }
 $PadSpaces = " " * $PaddingNeeded
+
+$VersionLineText = $VT + $RawTextContent + $PadSpaces + $VT
 
 # Force the local console output manager to translate strings using clean UTF-8 tables
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -171,7 +173,7 @@ $PadSpaces = " " * $PaddingNeeded
 Write-Host "`n  $TopBar" -ForegroundColor Green
 Write-Host "  $VT   SUCCESS: Project Saver Installation Complete!            $VT" -ForegroundColor Green
 Write-Host "  $Divider" -ForegroundColor Green
-Write-Host "  $VersionText$PadSpaces  $VT" -ForegroundColor Green
+Write-Host "  $VersionLineText" -ForegroundColor Green
 Write-Host "  $VT Security Check   : SHA-256 Verified (Match Confirmed)      $VT" -ForegroundColor Green
 Write-Host "  $VT Location Locked  : AppData\Local\ProjectSaver              $VT" -ForegroundColor Green
 Write-Host "  $VT Created By       : Gunther Voet                            $VT" -ForegroundColor Green
