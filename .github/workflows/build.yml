@@ -114,7 +114,6 @@ jobs:
 
         [Files]
         Source: "..\\dist\\project_saver_{1}-portable.exe"; DestDir: "{{app}}"; DestName: "project_saver.exe"; Flags: ignoreversion
-        Source: "..\\dist\\manifest_windows.txt"; DestDir: "{{app}}"; Flags: ignoreversion
 
         [Icons]
         Name: "{{userdesktop}}\\Project Saver"; Filename: "{{app}}\\project_saver.exe"; WorkingDir: "{{app}}"
