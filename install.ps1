@@ -2,14 +2,14 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.56"
+$InstallVersion = "v0.57"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
 
 $InstallDir = Join-Path $env:USERPROFILE "AppData\Local\ProjectSaver"
 $BinPath = Join-Path $InstallDir "project_saver.exe"
-$ManifestPath = Join-Path $InstallDir "manifest_windows.txt"
+$ManifestPath = Join-Path $InstallDir "manifest.txt"
 $ShortcutPath = "$([Environment]::GetFolderPath('Desktop'))\Project Saver.lnk"
 
 Write-Host "==================================================" -ForegroundColor Cyan
@@ -32,7 +32,7 @@ Write-Host "[+] Target release version isolated: [$LatestVersion]" -ForegroundCo
 
 # 2. Extract specific binary asset URLs
 $ExeAsset = $ReleaseData.assets | Where-Object { $_.name -like "*.exe" -and $_.name -notlike "*setup*" } | Select-Object -First 1
-$ManifestAsset = $ReleaseData.assets | Where-Object { $_.name -eq "manifest_windows.txt" } | Select-Object -First 1
+$ManifestAsset = $ReleaseData.assets | Where-Object { $_.name -eq "manifest.txt" } | Select-Object -First 1
 
 if (-not $ExeAsset -or -not $ManifestAsset) {
     Write-Host "[-] Critical Error: Missing executable or manifest file in release." -ForegroundColor Red
@@ -44,14 +44,14 @@ if (Test-Path $TempFolder) { Remove-Item $TempFolder -Recurse -Force | Out-Null 
 New-Item -ItemType Directory -Path $TempFolder | Out-Null
 
 $TempExePath = Join-Path $TempFolder $ExeAsset.name
-$TempManifestPath = Join-Path $TempFolder "manifest_windows.txt"
+$TempManifestPath = Join-Path $TempFolder "manifest.txt"
 
 # 4. Download files down into temporary sandbox
 Write-Host "[*] Fetching delivery assets for integrity verification..."
 Invoke-WebRequest -Uri $ExeAsset.browser_download_url -OutFile $TempExePath -UseBasicParsing
 Invoke-WebRequest -Uri $ManifestAsset.browser_download_url -OutFile $TempManifestPath -UseBasicParsing
 
-# 5. DYNAMIC CRYPTOGRAPHIC SHA-1 VALIDATION 
+# 5. DYNAMIC CRYPTOGRAPHIC SHA-256 VALIDATION 
 Write-Host "[*] Evaluating security footprint hash keys..."
 
 $ManifestContent = Get-Content -Path $TempManifestPath
@@ -69,7 +69,7 @@ Write-Host "    -> Expected Hash: $OfficialHash" -ForegroundColor Yellow
 Write-Host "    -> Computed Hash: $LocalHash" -ForegroundColor Yellow
 
 if ($LocalHash -ne $OfficialHash) {
-    Write-Host "`n[🚨] SECURITY BARRICADE: SHA-1 Integrity Hash Mismatch!" -ForegroundColor Red
+    Write-Host "`n[🚨] SECURITY BARRICADE: SHA-256 Integrity Hash Mismatch!" -ForegroundColor Red
     Write-Host "    The downloaded application executable failed security checksum validation." -ForegroundColor Red
     Write-Host "    Installation aborted automatically to protect machine." -ForegroundColor Red
     Remove-Item $TempFolder -Recurse -Force | Out-Null
@@ -112,10 +112,15 @@ $Shortcut.Description = "Project Saver Daemon"
 $Shortcut.IconLocation = "shell32.dll,44"
 $Shortcut.Save()
 
+$BoxTotalWidth = 60
+$VersionText   = "│ Version Deployed : $LatestVersion"
+$PaddingNeeded = $BoxTotalWidth - $VersionText.Length - 1
+$PadSpaces     = " " * $PaddingNeeded
+
 Write-Host "`n┌────────────────────────────────────────────────────────────┐" -ForegroundColor Green
 Write-Host "│   SUCCESS: Project Saver Installation Complete!            │" -ForegroundColor Green
 Write-Host "├────────────────────────────────────────────────────────────┤" -ForegroundColor Green
-Write-Host "│ Version Deployed : $LatestVersion                                 │" -ForegroundColor Green
-Write-Host "│ Security Check   : SHA-1 Verified (Match Confirmed)        │" -ForegroundColor Green
+Write-Host "$VersionText$PadSpaces│" -ForegroundColor Green
+Write-Host "│ Security Check   : SHA-256 Verified (Match Confirmed)        │" -ForegroundColor Green
 Write-Host "│ Location Locked  : AppData\Local\ProjectSaver              │" -ForegroundColor Green
 Write-Host "└────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
