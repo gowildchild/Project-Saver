@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.60"
+VERSION = "v0.0.60-beta"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -162,6 +162,10 @@ class RestApiHandler(BaseHTTPRequestHandler):
             editor_override=CLI_ARGS.chosen_editor,
 			app_version=VERSION
         )
+
+def check_for_updates_silently():
+    """Safety placeholder to resolve historic background loop definitions."""
+    pass
 
 def set_terminal_title(title_text, run_version, run_text):
     if os.name == 'nt':
