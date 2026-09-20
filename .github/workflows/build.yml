@@ -46,10 +46,52 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller beautifulsoup4 reportlab
 
+    - name: Generate Dynamic Version Info Resource File
+      shell: bash
+      run: |
+        VER="\${{ needs.build-and-release.outputs.app_version }}"
+        CLEAN_VER=(echo VER | sed 's/[vV]//g')
+        IFS='.' read -r major minor patch <<< "\$CLEAN_VER"
+        major=\${major:-0}; minor=minor:-0; patch={patch:-0}
+        
+        cat <<EOF > master/version_info.txt
+        VSVersionInfo(
+          ffi=FixedFileInfo(
+            filevers=(\$major, minor, patch, 0),
+            prodvers=(\$major, minor, patch, 0),
+            mask=0x3f,
+            flags=0x0,
+            OS=0x40004,
+            fileType=0x1,
+            subtype=0x0,
+            date=(0, 0)
+          ),
+          kids=[
+            StringFileInfo([
+              StringTable(
+                '040904b0',
+                [
+                  StringChar('CompanyName', 'Gunther Voet'),
+                  StringChar('FileDescription', 'Project Saver Background Service Daemon'),
+                  StringChar('FileVersion', '$CLEAN_VER'),
+                  StringChar('InternalName', 'project_saver'),
+                  StringChar('LegalCopyright', 'Copyright © 2026 Gunther Voet. All Rights Reserved.'),
+                  StringChar('OriginalFilename', 'project_saver.exe'),
+                  StringChar('ProductName', 'Project Saver Application'),
+                  StringChar('ProductVersion', '$CLEAN_VER')
+                ]
+              )
+            ]),
+            VarFileInfo([VarChar('Translation', [1033, 1200])])
+          ]
+        )
+        EOF
+        echo "[+] Dynamic version_info.txt file generated successfully."
+
     - name: Compile Standalone Executable
       working-directory: ./master
       run: |
-        pyinstaller --onefile --distpath ../dist --workpath ../build project_saver.py
+        pyinstaller --onefile --distpath ../dist --workpath ../build --version-file=version_info.txt project_saver.py
 
     - name: Generate Release Manifest
       shell: bash
