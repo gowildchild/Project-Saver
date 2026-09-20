@@ -108,6 +108,7 @@ def ask_with_countdown(prompt, default_timeout=5, default_value=False):
                     input_str += char
                     
             time.sleep(0.1)
+        print()
 
     else:  # macOS / Linux Engine
         import select
@@ -157,6 +158,7 @@ def ask_mode_override(detected_mode, default_timeout=5):
                     user_responded = True
                     break
             time.sleep(0.1)
+        print()
     else:
         import select
         for remaining in range(default_timeout, 0, -1):
@@ -196,17 +198,16 @@ def launch_markdown_editor(file_path):
         print(f"[-] Could not automatically launch editor: {e}")
 
 def process_html_content(html_string, page_title, source_origin="Natively Captured", 
-                         export_folder="", export_format="markdown", export_type="auto", auto_timeout=None, editor_override=None, app_version="v0.0.40"):
+                         export_folder="", export_format="markdown", export_type="auto", auto_timeout=None, editor_override=None, app_version=None):
     current_session_hash = hashlib.md5(html_string.encode('utf-8')).hexdigest()
     processed_hashes = load_processed_hashes()
     
     if current_session_hash in processed_hashes:
-        print(f"\n[!] ALERT: This session layout was already processed! Skipping.")
+        print(f"\n[!] ALERT: This identical session layout was already processed! Skipping.")
         return
 
     soup = BeautifulSoup(html_string, "html.parser")
     
-    # ─── EXPORT-TYPE ROUTING RULES (WITH OVERRIDE FLAGS) ───
     if export_type == "code":
         export_mode = "code_dev"
     elif export_type == "web":
@@ -221,22 +222,23 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
     # Give a quick terminal countdown option to manually change modes
     export_mode = ask_mode_override(export_mode, default_timeout=4)
 
-    # ─── TARGETED EXTRACTION ENGINE (GITHUB & READER VIEWS) ───
+    # ─── 2. TARGETED EXTRACTION ENGINE (GITHUB & READER VIEWS) ───
     parsing_root = soup
     is_github = "github.com" in source_origin.lower()
 
     if is_github:
+        # GitHub isolation strategy: Target the actual code container table or article area
         github_code_container = soup.find(id="read-only-cursor-wrapper") or soup.find(class_="blob-wrapper") or soup.find('react-file-lines')
         if github_code_container:
             parsing_root = github_code_container
-            print("[*] Target Match: Isolated GitHub Code Content.")
+            print("[*] Target Match: Isolated GitHub Code Content Area.")
     elif export_mode == "web_article":
         reader_container = soup.find(['article', 'main']) or soup.find(class_=re.compile(r'reader|content|article-body|post-content', re.I)) or soup.find(id=re.compile(r'reader|content|article-body|post-content', re.I))
         if reader_container:
             parsing_root = reader_container
-            print("[*] Target Match: Isolated Reader-View structure.")
+            print("[*] Target Match: Isolated Reader-View structure for processing.")
 
-    # ─── URL EXTENSION EXTRACTION ENGINE ───
+    # RESTORED: Stable index tracking array split loops
     url_clean = source_origin.split('?')[0].split('#')[0]
     url_match = re.search(r'\.([a-zA-Z0-9]+)$', url_clean)
     url_extension = url_match.group(1).lower() if url_match else None
@@ -245,10 +247,13 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
         url_extension = None
 
     safe_title = re.sub(r'[\\/*?:"<>| ]', '_', page_title)[:50]
+    
+    # Priority: Command Line Argument Folder -> Script Configuration Setting -> Current Directory
     base_dir = export_folder if export_folder else (SAVE_DIRECTORY if SAVE_DIRECTORY else os.getcwd())
     
     ExporterClass = EXPORTER_REGISTRY.get(export_mode, EXPORTER_REGISTRY["code_dev"])
-    exporter = ExporterClass(base_dir, safe_title, app_version)
+    # RESTORED: Passes your core system global VERSION parameter cleanly
+    exporter = ExporterClass(base_dir, safe_title, VERSION)
 
     # If --auto was passed, override the standard prompt timers with your custom seconds duration
     timeout_duration = auto_timeout if auto_timeout is not None else 5
@@ -258,7 +263,6 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
 
     exporter.initialize_directories(export_detailed)
 
-    # Decompose script clutter inside the chosen root boundary
     for technical_garbage in parsing_root(["script", "style", "meta", "link", "noscript"]):
         technical_garbage.decompose()
 
@@ -299,6 +303,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
 
             is_pre_block = element.name == 'pre'
             
+            # STRICTOR RE-MATCH REGEX PARSING LOGIC: Checks anchors to separate true statements from conversation
             is_inline_code = element.name == 'code' and any(
                 re.search(pattern, text) for pattern in [r'^import\s', r'^def\s', r'^\$', r'^use strict;']
             )
@@ -333,28 +338,29 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                     if final_markdown_blocks and final_markdown_blocks[-1] == text: continue
                     final_markdown_blocks.append(text)
 
-    # ─── MULTI-FORMAT TARGET EXECUTION GENERATION ───
     target_formats = [f.strip().lower() for f in export_format.split(',')]
     
+    # RESTORED: Explicit console report layout descriptions
     if 'html' in target_formats:
         with open(exporter.output_html, "w", encoding="utf-8") as f: 
             f.write(html_string)
-        print(f"[+] Backup HTML saved: {exporter.output_html}")
+        print(f"[+] Local backup HTML saved: {exporter.output_html}")
         
     if 'markdown' in target_formats or 'md' in target_formats:
         with open(exporter.output_md, "w", encoding="utf-8") as f:
             exporter.write_header(f, page_title, source_origin)
             exporter.write_blocks(f, final_markdown_blocks)
-        print(f"[+] Markdown Document saved: {exporter.output_md}")
+        print(f"[+] Structured Markdown Document saved: {exporter.output_md}")
         
     if 'pdf' in target_formats:
         render_pdf_fallback(exporter.output_pdf, page_title, source_origin, final_markdown_blocks)
-        print(f"[+] PDF Document saved: {exporter.output_pdf}")
+        print(f"[+] Rendered PDF Document saved: {exporter.output_pdf}")
 
     save_processed_hash(current_session_hash)
-
+    
     if trigger_auto_launch and ('markdown' in target_formats or 'md' in target_formats): 
         launch_markdown_editor(exporter.output_md)
+
 
 if __name__ == "__main__":
     # Fallback to direct script execution handling via terminal inputs
@@ -374,4 +380,4 @@ if __name__ == "__main__":
 
     if target_file and os.path.exists(target_file):
         with open(target_file, "r", encoding="utf-8", errors="ignore") as f:
-            process_html_content(f.read(), target_file.replace(".html", ""), target_file, export_type=export_flag, app_version="v0.0.40")
+            process_html_content(f.read(), target_file.replace(".html", ""), target_file, export_type=export_flag)
