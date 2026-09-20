@@ -1,0 +1,36 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'install.ps1'
+      - 'README.md'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+      - name: Setup Pages Environment
+        uses: actions/configure-pages@v5
+      - name: Upload Static Web Page Web Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy straight to GitHub Pages Infrastructure
+        id: deployment
+        uses: actions/deploy-pages@v4
