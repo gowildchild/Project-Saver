@@ -7,7 +7,8 @@ $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
 
-$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+while ([Console]::KeyAvailable) { [Console]::ReadKey($true) | Out-Null }
 $InstallDir = Join-Path $env:USERPROFILE "AppData\Local\ProjectSaver"
 $MyDocuments = [Environment]::GetFolderPath('MyDocuments')
 $ExportFolder = Join-Path $MyDocuments "Project-Saver\export"
