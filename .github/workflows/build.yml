@@ -1,4 +1,4 @@
-name: Compile Standalone Binary
+name: Compile Standalone Binaries
 
 on:
   push:
@@ -22,7 +22,6 @@ jobs:
     - name: Extract Version from Source
       id: get_version
       run: |
-        # Pulls the exact text wrapped inside the VERSION string variable cleanly
         VERSION_STR=\$(python3 -c "import re; f=open('master/project_saver.py'); m=re.search(r'VERSION\s*=\s*[\"\']([^\"\']+)[\"\']', f.read()); print(m.group(1)) if m else print('')")
         if [ -z "\$VERSION_STR" ]; then
           echo "[-] Error: Failed to extract VERSION string token from source code."
@@ -69,7 +68,6 @@ jobs:
         echo "SHA-1 Checksum  : \$RAW_HASH" >> manifest.txt
         echo "==================================================" >> manifest.txt
         
-        # Rename binary to include version tag so it maps perfectly inside your browser update trackers
         mv project_saver.exe project_saver_\${{ needs.build-and-release.outputs.app_version }}.exe
 
     - name: Upload Windows Asset to Job Memory
@@ -115,7 +113,6 @@ jobs:
         echo "SHA-1 Checksum  : \$RAW_HASH" >> manifest.txt
         echo "==================================================" >> manifest.txt
         
-        # Keep native manifest name intact, wrap binary explicitly to prevent naming friction collisions
         mv project_saver project_saver_\${{ needs.build-and-release.outputs.app_version }}_linux
 
     - name: Upload Linux Asset to Job Memory
