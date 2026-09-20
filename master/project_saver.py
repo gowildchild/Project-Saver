@@ -158,7 +158,8 @@ class RestApiHandler(BaseHTTPRequestHandler):
             export_folder=CLI_ARGS.export_folder,
             export_format=CLI_ARGS.export_format,
             export_type=CLI_ARGS.export_type,
-            auto_timeout=CLI_ARGS.auto
+            auto_timeout=CLI_ARGS.auto,
+            editor_override=CLI_ARGS.chosen_editor
         )
 
 def set_terminal_title(title_text, run_version, run_text):
@@ -274,6 +275,7 @@ def save_config_file(filepath, args_namespace):
             f.write(f"export-format={args_namespace.export_format}\n")
             f.write(f"export-type={args_namespace.export_type}\n")
             f.write(f"remote-address={args_namespace.remote_address}\n")
+			f.write(f"chosen-editor={args_namespace.chosen_editor}\n")
             if args_namespace.auto is not None: f.write(f"auto={args_namespace.auto}\n")
         print(f"[+] Active configuration written to profile: {filepath}")
     except Exception as e:
@@ -318,6 +320,7 @@ if __name__ == "__main__":
     parser.add_argument("--config-save", default="", help="Save setup flags into configuration profile text file.")
     parser.add_argument("--about", action="store_true", help="Displays developer credits and exit.")
     parser.add_argument("--update", action="store_true", help="Queries GitHub downloads update binary and exit.")
+	parser.add_argument("--chosen-editor", default="system_default", choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool.")
 
     temp_args = sys.argv[1:]
     loaded_file_args = []
