@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.55-beta"
+VERSION = "v0.0.56"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -223,35 +223,114 @@ def check_for_updates_silently():
         pass  # Fails silently to prevent crash spikes if network links are dead on boot
 
 def check_and_perform_update():
-    """Performs manual force execution upgrade downloads via --update."""
+    """Performs manual force upgrade downloads via --update with full SHA-256 manifest validation."""
     import platform
+    import os
+    import sys
+    import urllib.request
+    import json
+    import subprocess
+    import hashlib
+
     is_windows = platform.system().lower() == "windows"
-    local_binary_name = "project_saver.exe" if is_windows else "project_saver"
-    api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
-    print(f"[*] Initializing manual system upgrade check via: {api_url}")
+    api_url = f"https://github.com{REPO_OWNER}/{REPO_NAME}/releases/latest"
+    print(f"[*] Initializing secure system upgrade check via: {api_url}")
+    
     try:
-        req = urllib.request.Request(api_url, headers={'User-Agent': 'Project-Saver-Manual-Updater'})
+        current_exe_path = os.path.abspath(sys.executable)
+        install_dir = os.path.dirname(current_exe_path)
+        
+        req = urllib.request.Request(api_url, headers={'User-Agent': 'Project-Saver-Secure-Updater'})
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode('utf-8'))
             latest = data.get("tag_name", "").strip()
             if latest == VERSION:
-                print("[+] Already running the latest version profile framework."); return
+                print("[+] Already running the latest version profile framework.")
+                return
             
             download_url = None
+            manifest_url = None
             for asset in data.get("assets", []):
                 name = asset.get("name", "")
-                if (is_windows and name.endswith(".exe")) or (not is_windows and "linux" in name.lower()):
-                    download_url = asset.get("browser_download_url"); break
+                if (is_windows and name.endswith("-portable.exe")) or (not is_windows and "linux" in name.lower()):
+                    download_url = asset.get("browser_download_url")
+                if name == "manifest.txt":
+                    manifest_url = asset.get("browser_download_url")
             
-            if not download_url:
-                print("[-] Could not isolate matching pre-compiled distribution bundle."); return
+            if not download_url or not manifest_url:
+                print("[-] Error: Missing distribution executable or master manifest.txt in release.")
+                return
 
-            print(f"[*] Downloading {latest} binary upgrade...")
+            print(f"[*] Fetching delivery assets for integrity verification...")
+            temp_download_name = "project_saver.new" if is_windows else f"project_saver_{latest}_linux"
+            temp_download_path = os.path.join(install_dir, temp_download_name)
+            
+            # 1. Download the new binary payload
             with urllib.request.urlopen(download_url) as stream:
-                with open(local_binary_name, "wb") as f: f.write(stream.read())
-            print("[+] Success: Upgrade complete! Restart application daemon to load.")
+                with open(temp_download_path, "wb") as f: 
+                    f.write(stream.read())
+            
+            # 2. Download the unified manifest.txt file strings into runner memory
+            expected_hash = None
+            with urllib.request.urlopen(manifest_url) as stream:
+                manifest_lines = stream.read().decode('utf-8').splitlines()
+                # Locate the very first SHA-256 Checksum string in the document (corresponds to asset 1)
+                for line in manifest_lines:
+                    if "SHA-256 Checksum" in line:
+                        expected_hash = line.split(":")[1].strip().lower()
+                        break
+
+            if not expected_hash:
+                print("[-] Verification Error: Manifest format is malformed or invalid.")
+                os.remove(temp_download_path)
+                return
+
+            # 3. NATIVE CRYPTOGRAPHIC SHA-256 CALCULATION LOOP
+            print("[*] Evaluating security footprint hash keys...")
+            sha256_hash = hashlib.sha256()
+            with open(temp_download_path, "rb") as f:
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+            computed_hash = sha256_hash.hexdigest().lower()
+
+            print(f"    -> Expected Hash: {expected_hash}")
+            print(f"    -> Computed Hash: {computed_hash}")
+
+            if computed_hash != expected_hash:
+                print("\n[🚨] SECURITY BARRICADE: SHA-256 Integrity Hash Mismatch!")
+                print("    The downloaded upgrade executable failed security checksum validation.")
+                print("    Upgrade cycle aborted automatically to protect this machine.")
+                os.remove(temp_download_path)
+                return
+            
+            print("[+] Cryptographic Verification Passed: Binary file code matches perfectly.")
+
+            # 4. ATOMIC HOT-SWAP REPLACEMENT CHOREOGRAPHY
+            if is_windows:
+                old_exe_path = os.path.join(install_dir, "project_saver.old")
+                if os.path.exists(old_exe_path):
+                    try: os.remove(old_exe_path)
+                    except Exception: pass
+                
+                print("[*] Performing safe atomic hot-swap file replacements...")
+                os.rename(current_exe_path, old_exe_path)
+                os.rename(temp_download_path, current_exe_path)
+                
+                cleanup_cmd = f"timeout /t 2 >nul && del \"{old_exe_path}\""
+                subprocess.Popen(cleanup_cmd, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            else:
+                final_linux_path = os.path.join(install_dir, "project_saver")
+                if os.path.exists(final_linux_path):
+                    os.remove(final_linux_path)
+                os.rename(temp_download_path, final_linux_path)
+                os.chmod(final_linux_path, 0o755)
+
+            print("[🎉] SUCCESS: Secure system upgrade complete. Please restart Project Saver to run the new version!")
+            sys.exit(0)
+            
     except Exception as e:
-        print(f"[-] Manual upgrade block failed: {e}")
+        print(f"[-] Secure upgrade block failed: {e}")
+
 
 def load_config_file(filepath):
     args_list = []
