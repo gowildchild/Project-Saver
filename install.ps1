@@ -1,9 +1,9 @@
 # ====================================================================================
-# PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE v0.51
+# PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
 # ====================================================================================
+$InstallVersion = "v0.53"
 $ErrorActionPreference = "Stop"
-
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
 
@@ -13,7 +13,7 @@ $ManifestPath = Join-Path $InstallDir "manifest_windows.txt"
 $ShortcutPath = "$([Environment]::GetFolderPath('Desktop'))\Project Saver.lnk"
 
 Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "Project Saver Verified Network Setup..." -ForegroundColor Cyan
+Write-Host "Project Saver Verified Network Setup version $InstallVersion" -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Cyan
 
 # 1. Fetch live production release definitions from GitHub API
@@ -112,9 +112,9 @@ $Shortcut.IconLocation = "shell32.dll,44"
 $Shortcut.Save()
 
 Write-Host "`n┌────────────────────────────────────────────────────────────┐" -ForegroundColor Green
-Write-Host "│   SUCCESS: Verified Installation Complete!                │" -ForegroundColor Green
+Write-Host "│   SUCCESS: Verified Installation Complete!                 │" -ForegroundColor Green
 Write-Host "├────────────────────────────────────────────────────────────┤" -ForegroundColor Green
-Write-Host "│ Version Deployed : $LatestVersion                                    │" -ForegroundColor Green
-Write-Host "│ Security Check   : SHA-1 Verified (Match Confirmed)         │" -ForegroundColor Green
-Write-Host "│ Location Locked  : AppData\Local\ProjectSaver               │" -ForegroundColor Green
+Write-Host "│ Version Deployed : $LatestVersion                          │" -ForegroundColor Green
+Write-Host "│ Security Check   : SHA-1 Verified (Match Confirmed)        │" -ForegroundColor Green
+Write-Host "│ Location Locked  : AppData\Local\ProjectSaver              │" -ForegroundColor Green
 Write-Host "└────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
