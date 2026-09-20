@@ -107,18 +107,18 @@ jobs:
       shell: bash
       run: |
         cd dist
-        RAW_HASH=$(certutil -hashfile project_saver.exe SHA1 | sed -n '2p' | tr -d '[:space:]')
+        mv project_saver.exe project_saver_${{ needs.build-and-release.outputs.app_version }}.exe
+        RAW_HASH=$(certutil -hashfile project_saver_${{ needs.build-and-release.outputs.app_version }}.exe SHA1 | sed -n '2p' | tr -d '[:space:]')
         echo "==================================================" > manifest.txt
         echo "   PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
         echo "==================================================" >> manifest.txt
         echo "Build Timestamp : $(date -u)" >> manifest.txt
         echo "Version Tag     : ${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
         echo "Platform        : Windows x64 Standalone Asset" >> manifest.txt
-        echo "Application File: project_saver.exe" >> manifest.txt
+        echo "Application File: project_saver_${{ needs.build-and-release.outputs.app_version }}.exe" >> manifest.txt
         echo "--------------------------------------------------" >> manifest.txt
         echo "SHA-1 Checksum  : $RAW_HASH" >> manifest.txt
         echo "==================================================" >> manifest.txt
-        mv project_saver.exe project_saver_${{ needs.build-and-release.outputs.app_version }}.exe
 
     - name: Upload Windows Asset to Job Memory
       uses: actions/upload-artifact@v4
@@ -151,18 +151,18 @@ jobs:
     - name: Generate Release Manifest
       run: |
         cd dist
-        RAW_HASH=$(sha1sum project_saver | awk '{print $1}')
+        mv project_saver project_saver_${{ needs.build-and-release.outputs.app_version }}_linux
+        RAW_HASH=$(sha1sum project_saver_${{ needs.build-and-release.outputs.app_version }}_linux | awk '{print $1}')
         echo "==================================================" > manifest.txt
         echo "   PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
         echo "==================================================" >> manifest.txt
         echo "Build Timestamp : $(date -u)" >> manifest.txt
         echo "Version Tag     : ${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
         echo "Platform        : Linux x64 Standalone Asset" >> manifest.txt
-        echo "Application File: project_saver" >> manifest.txt
+        echo "Application File: project_saver_${{ needs.build-and-release.outputs.app_version }}_linux" >> manifest.txt
         echo "--------------------------------------------------" >> manifest.txt
         echo "SHA-1 Checksum  : $RAW_HASH" >> manifest.txt
         echo "==================================================" >> manifest.txt
-        mv project_saver project_saver_${{ needs.build-and-release.outputs.app_version }}_linux
 
     - name: Upload Linux Asset to Job Memory
       uses: actions/upload-artifact@v4
