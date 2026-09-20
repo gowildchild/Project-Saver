@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
 
-$InstallDir = Join-Path env:USERPROFILE "AppData\Local\ProjectSaver"
+$InstallDir = Join-Path $env:USERPROFILE "AppData\Local\ProjectSaver"
 $BinPath = Join-Path $InstallDir "project_saver.exe"
 $ManifestPath = Join-Path $InstallDir "manifest.txt"
 $ShortcutPath = "$([Environment]::GetFolderPath('Desktop'))\Project Saver.lnk"
@@ -39,7 +39,7 @@ if (-not $ExeAsset -or -not $ManifestAsset) {
     Exit
 }
 
-$TempFolder = Join-Path env:TEMP "ProjectSaver_Setup"
+$TempFolder = Join-Path ([System.IO.Path]::GetTempPath()) "ProjectSaver_Setup"
 if (Test-Path $TempFolder) { Remove-Item $TempFolder -Recurse -Force | Out-Null }
 New-Item -ItemType Directory -Path $TempFolder | Out-Null
 
