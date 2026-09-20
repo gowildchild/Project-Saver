@@ -197,6 +197,7 @@ def launch_markdown_editor(file_path):
     except Exception as e:
         print(f"[-] Could not automatically launch editor: {e}")
 
+
 def process_html_content(html_string, page_title, source_origin="Natively Captured", 
                          export_folder="", export_format="markdown", export_type="auto", auto_timeout=None, editor_override=None, app_version=None):
     current_session_hash = hashlib.md5(html_string.encode('utf-8')).hexdigest()
@@ -285,9 +286,35 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                 img_src = element.get('src', '').strip()
                 if not img_src: 
                     continue
-                img_alt = element.get('alt', '').strip() or element.get('title', '').strip() or "Captured Image"
-                final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
-                continue
+                img_alt = element.get('alt', '').strip() or element.get('title', '').strip() or "Captured_Image"
+                
+                if img_src.startswith("data:image/"):
+                    try:
+                        import base64
+                        header, base64_data = img_src.split(',', 1)
+                        img_ext = header.split(';')[0].split('/')[1]
+                        
+                        img_hash = hashlib.md5(base64_data.encode('utf-8')).hexdigest()[:10]
+                        local_img_name = f"image_{code_block_index}_{img_hash}.{img_ext}"
+                        
+                        target_folder = exporter.asset_folder if export_detailed else base_dir
+                        if not os.path.exists(target_folder):
+                            os.makedirs(target_folder, exist_ok=True)
+                            
+                        local_img_path = os.path.join(target_folder, local_img_name)
+                        with open(local_img_path, "wb") as img_file:
+                            img_file.write(base64.b64decode(base64_data))
+                        
+                        markdown_link_path = os.path.join(os.path.basename(exporter.asset_folder), local_img_name) if export_detailed else local_img_name
+                        final_markdown_blocks.append(exporter.format_image(img_alt, markdown_link_path))
+                        code_block_index += 1
+                        continue
+                    except Exception as e:
+                        print(f"[-] Warning: Failed to decode embedded base64 asset string line: {e}")
+                        continue
+                else:
+                    final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
+                    continue
             text = element.get_text() if element.name in ['pre', 'code'] else element.get_text().strip()
 
             if not text or len(text.strip()) < 2 or text.strip().startswith("data:image/"): 
@@ -296,9 +323,11 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
             is_pre_block = element.name == 'pre'
             
             is_inline_code = element.name == 'code' and (any(
-                re.search(pattern, text.strip()) for pattern in [r'^import\s', r'^def\s', r'^\$', r'^use strict;', r'^class\s', r'^\s*def\s']
+                re.search(pattern, text.strip()) for pattern in [
+                    r'^import\s', r'^def\s', r'^\$', r'^use strict;', r'^class\s', r'^\s*def\s',
+                    r'^\s*-\w+', r'^\s*\$\w+', r'\b(Get|Set|New|Unregister|Register)-[a-zA-Z]+'
+                ]
             ) or (text.strip().startswith('{') and text.strip().endswith('}')))
-
 
             if is_pre_block or is_inline_code:
                 if text.strip().startswith('{') and text.strip().endswith('}'):
