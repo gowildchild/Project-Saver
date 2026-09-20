@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.66-alpha"
+VERSION = "v0.0.66-beta"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -64,7 +64,14 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
                 "saveToRestFormApiFileFieldName": "file",
                 "saveToRestFormApiUrlFieldName": "url"
             }
-        }
+        },
+        "rules": [
+            {
+                "url": "^https?://.*",
+                "profile": "Project Saver",
+                "autoSaveProfile": "__Disabled_Settings__"
+            }
+        ]
     }
     
     try:
