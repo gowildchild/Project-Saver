@@ -17,7 +17,7 @@ Run this command string inside a standard **PowerShell** window to install:
 irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 ```
 
-🔗 [Click here to view the raw installation script source code](https://gowildchild.github.io/Project-Saver/install.ps1)
+🔗 [Click here to view the raw installation script source code](https://github.com/gowildchild/Project-Saver/blob/main/install.ps1)
 
 1. Queries the public GitHub REST API endpoint for the newest stable production.
 2. Stream-downloads the  standalone application binary appliance executable safely.
