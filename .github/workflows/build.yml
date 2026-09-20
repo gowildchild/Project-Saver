@@ -6,100 +6,151 @@ on:
   pull_request:
     branches: [ main, master ]
 
+permissions:
+  contents: write
+
 jobs:
-  build-windows:
+  build-and-release:
+    runs-on: ubuntu-latest
+    outputs:
+      app_version: \${{ steps.get_version.outputs.VERSION }}
+    steps:
+    - name: Checkout Source Repository Code
+      uses: actions/checkout@v4
+
+    # ─── EXTRACTION ENGINE: READ VERSION FROM PYTHON SOURCE CODE ───
+    - name: Extract Version from Source
+      id: get_version
+      run: |
+        # Pulls the exact text wrapped inside the VERSION string variable cleanly
+        VERSION_STR=\$(python3 -c "import re; f=open('master/project_saver.py'); m=re.search(r'VERSION\s*=\s*[\"\']([^\"\']+)[\"\']', f.read()); print(m.group(1)) if m else print('')")
+        if [ -z "\$VERSION_STR" ]; then
+          echo "[-] Error: Failed to extract VERSION string token from source code."
+          exit 1
+        fi
+        echo "VERSION=\(VERSION_STR" >> \)GITHUB_OUTPUT
+        echo "[+] Successfully captured active application target token version: \$VERSION_STR"
+
+  compile-windows:
+    needs: build-and-release
     runs-on: windows-latest
     steps:
     - name: Checkout Source Repository Code
       uses: actions/checkout@v4
 
-    - name: Set Up Python Environment Runtime
+    - name: Setup Python Environment Runtime
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    - name: Install Project Packaging Dependencies
+    - name: Install Packaging Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller beautifulsoup4 reportlab
 
-    - name: Compile Unified Standalone Executable
+    - name: Compile Standalone Executable
       working-directory: ./master
       run: |
         pyinstaller --onefile --distpath ../dist --workpath ../build project_saver.py
 
-    # Generates a professional manifest file layout at the root level dist folder
-    - name: Generate Security Release Manifest
+    - name: Generate Release Manifest
       shell: bash
       run: |
         cd dist
-        RAW_HASH=$(certutil -hashfile project_saver.exe SHA1 | sed -n '2p' | tr -d '[:space:]')
-        
+        RAW_HASH=\$(certutil -hashfile project_saver.exe SHA1 | sed -n '2p' | tr -d '[:space:]')
         echo "==================================================" > manifest.txt
         echo "📦 PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
         echo "==================================================" >> manifest.txt
-        echo "Build Timestamp : $(date -u)" >> manifest.txt
+        echo "Build Timestamp : \$(date -u)" >> manifest.txt
+        echo "Version Tag     : \${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
         echo "Platform        : Windows x64 Standalone Asset" >> manifest.txt
         echo "Application File: project_saver.exe" >> manifest.txt
         echo "--------------------------------------------------" >> manifest.txt
-        echo "SHA-1 Checksum  : $RAW_HASH" >> manifest.txt
+        echo "SHA-1 Checksum  : \$RAW_HASH" >> manifest.txt
         echo "==================================================" >> manifest.txt
         
-        echo "=== GENERATED MANIFEST PREVIEW ==="
-        cat manifest.txt
+        # Rename binary to include version tag so it maps perfectly inside your browser update trackers
+        mv project_saver.exe project_saver_\${{ needs.build-and-release.outputs.app_version }}.exe
 
-    - name: Upload Windows Distribution Binary Bundle
+    - name: Upload Windows Asset to Job Memory
       uses: actions/upload-artifact@v4
       with:
-        name: project_saver-windows-x64
-        path: |
-          dist/project_saver.exe
-          dist/manifest.txt
+        name: windows-assets
+        path: dist/
 
-  build-linux:
+  compile-linux:
+    needs: build-and-release
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Source Repository Code
       uses: actions/checkout@v4
 
-    - name: Set Up Python Environment Runtime
+    - name: Setup Python Environment
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    - name: Install Project Packaging Dependencies
+    - name: Install Packaging Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller beautifulsoup4 reportlab
 
-    - name: Compile Unified Standalone Linux Binary
+    - name: Compile Linux Binary
       working-directory: ./master
       run: |
         pyinstaller --onefile --distpath ../dist --workpath ../build project_saver.py
 
-    # Generates a professional manifest file layout at the root level dist folder
-    - name: Generate Security Release Manifest
+    - name: Generate Release Manifest
       run: |
         cd dist
-        RAW_HASH=$(sha1sum project_saver | awk '{print $1}')
-        
+        RAW_HASH=\$(sha1sum project_saver | awk '{print \$1}')
         echo "==================================================" > manifest.txt
         echo "📦 PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
         echo "==================================================" >> manifest.txt
-        echo "Build Timestamp : $(date -u)" >> manifest.txt
+        echo "Build Timestamp : \$(date -u)" >> manifest.txt
+        echo "Version Tag     : \${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
         echo "Platform        : Linux x64 Standalone Asset" >> manifest.txt
         echo "Application File: project_saver" >> manifest.txt
         echo "--------------------------------------------------" >> manifest.txt
-        echo "SHA-1 Checksum  : $RAW_HASH" >> manifest.txt
+        echo "SHA-1 Checksum  : \$RAW_HASH" >> manifest.txt
         echo "==================================================" >> manifest.txt
         
-        echo "=== GENERATED MANIFEST PREVIEW ==="
-        cat manifest.txt
+        # Keep native manifest name intact, wrap binary explicitly to prevent naming friction collisions
+        mv project_saver project_saver_\${{ needs.build-and-release.outputs.app_version }}_linux
 
-    - name: Upload Linux Distribution Binary Bundle
+    - name: Upload Linux Asset to Job Memory
       uses: actions/upload-artifact@v4
       with:
-        name: project_saver-linux-x64
-        path: |
-          dist/project_saver
-          dist/manifest.txt
+        name: linux-assets
+        path: dist/
+
+  publish-github-release:
+    needs: [build-and-release, compile-windows, compile-linux]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Compiled Windows Assets
+      uses: actions/artifacts/download-artifact@v4
+      with:
+        name: windows-assets
+        path: release_files
+
+    - name: Download Compiled Linux Assets
+      uses: actions/artifacts/download-artifact@v4
+      with:
+        name: linux-assets
+        path: release_files
+
+    - name: Create Official GitHub Release
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        tag: \${{ needs.build-and-release.outputs.app_version }}
+        name: Release \${{ needs.build-and-release.outputs.app_version }}
+        body: |
+          ## 🚀 Automated Build Success!
+          Standalone application binary file deployment packages compiled successfully.
+          
+          ### 🔒 Verification Footprint Note
+          Please inspect the `manifest.txt` configuration files contained in your platform download to verify your matching SHA-1 integrity hash keys.
+        artifacts: "release_files/*"
+        token: \${{ secrets.GITHUB_TOKEN }}
