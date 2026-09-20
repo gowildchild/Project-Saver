@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.62"
+VERSION = "v0.0.64"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -55,12 +55,15 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
     # Dynamically inject this exact token string into the configuration json file profile asset
     singlefile_json_path = "singlefile-project-saver-config.json"
     singlefile_config_payload = {
-        "endpoint": f"http://localhost:{PORT}",
-        "serverToken": EXPECTED_TOKEN,
-        "bodyFilenameField": "file",
-        "bodyUrlField": "url",
-        "destination": "server",
-        "autoSave": "none"
+        "profiles": {
+            "Project Saver": {
+                "saveToRestFormApi": True,
+                "saveToRestFormApiUrl": f"http://localhost:{PORT}",
+                "saveToRestFormApiToken": EXPECTED_TOKEN,
+                "saveToRestFormApiFileFieldName": "server",
+                "saveToRestFormApiUrlFieldName": "file"
+            }
+        }
     }
     
     try:
