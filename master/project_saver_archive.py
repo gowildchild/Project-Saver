@@ -3,21 +3,26 @@ import re
 import sys
 import hashlib
 import time
+import subprocess
 from bs4 import BeautifulSoup
 from project_saver_exporter import EXPORTER_REGISTRY, render_pdf_fallback
 
 # ==================== CONFIGURATIONS ====================
 # Set your desired save path here (e.g., "C:/Users/YourName/Documents/ObsidianVault")
 # Leaving it as "" saves files right next to the script
-SAVE_DIRECTORY = os.path.join(os.path.expanduser("~"), "Documents", "WEB Vault")
+SAVE_DIRECTORY = os.path.join(os.path.expanduser("~"), "Documents", "Project-Saver")
 
 # Choose your preferred markdown viewer/editor launcher:
 # Options: "system_default", "obsidian", "vscode", "marktext"
 CHOSEN_EDITOR = "system_default" 
 # ========================================================
-HISTORY_FILE = "project_saver.db"
-if SAVE_DIRECTORY:
-    HISTORY_FILE = os.path.join(SAVE_DIRECTORY, HISTORY_FILE)
+if getattr(sys, 'frozen', False):
+    EXE_DIRECTORY = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    EXE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+
+# Hardcodes the history index tracker file to live strictly inside your application directory path
+HISTORY_FILE = os.path.join(EXE_DIRECTORY, "project_saver.db")
 
 def load_processed_hashes():
     if not os.path.exists(HISTORY_FILE): 
