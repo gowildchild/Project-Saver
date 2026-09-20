@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.78"
+$InstallVersion = "v0.0.79"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -103,13 +103,16 @@ if ($UserPath -split ";" -notcontains $InstallDir) {
 Write-Host "[*] Provisioning unique browser extension connection tokens..."
 $NewToken = [Guid]::NewGuid().ToString("N")
 $SingleFileConfig = @{
-    "endpoint"          = "http://localhost:19763"
-    "serverToken"       = $NewToken
-    "bodyFilenameField" = "file"
-    "bodyUrlField"      = "url"
-    "destination"       = "server"
-    "autoSave"          = "none"
-} | ConvertTo-Json
+    "profiles" = @{
+        "Project Saver" = @{
+            "saveToRestFormApi"              = $true
+            "saveToRestFormApiUrl"           = "http://localhost:19763"
+            "saveToRestFormApiToken"         = $NewToken
+            "saveToRestFormApiFileFieldName" = "server"
+            "saveToRestFormApiUrlFieldName"  = "file"
+        }
+    }
+} | ConvertTo-Json -Depth 4
 
 $JsonPath = Join-Path $InstallDir "singlefile-project-saver-config.json"
 $CfgPath = Join-Path $InstallDir "project_saver.cfg"
