@@ -219,15 +219,11 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
         else:
             export_mode = "web_article"
 
-    # Give a quick terminal countdown option to manually change modes
     export_mode = ask_mode_override(export_mode, default_timeout=4)
-
-    # ─── 2. TARGETED EXTRACTION ENGINE (GITHUB & READER VIEWS) ───
     parsing_root = soup
     is_github = "github.com" in source_origin.lower()
 
     if is_github:
-        # GitHub isolation strategy: Target the actual code container table or article area
         github_code_container = soup.find(id="read-only-cursor-wrapper") or soup.find(class_="blob-wrapper") or soup.find('react-file-lines')
         if github_code_container:
             parsing_root = github_code_container
@@ -238,7 +234,6 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
             parsing_root = reader_container
             print("[*] Target Match: Isolated Reader-View structure for processing.")
 
-    # RESTORED: Stable index tracking array split loops
     url_clean = source_origin.split('?')[0].split('#')[0]
     url_match = re.search(r'\.([a-zA-Z0-9]+)$', url_clean)
     url_extension = url_match.group(1).lower() if url_match else None
@@ -248,14 +243,11 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
 
     safe_title = re.sub(r'[\\/*?:"<>| ]', '_', page_title)[:50]
     
-    # Priority: Command Line Argument Folder -> Script Configuration Setting -> Current Directory
     base_dir = export_folder if export_folder else (SAVE_DIRECTORY if SAVE_DIRECTORY else os.getcwd())
     
     ExporterClass = EXPORTER_REGISTRY.get(export_mode, EXPORTER_REGISTRY["code_dev"])
-    # RESTORED: Passes your core system global VERSION parameter cleanly
     exporter = ExporterClass(base_dir, safe_title, app_version if app_version else "v0.0.60")
 
-    # If --auto was passed, override the standard prompt timers with your custom seconds duration
     timeout_duration = auto_timeout if auto_timeout is not None else 5
 
     export_detailed = ask_with_countdown("Create a detailed folder?", timeout_duration, False)
@@ -271,7 +263,6 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
     recent_context_text = "script_asset"
     seen_code_hashes = set()
 
-    # If it's GitHub and we isolated the raw container, pull the pure text lines out cleanly
     if is_github and parsing_root != soup:
         for num in parsing_root.find_all(class_=re.compile(r'line-number|blob-num', re.I)):
             num.decompose()
@@ -289,36 +280,40 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
             with open(asset_filepath, "w", encoding="utf-8") as script_file:
                 script_file.write(clean_code)
     else:
-        # Fallback to standard context loop for non-GitHub or generic pages (Keeps all original text context intact)
         for element in parsing_root.find_all(['p', 'pre', 'code', 'h1', 'h2', 'h3', 'li', 'img']):
             if element.name == 'img':
                 img_src = element.get('src', '').strip()
-                if not img_src: continue
+                if not img_src: 
+                    continue
                 img_alt = element.get('alt', '').strip() or element.get('title', '').strip() or "Captured Image"
                 final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
                 continue
-
-            text = element.get_text().strip()
-            if not text or len(text) < 2: continue
+            text = element.get_text() if element.name in ['pre', 'code'] else element.get_text().strip()
+            if not text or len(text.strip()) < 2: 
+                continue
 
             is_pre_block = element.name == 'pre'
-            
-            # STRICTOR RE-MATCH REGEX PARSING LOGIC: Checks anchors to separate true statements from conversation
-            is_inline_code = element.name == 'code' and any(
-                re.search(pattern, text) for pattern in [r'^import\s', r'^def\s', r'^\$', r'^use strict;']
-            )
+            is_inline_code = element.name == 'code' and (any(
+                re.search(pattern, text.strip()) for pattern in [r'^import\s', r'^def\s', r'^\$', r'^use strict;']
+            ) or (text.strip().startswith('{') and text.strip().endswith('}')))
 
             if is_pre_block or is_inline_code:
-                clean_code = clean_code_block(text)
+                if text.strip().startswith('{') and text.strip().endswith('}'):
+                    clean_code = text.strip()  
+                else:
+                    clean_code = clean_code_block(text)
+                    
                 code_hash = hashlib.md5(clean_code.encode('utf-8')).hexdigest()
-                if code_hash in seen_code_hashes: continue
+                if code_hash in seen_code_hashes: 
+                    continue
                 seen_code_hashes.add(code_hash)
 
                 ext = url_extension if (url_extension and is_github) else detect_language(clean_code)
                 
                 descriptive_slug = re.sub(r'[^a-zA-Z0-9\s]', '', recent_context_text).strip().lower()
                 descriptive_slug = "_".join(descriptive_slug.split()[:5])
-                if not descriptive_slug: descriptive_slug = "asset"
+                if not descriptive_slug: 
+                    descriptive_slug = "asset"
 
                 asset_filename = f"{code_block_index}_{descriptive_slug}.{ext}"
                 final_markdown_blocks.append(exporter.format_code(asset_filename, ext, clean_code))
@@ -329,18 +324,23 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                         script_file.write(clean_code)
                 code_block_index += 1
             else:
-                if element.name in ['p', 'h2', 'h3'] and len(text) > 5: recent_context_text = text
-                if element.name == 'h1': final_markdown_blocks.append(f"\n## {text}\n")
-                elif element.name == 'h2': final_markdown_blocks.append(f"\n### {text}\n")
-                elif element.name == 'h3': final_markdown_blocks.append(f"\n#### {text}\n")
-                elif element.name == 'li': final_markdown_blocks.append(f"* {text}")
+                text_clean = text.strip()
+                if element.name in ['p', 'h2', 'h3'] and len(text_clean) > 5: 
+                    recent_context_text = text_clean
+                if element.name == 'h1': 
+                    final_markdown_blocks.append(f"\n## {text_clean}\n")
+                elif element.name == 'h2': 
+                    final_markdown_blocks.append(f"\n### {text_clean}\n")
+                elif element.name == 'h3': 
+                    final_markdown_blocks.append(f"\n#### {text_clean}\n")
+                elif element.name == 'li': 
+                    final_markdown_blocks.append(f"* {text_clean}")
                 else:
-                    if final_markdown_blocks and final_markdown_blocks[-1] == text: continue
-                    final_markdown_blocks.append(text)
+                    if final_markdown_blocks and final_markdown_blocks[-1] == text_clean: 
+                        continue
+                    final_markdown_blocks.append(text_clean)
 
     target_formats = [f.strip().lower() for f in export_format.split(',')]
-    
-    # RESTORED: Explicit console report layout descriptions
     if 'html' in target_formats:
         with open(exporter.output_html, "w", encoding="utf-8") as f: 
             f.write(html_string)
