@@ -19,8 +19,6 @@ HISTORY_FILE = "project_saver.db"
 if SAVE_DIRECTORY:
     HISTORY_FILE = os.path.join(SAVE_DIRECTORY, HISTORY_FILE)
 
-VERSION = "v0.0.42"
-
 def load_processed_hashes():
     if not os.path.exists(HISTORY_FILE): 
         return set()
@@ -195,7 +193,7 @@ def force_window_to_foreground():
         pass
 
 def process_html_content(html_string, page_title, source_origin="Natively Captured", 
-                         export_folder="", export_format="markdown", export_type="auto", auto_timeout=None):
+                         export_folder="", export_format="markdown", export_type="auto", auto_timeout=None, editor_override=None, app_version="v0.0.40"):
     current_session_hash = hashlib.md5(html_string.encode('utf-8')).hexdigest()
     processed_hashes = load_processed_hashes()
     
@@ -245,12 +243,10 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
         url_extension = None
 
     safe_title = re.sub(r'[\\/*?:"<>| ]', '_', page_title)[:50]
-    
-    # Priority: Command Line Argument Folder -> Script Configuration Setting -> Current Directory
     base_dir = export_folder if export_folder else (SAVE_DIRECTORY if SAVE_DIRECTORY else os.getcwd())
     
     ExporterClass = EXPORTER_REGISTRY.get(export_mode, EXPORTER_REGISTRY["code_dev"])
-    exporter = ExporterClass(base_dir, safe_title, VERSION)
+    exporter = ExporterClass(base_dir, safe_title, app_version)
 
     # If --auto was passed, override the standard prompt timers with your custom seconds duration
     timeout_duration = auto_timeout if auto_timeout is not None else 5
@@ -377,4 +373,5 @@ if __name__ == "__main__":
 
     if target_file and os.path.exists(target_file):
         with open(target_file, "r", encoding="utf-8", errors="ignore") as f:
-            process_html_content(f.read(), target_file.replace(".html", ""), target_file, export_type=export_flag)
+            process_html_content(f.read(), target_file.replace(".html", ""), target_file, export_type=export_flag, app_version="v0.0.40")
+
