@@ -110,6 +110,7 @@ jobs:
         Compression=lzma
         SolidCompression=yes
         PrivilegesRequired=lowest
+        CloseApplications=yes
 
         [Files]
         Source: "..\\dist\\project_saver_{1}.exe"; DestDir: "{{app}}"; DestName: "project_saver.exe"; Flags: ignoreversion
@@ -117,9 +118,16 @@ jobs:
 
         [Icons]
         Name: "{{userdesktop}}\\Project Saver"; Filename: "{{app}}\\project_saver.exe"; WorkingDir: "{{app}}"
+        Name: "{{userstartup}}\\Project Saver Daemon"; Filename: "{{app}}\\project_saver.exe"; WorkingDir: "{{app}}"; Comment: "Launches Project Saver background daemon on boot"
 
         [Run]
-        Filename: "{{app}}\\project_saver.exe"; Description: "Launch Project Saver Service Daemon"; Flags: nowait postinstall skipifsilent
+        Filename: "{{app}}\\project_saver.exe"; Description: "Launch Project Saver Service Daemon Now"; Flags: nowait postinstall skipifsilent
+
+        [UninstallDelete]
+        Type: filesandordirs; Name: "{{app}}\\singlefile-project-saver-config.json"
+        Type: filesandordirs; Name: "{{app}}\\project_saver.cfg"
+        Type: filesandordirs; Name: "{{app}}\\export"
+        Type: filesandordirs; Name: "{{app}}"
         """
         
         content_inno = template_inno.format(clean_ver, ver)
