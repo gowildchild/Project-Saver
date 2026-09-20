@@ -158,14 +158,14 @@ $PadSpaces = " " * $PaddingNeeded
 # Force the local console output manager to translate strings using clean UTF-8 tables
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-Write-Host "`n$TopBar" -ForegroundColor Green
+Write-Host "`n  $TopBar" -ForegroundColor Green
 Write-Host "  $VT   SUCCESS: Project Saver Installation Complete!            $VT" -ForegroundColor Green
-Write-Host "$Divider" -ForegroundColor Green
-Write-Host "$VersionText$PadSpaces  $VT" -ForegroundColor Green
+Write-Host "  $Divider" -ForegroundColor Green
+Write-Host "  $VersionText$PadSpaces  $VT" -ForegroundColor Green
 Write-Host "  $VT Security Check   : SHA-256 Verified (Match Confirmed)      $VT" -ForegroundColor Green
 Write-Host "  $VT Location Locked  : AppData\Local\ProjectSaver              $VT" -ForegroundColor Green
 Write-Host "  $VT Created By       : Gunther Voet                            $VT" -ForegroundColor Green
-Write-Host "$BottomBar`n" -ForegroundColor Green
+Write-Host "  $BottomBar`n" -ForegroundColor Green
 
 # 9. AUTOMATED WINDOWS TASK SCHEDULER INTERACTIVE STARTUP REGISTRATION
 Write-Host "[*] Registering automated interactive logon startup triggers..." -ForegroundColor Cyan
