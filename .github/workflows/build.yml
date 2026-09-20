@@ -46,12 +46,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller beautifulsoup4 reportlab
 
-    - name: Generate Version Info Resourcefile
+    - name: Generate Dynamic Version Info Resource File
       shell: bash
       run: |
         python3 -c "
         import re
-        ver = '${{ needs.build-and-release.outputs.app_version }}'
+        ver = '\${{ needs.build-and-release.outputs.app_version }}'
         clean_ver = re.sub(r'[vV]', '', ver)
         parts = clean_ver.split('.')
         while len(parts) < 3: parts.append('0')
@@ -73,25 +73,24 @@ jobs:
               StringTable(
                 '040904b0',
                 [
-                  StringChar('CompanyName', 'Gunther Voet'),
-                  StringChar('FileDescription', 'Project Saver Background Service Daemon'),
-                  StringChar('FileVersion', \"{clean_ver}\"),
-                  StringChar('InternalName', 'project_saver'),
-                  StringChar('LegalCopyright', 'Copyright © 2026 Gunther Voet. All Rights Reserved.'),
-                  StringChar('OriginalFilename', 'project_saver.exe'),
-                  StringChar('ProductName', 'Project Saver Application'),
-                  StringChar('ProductVersion', \"{clean_ver}\")
+                  StringStruct('CompanyName', 'Gunther Voet'),
+                  StringStruct('FileDescription', 'Project Saver Background Service Daemon'),
+                  StringStruct('FileVersion', \"{clean_ver}\"),
+                  StringStruct('InternalName', 'project_saver'),
+                  StringStruct('LegalCopyright', 'Copyright © 2026 Gunther Voet. All Rights Reserved.'),
+                  StringStruct('OriginalFilename', 'project_saver.exe'),
+                  StringStruct('ProductName', 'Project Saver Application'),
+                  StringStruct('ProductVersion', \"{clean_ver}\")
                 ]
               )
             ]),
-            VarFileInfo([VarChar('Translation', [1033, 1200])])
+            VarFileInfo([VarStruct('Translation', [1033, 1200])])
           ]
         )'''
         with open('master/version_info.txt', 'w', encoding='utf-8') as f:
             f.write(content)
         print('[+] Dynamic version_info.txt file generated successfully.')
         "
-
 
     - name: Compile Standalone Executable
       working-directory: ./master
