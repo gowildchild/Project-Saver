@@ -21,13 +21,13 @@ jobs:
     - name: Extract Version from Source
       id: get_version
       run: |
-        VERSION_STR=\$(python3 -c "import re; f=open('master/project_saver.py'); m=re.search(r'VERSION\s*=\s*[\"\']([^\"\']+)[\"\']', f.read()); print(m.group(1)) if m else print('')")
-        if [ -z "\$VERSION_STR" ]; then
+        VERSION_STR=$(python3 -c "import re; f=open('master/project_saver.py'); m=re.search(r'VERSION\s*=\s*[\"\']([^\"\']+)[\"\']', f.read()); print(m.group(1)) if m else print('')")
+        if [ -z "$VERSION_STR" ]; then
           echo "[-] Error: Failed to extract VERSION string from source code."
           exit 1
         fi
-        echo "VERSION=\(VERSION_STR" >> \)GITHUB_OUTPUT
-        echo "[+] Successfully captured version string: \$VERSION_STR"
+        echo "VERSION=$VERSION_STR" >> $GITHUB_OUTPUT
+        echo "[+] Successfully captured version string: $VERSION_STR"
 
   compile-windows:
     needs: build-and-release
