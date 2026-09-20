@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.66-beta"
+VERSION = "v0.0.66-charlie"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -418,12 +418,21 @@ def save_config_file(filepath, args_namespace):
     try:
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(f"# Project Saver {VERSION} Configuration Profile\n")
-            f.write(f"export-folder={args_namespace.export_folder}\n")
-            f.write(f"export-format={args_namespace.export_format}\n")
-            f.write(f"export-type={args_namespace.export_type}\n")
-            f.write(f"remote-address={args_namespace.remote_address}\n")
-            f.write(f"chosen-editor={args_namespace.chosen_editor}\n")
-            if args_namespace.auto is not None: f.write(f"auto={args_namespace.auto}\n")
+            
+            # Only save properties if they hold custom explicit text values
+            if getattr(args_namespace, 'export_folder', None):
+                f.write(f"export-folder={args_namespace.export_folder}\n")
+            if getattr(args_namespace, 'export_format', None):
+                f.write(f"export-format={args_namespace.export_format}\n")
+            if getattr(args_namespace, 'export_type', None):
+                f.write(f"export-type={args_namespace.export_type}\n")
+            if getattr(args_namespace, 'remote_address', None):
+                f.write(f"remote-address={args_namespace.remote_address}\n")
+            if getattr(args_namespace, 'chosen_editor', None):
+                f.write(f"chosen-editor={args_namespace.chosen_editor}\n")
+            if getattr(args_namespace, 'auto', None) is not None:
+                f.write(f"auto={args_namespace.auto}\n")
+                
         print(f"[+] Active configuration written to profile: {filepath}")
     except Exception as e:
         print(f"[-] Could not export configuration profile: {e}")
@@ -457,34 +466,60 @@ def run_server():
         print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Project Saver Server.")
+    parser = argparse.ArgumentParser(
+        description="Project Saver Server.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
     if platform.system().lower() == "windows":
         default_export_dir = os.path.join(os.environ["USERPROFILE"], "Documents", "Project-Saver", "export")
     else:
         default_export_dir = os.path.join(os.path.expanduser("~"), "Documents", "Project-Saver", "export")
-    parser.add_argument("--export-folder", default=default_export_dir, help="Target base folder path where files will be written.")
-    parser.add_argument("--export-format", default="markdown", help="Comma-separated dumping targets: markdown, html, pdf.")
-    parser.add_argument("--export-type", default="auto", choices=["auto", "code", "web"], help="Parsing layout configuration profile strategy.")
-    parser.add_argument("--remote-address", default="", help="Turns runtime engine into proxy router.")
+		
+    parser.add_argument("--export-folder", default=argparse.SUPPRESS, help=f"Target base folder path where files will be written. (Default: {default_export_dir})")
+    parser.add_argument("--export-format", default=argparse.SUPPRESS, help="Comma-separated dumping targets: markdown, html, pdf. (Default: markdown)")
+    parser.add_argument("--export-type", default=argparse.SUPPRESS, choices=["auto", "code", "web"], help="Parsing layout configuration profile strategy. (Default: auto)")
+    parser.add_argument("--remote-address", default=argparse.SUPPRESS, help="Turns runtime engine into proxy router. (Default: None)")
     parser.add_argument("--auto", type=int, nargs='?', const=5, default=None, help="Enables automated execution timeout duration.")
     parser.add_argument("--config", default="", help="Load options from a custom configuration text file.")
     parser.add_argument("--config-save", default="", help="Save setup flags into configuration profile text file.")
     parser.add_argument("--about", action="store_true", help="Displays developer credits and exit.")
     parser.add_argument("--update", action="store_true", help="Queries GitHub downloads update binary and exit.")
-    parser.add_argument("--chosen-editor", default="system_default", choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool.")
+    parser.add_argument("--chosen-editor", default=argparse.SUPPRESS, choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool. (Default: system_default)")
 
     temp_args = sys.argv[1:]
-    loaded_file_args = []
+    
+    # ─── 2. DYNAMICALLY ISOLATE THE ACTIVE CONFIGURATION FILENAME ───
+    active_cfg_profile = "project_saver.cfg"
     if "--config" in temp_args:
         try:
             c_idx = temp_args.index("--config")
             if c_idx + 1 < len(temp_args):
-                loaded_file_args = load_config_file(temp_args[c_idx + 1])
+                active_cfg_profile = temp_args[c_idx + 1]
         except Exception:
             pass
 
+    # ─── 3. COMBINE ARRAYS IN CORRECT OVERRIDE PRIORITY LAYER ORDER ───
+    # Configuration options are evaluated first, terminal entries come LAST to explicitly override them
+    loaded_file_args = load_config_file(active_cfg_profile) if os.path.exists(active_cfg_profile) else []
     combined_args = loaded_file_args + temp_args
     CLI_ARGS = parser.parse_args(combined_args)
+
+    # ─── 4. APPLY DEFAULT FALLBACKS ONLY IF THEY WERE NOT SET BY FILE OR CLI ───
+    if not hasattr(CLI_ARGS, 'export_folder') or not CLI_ARGS.export_folder:
+        CLI_ARGS.export_folder = default_export_dir
+        
+    if not hasattr(CLI_ARGS, 'export_format') or not CLI_ARGS.export_format: 
+        CLI_ARGS.export_format = "markdown"
+        
+    if not hasattr(CLI_ARGS, 'export_type') or not CLI_ARGS.export_type: 
+        CLI_ARGS.export_type = "auto"
+        
+    if not hasattr(CLI_ARGS, 'chosen_editor') or not CLI_ARGS.chosen_editor: 
+        CLI_ARGS.chosen_editor = "system_default"
+        
+    if not hasattr(CLI_ARGS, 'remote_address') or CLI_ARGS.remote_address is None: 
+        CLI_ARGS.remote_address = ""
 
     if CLI_ARGS.about:
         about_data = [
@@ -509,7 +544,7 @@ if __name__ == "__main__":
         save_config_file(CLI_ARGS.config_save, CLI_ARGS)
         sys.exit(0)
 
-    active_cfg_profile = CLI_ARGS.config if CLI_ARGS.config else "project_saver.cfg"
+    # Initialize the authentication token validation sequence using the verified config filename
     resolve_or_create_security_token(active_cfg_profile)
 
     run_server()
