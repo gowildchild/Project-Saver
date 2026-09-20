@@ -1,6 +1,6 @@
 # ====================================================================================
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
-# irm https://githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
+# irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
 # ====================================================================================
 $ErrorActionPreference = "Stop"
 
