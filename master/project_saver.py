@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.47"
+VERSION = "v0.0.47a"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -339,7 +339,7 @@ if __name__ == "__main__":
             f"Project Saver {VERSION} - Local & Remote Web Scraping Daemon",
             "---",
             "🛠️ Developer: Gunther Voet",
-            "📜 License: Open Source (MIT License)",
+            "📜 License: Open Source (AGPL-3.0 license)",
             "🌐 Repository: https://github.com/gowildchild/Project-Saver/",
             "---",
             "Designed to cleanly archive browser sessions, code repositories",
