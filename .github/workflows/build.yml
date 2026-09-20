@@ -50,7 +50,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller beautifulsoup4 reportlab
 
-    - name: Generate Dynamic Version Resource File
+    - name: Generate blueprints
       shell: bash
       run: |
         python3 -c '
@@ -102,7 +102,7 @@ jobs:
         AppVersion={0}
         AppPublisher=Gunther Voet
         AppPublisherURL=https://github.com/gowildchild/Project-Saver
-        DefaultDirName={{userlocalappdata}}\\ProjectSaver
+        DefaultDirName={{localappdata}}\\ProjectSaver
         DefaultGroupName=Project Saver
         DisableProgramGroupPage=yes
         OutputDir=..\\dist
@@ -113,7 +113,7 @@ jobs:
         CloseApplications=yes
 
         [Files]
-        Source: "..\\dist\\project_saver_{1}.exe"; DestDir: "{{app}}"; DestName: "project_saver.exe"; Flags: ignoreversion
+        Source: "..\\dist\\project_saver_{1}-portable.exe"; DestDir: "{{app}}"; DestName: "project_saver.exe"; Flags: ignoreversion
         Source: "..\\dist\\manifest_windows.txt"; DestDir: "{{app}}"; Flags: ignoreversion
 
         [Icons]
@@ -141,35 +141,46 @@ jobs:
       run: |
         pyinstaller --onefile --distpath ../dist --workpath ../build --version-file=version_info.txt project_saver.py
 
+    - name: Rename Portable Windows Binary
+      shell: bash
+      run: |
+        cd dist
+        mv project_saver.exe project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe
+
+    - name: Compile Windows Setup Installer
+      run: |
+        iscc master/installer_blueprint.iss
+
     - name: Generate Release Manifest
       shell: bash
       run: |
         cd dist
-        mv project_saver.exe project_saver_${{ needs.build-and-release.outputs.app_version }}.exe
-        RAW_HASH=$(certutil -hashfile project_saver_${{ needs.build-and-release.outputs.app_version }}.exe SHA1 | sed -n '2p' | tr -d '[:space:]')
+        EXE_NAME="project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe"
+        SETUP_NAME="project_saver_setup.exe"
+        PORTABLE_HASH=$(certutil -hashfile "$EXE_NAME" SHA1 | sed -n '2p' | tr -d '[:space:]')
+        SETUP_HASH=$(certutil -hashfile "$SETUP_NAME" SHA1 | sed -n '2p' | tr -d '[:space:]')
         echo "==================================================" > manifest_windows.txt
-        echo "   PROJECT SAVER RELEASE MANIFEST                 " >> manifest_windows.txt
+        echo "   PROJECT SAVER WINDOWS RELEASE MANIFEST         " >> manifest_windows.txt
         echo "==================================================" >> manifest_windows.txt
         echo "Build Timestamp : $(date -u)" >> manifest_windows.txt
         echo "Version Tag     : ${{ needs.build-and-release.outputs.app_version }}" >> manifest_windows.txt
         echo "Platform        : Windows x64 Standalone Asset" >> manifest_windows.txt
-        echo "Application File: project_saver_${{ needs.build-and-release.outputs.app_version }}.exe" >> manifest_windows.txt
         echo "--------------------------------------------------" >> manifest_windows.txt
-        echo "SHA-1 Checksum  : $RAW_HASH" >> manifest_windows.txt
+        echo "1. Portable Asset : $EXE_NAME" >> manifest_windows.txt
+        echo "   SHA-1 Checksum : $PORTABLE_HASH" >> manifest_windows.txt
+        echo "--------------------------------------------------" >> manifest_windows.txt
+        echo "2. Setup Installer: $SETUP_NAME" >> manifest_windows.txt
+        echo "   SHA-1 Checksum : $SETUP_HASH" >> manifest_windows.txt
         echo "==================================================" >> manifest_windows.txt
-
-    - name: Compile Windows Setup Installer Executable
-      run: |
-        iscc master/installer_blueprint.iss
 
     - name: Upload Windows Asset to Job Memory
       uses: actions/upload-artifact@v4
       with:
         name: windows-assets
         path: |
-          dist/project_saver_${{ needs.build-and-release.outputs.app_version }}.exe
+          dist/project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe
           dist/manifest_windows.txt
-          dist/project_saver_setup.exe        
+          dist/project_saver_setup.exe
 
   compile-linux:
     needs: build-and-release
