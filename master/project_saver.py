@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.64"
+VERSION = "v0.0.65"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -60,8 +60,8 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
                 "saveToRestFormApi": True,
                 "saveToRestFormApiUrl": f"http://localhost:{PORT}",
                 "saveToRestFormApiToken": EXPECTED_TOKEN,
-                "saveToRestFormApiFileFieldName": "server",
-                "saveToRestFormApiUrlFieldName": "file"
+                "saveToRestFormApiFileFieldName": "file",
+                "saveToRestFormApiUrlFieldName": "url"
             }
         }
     }
