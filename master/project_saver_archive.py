@@ -58,6 +58,21 @@ def detect_language(text):
         return 'xml'
     return 'txt'
 
+def force_window_to_foreground():
+    """Forces the terminal execution environment to jump directly to the front of the screen."""
+    try:
+        if os.name == 'nt':  # Windows Native API Engine
+            import ctypes
+            hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+            if hwnd:
+                ctypes.windll.user32.ShowWindow(hwnd, 9) 
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+                ctypes.windll.user32.BringWindowToTop(hwnd)
+        elif sys.platform == 'darwin':  # macOS AppleScript Bridge
+            os.system("osascript -e 'tell application \"Terminal\" to activate'")
+    except Exception:
+        pass
+
 def ask_with_countdown(prompt, default_timeout=5, default_value=False):
     """Asks a question with a live timer. If it expires, it uses default_value and erases itself."""
     force_window_to_foreground()
@@ -93,7 +108,6 @@ def ask_with_countdown(prompt, default_timeout=5, default_value=False):
                     input_str += char
                     
             time.sleep(0.1)
-        print()
 
     else:  # macOS / Linux Engine
         import select
@@ -143,7 +157,6 @@ def ask_mode_override(detected_mode, default_timeout=5):
                     user_responded = True
                     break
             time.sleep(0.1)
-        print()
     else:
         import select
         for remaining in range(default_timeout, 0, -1):
@@ -182,21 +195,6 @@ def launch_markdown_editor(file_path):
     except Exception as e:
         print(f"[-] Could not automatically launch editor: {e}")
 
-def force_window_to_foreground():
-    """Forces the terminal execution environment to jump directly to the front of the screen."""
-    try:
-        if os.name == 'nt':  # Windows Native API Engine
-            import ctypes
-            hwnd = ctypes.windll.kernel32.GetConsoleWindow()
-            if hwnd:
-                ctypes.windll.user32.ShowWindow(hwnd, 9) 
-                ctypes.windll.user32.SetForegroundWindow(hwnd)
-                ctypes.windll.user32.BringWindowToTop(hwnd)
-        elif sys.platform == 'darwin':  # macOS AppleScript Bridge
-            os.system("osascript -e 'tell application \"Terminal\" to activate'")
-    except Exception as e:
-        pass
-
 def process_html_content(html_string, page_title, source_origin="Natively Captured", 
                          export_folder="", export_format="markdown", export_type="auto", auto_timeout=None, editor_override=None, app_version="v0.0.40"):
     current_session_hash = hashlib.md5(html_string.encode('utf-8')).hexdigest()
@@ -208,7 +206,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
 
     soup = BeautifulSoup(html_string, "html.parser")
     
-    # ─── 1. EXPORT-TYPE ROUTING RULES (WITH OVERRIDE FLAGS) ───
+    # ─── EXPORT-TYPE ROUTING RULES (WITH OVERRIDE FLAGS) ───
     if export_type == "code":
         export_mode = "code_dev"
     elif export_type == "web":
@@ -223,12 +221,11 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
     # Give a quick terminal countdown option to manually change modes
     export_mode = ask_mode_override(export_mode, default_timeout=4)
 
-    # ─── 2. TARGETED EXTRACTION ENGINE (GITHUB & READER VIEWS) ───
+    # ─── TARGETED EXTRACTION ENGINE (GITHUB & READER VIEWS) ───
     parsing_root = soup
     is_github = "github.com" in source_origin.lower()
 
     if is_github:
-        # GitHub isolation strategy: Target the actual code container table or article area
         github_code_container = soup.find(id="read-only-cursor-wrapper") or soup.find(class_="blob-wrapper") or soup.find('react-file-lines')
         if github_code_container:
             parsing_root = github_code_container
@@ -239,7 +236,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
             parsing_root = reader_container
             print("[*] Target Match: Isolated Reader-View structure.")
 
-    # ─── 3. URL EXTENSION EXTRACTION ENGINE ───
+    # ─── URL EXTENSION EXTRACTION ENGINE ───
     url_clean = source_origin.split('?')[0].split('#')[0]
     url_match = re.search(r'\.([a-zA-Z0-9]+)$', url_clean)
     url_extension = url_match.group(1).lower() if url_match else None
@@ -302,7 +299,6 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
 
             is_pre_block = element.name == 'pre'
             
-            # STRICTOR RE-MATCH REGEX PARSING LOGIC: Checks anchors to separate true statements from conversation
             is_inline_code = element.name == 'code' and any(
                 re.search(pattern, text) for pattern in [r'^import\s', r'^def\s', r'^\$', r'^use strict;']
             )
@@ -337,7 +333,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                     if final_markdown_blocks and final_markdown_blocks[-1] == text: continue
                     final_markdown_blocks.append(text)
 
-    # ─── 4. MULTI-FORMAT TARGET EXECUTION GENERATION ───
+    # ─── MULTI-FORMAT TARGET EXECUTION GENERATION ───
     target_formats = [f.strip().lower() for f in export_format.split(',')]
     
     if 'html' in target_formats:
@@ -356,7 +352,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
         print(f"[+] PDF Document saved: {exporter.output_pdf}")
 
     save_processed_hash(current_session_hash)
-    
+
     if trigger_auto_launch and ('markdown' in target_formats or 'md' in target_formats): 
         launch_markdown_editor(exporter.output_md)
 
@@ -379,4 +375,3 @@ if __name__ == "__main__":
     if target_file and os.path.exists(target_file):
         with open(target_file, "r", encoding="utf-8", errors="ignore") as f:
             process_html_content(f.read(), target_file.replace(".html", ""), target_file, export_type=export_flag, app_version="v0.0.40")
-
