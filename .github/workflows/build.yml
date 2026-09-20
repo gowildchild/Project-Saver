@@ -46,21 +46,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller beautifulsoup4 reportlab
 
-    - name: Generate Dynamic Version Info Resource File
+    - name: Generate Dynamic Version Resource File
       shell: bash
       run: |
-        python3 -c "
+        python3 -c '
         import re
-        ver = '\${{ needs.build-and-release.outputs.app_version }}'
-        clean_ver = re.sub(r'[vV]', '', ver)
-        parts = clean_ver.split('.')
-        while len(parts) < 3: parts.append('0')
+        ver = "${{ needs.build-and-release.outputs.app_version }}"
+        clean_ver = re.sub(r"[vV]", "", ver)
+        parts = clean_ver.split(".")
+        while len(parts) < 3: parts.append("0")
         major, minor, patch = parts[0], parts[1], parts[2]
         
-        content = f'''VSVersionInfo(
+        template = """VSVersionInfo(
           ffi=FixedFileInfo(
-            filevers=({major}, {minor}, {patch}, 0),
-            prodvers=({major}, {minor}, {patch}, 0),
+            filevers=({0}, {1}, {2}, 0),
+            prodvers=({0}, {1}, {2}, 0),
             mask=0x3f,
             flags=0x0,
             OS=0x40004,
@@ -71,26 +71,28 @@ jobs:
           kids=[
             StringFileInfo([
               StringTable(
-                '040904b0',
+                "040904b0",
                 [
-                  StringStruct('CompanyName', 'Gunther Voet'),
-                  StringStruct('FileDescription', 'Project Saver Background Service Daemon'),
-                  StringStruct('FileVersion', \"{clean_ver}\"),
-                  StringStruct('InternalName', 'project_saver'),
-                  StringStruct('LegalCopyright', 'Copyright © 2026 Gunther Voet. All Rights Reserved.'),
-                  StringStruct('OriginalFilename', 'project_saver.exe'),
-                  StringStruct('ProductName', 'Project Saver Application'),
-                  StringStruct('ProductVersion', \"{clean_ver}\")
+                  StringStruct("CompanyName", "Gunther Voet"),
+                  StringStruct("FileDescription", "Project Saver Background Service Daemon"),
+                  StringStruct("FileVersion", "{3}"),
+                  StringStruct("InternalName", "project_saver"),
+                  StringStruct("LegalCopyright", "Copyright (c) 2026 Gunther Voet. All Rights Reserved."),
+                  StringStruct("OriginalFilename", "project_saver.exe"),
+                  StringStruct("ProductName", "Project Saver Application"),
+                  StringStruct("ProductVersion", "{3}")
                 ]
               )
             ]),
-            VarFileInfo([VarStruct('Translation', [1033, 1200])])
+            VarFileInfo([VarStruct("Translation", [1033, 1200])])
           ]
-        )'''
-        with open('master/version_info.txt', 'w', encoding='utf-8') as f:
+        )"""
+        
+        content = template.format(major, minor, patch, clean_ver)
+        with open("master/version_info.txt", "w", encoding="utf-8") as f:
             f.write(content)
-        print('[+] Dynamic version_info.txt file generated successfully.')
-        "
+        print("[+] Dynamic version_info.txt file generated successfully.")
+        '
 
     - name: Compile Standalone Executable
       working-directory: ./master
