@@ -22,13 +22,13 @@ jobs:
     - name: Extract Version from Source
       id: get_version
       run: |
-        VERSION_STR=$(python3 -c "import re; f=open('master/project_saver.py'); m=re.search(r'VERSION\s*=\s*[\"\']([^\"\']+)[\"\']', f.read()); print(m.group(1)) if m else print('')")
-        if [ -z "$VERSION_STR" ]; then
-          echo "[-] Error: Failed to extract VERSION string token from source code."
+        VERSION_STR=\$(python3 -c "import re; f=open('master/project_saver.py'); m=re.search(r'VERSION\s*=\s*[\"\']([^\"\']+)[\"\']', f.read()); print(m.group(1)) if m else print('')")
+        if [ -z "\$VERSION_STR" ]; then
+          echo "[-] Error: Failed to extract VERSION string from source code."
           exit 1
         fi
-        echo "VERSION=$VERSION_STR" >> $GITHUB_OUTPUT
-        echo "[+] Successfully captured active application target token version: $VERSION_STR"
+        echo "VERSION=\(VERSION_STR" >> \)GITHUB_OUTPUT
+        echo "[+] Successfully captured version string: \$VERSION_STR"
 
   compile-windows:
     needs: build-and-release
@@ -56,20 +56,18 @@ jobs:
       shell: bash
       run: |
         cd dist
-        RAW_HASH=$(certutil -hashfile project_saver.exe SHA1 | sed -n '2p' | tr -d '[:space:]')
+        RAW_HASH=\$(certutil -hashfile project_saver.exe SHA1 | sed -n '2p' | tr -d '[:space:]')
         echo "==================================================" > manifest.txt
-        echo "PROJECT SAVER RELEASE MANIFEST                    " >> manifest.txt
+        echo "   PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
         echo "==================================================" >> manifest.txt
-        echo "Build Timestamp : $(date -u)" >> manifest.txt
-        echo "Version Tag     : ${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
+        echo "Build Timestamp : \$(date -u)" >> manifest.txt
+        echo "Version Tag     : \${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
         echo "Platform        : Windows x64 Standalone Asset" >> manifest.txt
         echo "Application File: project_saver.exe" >> manifest.txt
         echo "--------------------------------------------------" >> manifest.txt
-        echo "SHA-1 Checksum  : $RAW_HASH" >> manifest.txt
+        echo "SHA-1 Checksum  : \$RAW_HASH" >> manifest.txt
         echo "==================================================" >> manifest.txt
-        
-        # Rename binary safely using the dynamic version variable
-        mv project_saver.exe project_saver_${{ needs.build-and-release.outputs.app_version }}.exe
+        mv project_saver.exe project_saver_\${{ needs.build-and-release.outputs.app_version }}.exe
 
     - name: Upload Windows Asset to Job Memory
       uses: actions/upload-artifact@v4
@@ -102,18 +100,18 @@ jobs:
     - name: Generate Release Manifest
       run: |
         cd dist
-        RAW_HASH=$(sha1sum project_saver | awk '{print $1}')
+        RAW_HASH=\$(sha1sum project_saver | awk '{print \$1}')
         echo "==================================================" > manifest.txt
-        echo "PROJECT SAVER RELEASE MANIFEST                    " >> manifest.txt
+        echo "   PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
         echo "==================================================" >> manifest.txt
-        echo "Build Timestamp : $(date -u)" >> manifest.txt
-        echo "Version Tag     : ${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
+        echo "Build Timestamp : \$(date -u)" >> manifest.txt
+        echo "Version Tag     : \${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
         echo "Platform        : Linux x64 Standalone Asset" >> manifest.txt
         echo "Application File: project_saver" >> manifest.txt
         echo "--------------------------------------------------" >> manifest.txt
-        echo "SHA-1 Checksum  : $RAW_HASH" >> manifest.txt
+        echo "SHA-1 Checksum  : \$RAW_HASH" >> manifest.txt
         echo "==================================================" >> manifest.txt
-        mv project_saver project_saver_${{ needs.build-and-release.outputs.app_version }}_linux
+        mv project_saver project_saver_\${{ needs.build-and-release.outputs.app_version }}_linux
 
     - name: Upload Linux Asset to Job Memory
       uses: actions/upload-artifact@v4
@@ -144,10 +142,10 @@ jobs:
         tag: \${{ needs.build-and-release.outputs.app_version }}
         name: Release \${{ needs.build-and-release.outputs.app_version }}
         body: |
-          ## 🚀 Automated Build Success!
+          ## Automated Build Success!
           Standalone application binary file deployment packages compiled successfully.
           
-          ### 🔒 Verification Footprint Note
-          Please inspect the `manifest.txt` configuration files contained in your platform download to verify your matching SHA-1 integrity hash keys.
+          ### Verification Footprint Note
+          Please inspect the `manifest.txt` to verify your matching SHA-1 integrity hash keys.
         artifacts: "release_files/*"
         token: \${{ secrets.GITHUB_TOKEN }}
