@@ -7,7 +7,7 @@ An automated background documentation service logging daemon engine designed to 
 
 ---
 
-## ⚡ One-Click Automated Network Installation (Windows Node)
+## ⚡ OPTION A: One-Click Automated Network Installation (Windows Node)
 
 You do not need to download zip archives, manage system environment folders, or configure manual paths. Open a standard **PowerShell** console window and execute this single network pipeline string to fully deploy the newest operational software release build instantly:
 
@@ -15,7 +15,6 @@ You do not need to download zip archives, manage system environment folders, or 
 irm https://raw.githubusercontent.com/gowildchild/Project-Saver/install.ps1 | iex
 ```
 
-### 📦 OPTION A: Automated installer:
 1. Queries the public GitHub REST API endpoint for the newest stable production.
 2. Stream-downloads the  standalone application binary appliance executable safely.
 3. Automatically provisions a unique, cryptographically secure SingleFile token connection configuration file profile.
