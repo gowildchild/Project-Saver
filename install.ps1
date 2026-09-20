@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.79"
+$InstallVersion = "v0.0.80"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -108,8 +108,8 @@ $SingleFileConfig = @{
             "saveToRestFormApi"              = $true
             "saveToRestFormApiUrl"           = "http://localhost:19763"
             "saveToRestFormApiToken"         = $NewToken
-            "saveToRestFormApiFileFieldName" = "server"
-            "saveToRestFormApiUrlFieldName"  = "file"
+            "saveToRestFormApiFileFieldName" = "file"
+            "saveToRestFormApiUrlFieldName"  = "url"
         }
     }
 } | ConvertTo-Json -Depth 4
