@@ -18,7 +18,6 @@ jobs:
     - name: Checkout Source Repository Code
       uses: actions/checkout@v4
 
-    # ─── EXTRACTION ENGINE: READ VERSION FROM PYTHON SOURCE CODE ───
     - name: Extract Version from Source
       id: get_version
       run: |
