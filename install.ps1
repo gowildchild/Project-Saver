@@ -1,8 +1,8 @@
 # ====================================================================================
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
-# irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
+# irm https://raw.githubusercontent.com/gowildchild/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.62"
+$InstallVersion = "v0.0.64"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -151,23 +151,25 @@ Write-Host "------------------------------------------------------------"
 # Establish localized path references for opening folders natively
 ExportFolder = Join-Path InstallDir "export"
 
-while (\$true) {
+while ($true) {
     Write-Host -NoNewline "`r[?] Select navigation destination index action: "
-    \(KeyInfo = [Console]::ReadKey(\)true)
-    KeyChar = KeyInfo.KeyChar.ToString().ToLower()
+    $KeyInfo = [Console]::ReadKey($true)
+    $KeyChar = $KeyInfo.KeyChar.ToString().ToLower()
 
-    if (\$KeyChar -eq 'a') {
+    if ($KeyChar -eq 'a') {
         Write-Host "Opening Application folder...                      " -ForegroundColor Green
         Start-Process explorer.exe -ArgumentList "`"$InstallDir`""
     }
-    elif (\$KeyChar -eq 'e') {
-        # Safely create the export directory profile loop if it doesn't exist yet so explorer doesn't throw a crash error
-        if (-not (Test-Path ExportFolder)) New-Item -ItemType Directory -Path ExportFolder | Out-Null }
+    elseif ($KeyChar -eq 'e') {
+        # Safely create the export directory profile if it doesn't exist yet so explorer doesn't throw a crash error
+        if (-not (Test-Path $ExportFolder)) { 
+            New-Item -ItemType Directory -Path $ExportFolder | Out-Null 
+        }
         Write-Host "Opening Export folder...                      " -ForegroundColor Green
         Start-Process explorer.exe -ArgumentList "`"$ExportFolder`""
     }
-    elif (\$KeyInfo.Key -eq 'Enter') {
-        Write-Host "Exiting installer safely. Goodbye!                  " -ForegroundColor Gray
+    elseif ($KeyInfo.Key -eq 'Enter') {
+        Write-Host "Exiting installer safely. Goodbye!           " -ForegroundColor Gray
         break
     }
 }
