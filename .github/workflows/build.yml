@@ -151,27 +151,12 @@ jobs:
       run: |
         iscc master/installer_blueprint.iss
 
-    - name: Generate Release Manifest
+    - name: Pre-Calculate Windows SHA-256 Hashes
       shell: bash
       run: |
         cd dist
-        EXE_NAME="project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe"
-        SETUP_NAME="project_saver_setup.exe"
-        PORTABLE_HASH=$(certutil -hashfile "$EXE_NAME" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
-        SETUP_HASH=$(certutil -hashfile "$SETUP_NAME" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
-        echo "==================================================" > manifest_windows.txt
-        echo "   PROJECT SAVER WINDOWS RELEASE MANIFEST         " >> manifest_windows.txt
-        echo "==================================================" >> manifest_windows.txt
-        echo "Build Timestamp : $(date -u)" >> manifest_windows.txt
-        echo "Version Tag     : ${{ needs.build-and-release.outputs.app_version }}" >> manifest_windows.txt
-        echo "Platform        : Windows x64 Standalone Asset" >> manifest_windows.txt
-        echo "--------------------------------------------------" >> manifest_windows.txt
-        echo "1. Portable Asset   : $EXE_NAME" >> manifest_windows.txt
-        echo "   SHA-256 Checksum : $PORTABLE_HASH" >> manifest_windows.txt
-        echo "--------------------------------------------------" >> manifest_windows.txt
-        echo "2. Setup Installer  : $SETUP_NAME" >> manifest_windows.txt
-        echo "   SHA-256 Checksum : $SETUP_HASH" >> manifest_windows.txt
-        echo "==================================================" >> manifest_windows.txt
+        certutil -hashfile "project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]' > win_portable.hash
+        certutil -hashfile "project_saver_setup.exe" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]' > win_setup.hash
 
     - name: Upload Windows Asset to Job Memory
       uses: actions/upload-artifact@v4
@@ -179,9 +164,10 @@ jobs:
         name: windows-assets
         path: |
           dist/project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe
-          dist/manifest_windows.txt
           dist/project_saver_setup.exe
-
+          dist/win_portable.hash
+          dist/win_setup.hash
+          
   compile-linux:
     needs: build-and-release
     runs-on: ubuntu-latest
@@ -204,21 +190,11 @@ jobs:
       run: |
         pyinstaller --onefile --distpath ../dist --workpath ../build project_saver.py
 
-    - name: Generate Release Manifest
+    - name: Rename and Pre-Calculate Linux SHA-256 Hash
       run: |
         cd dist
         mv project_saver project_saver_${{ needs.build-and-release.outputs.app_version }}_linux
-        RAW_HASH=$(sha256sum project_saver_${{ needs.build-and-release.outputs.app_version }}_linux | awk '{print $1}')
-        echo "==================================================" > manifest_linux.txt
-        echo "   PROJECT SAVER RELEASE MANIFEST                 " >> manifest_linux.txt
-        echo "==================================================" >> manifest_linux.txt
-        echo "Build Timestamp : $(date -u)" >> manifest_linux.txt
-        echo "Version Tag     : ${{ needs.build-and-release.outputs.app_version }}" >> manifest_linux.txt
-        echo "Platform        : Linux x64 Standalone Asset" >> manifest_linux.txt
-        echo "Application File: project_saver_${{ needs.build-and-release.outputs.app_version }}_linux" >> manifest_linux.txt
-        echo "--------------------------------------------------" >> manifest_linux.txt
-        echo "SHA-256 Checksum  : $RAW_HASH" >> manifest_linux.txt
-        echo "==================================================" >> manifest_linux.txt
+        sha256sum project_saver_${{ needs.build-and-release.outputs.app_version }}_linux | awk '{print $1}' > linux_binary.hash
 
     - name: Upload Linux Asset to Job Memory
       uses: actions/upload-artifact@v4
@@ -226,7 +202,7 @@ jobs:
         name: linux-assets
         path: |
           dist/project_saver_${{ needs.build-and-release.outputs.app_version }}_linux
-          dist/manifest_linux.txt
+          dist/linux_binary.hash
 
   publish-github-release:
     needs: [build-and-release, compile-windows, compile-linux]
@@ -244,6 +220,35 @@ jobs:
         name: linux-assets
         path: release_files
 
+    - name: Generate Release manifest.txt
+      run: |
+        cd release_files
+        
+        # Read the saved hashes out from job memory files
+        WIN_PORTABLE_HASH=$(cat win_portable.hash)
+        WIN_SETUP_HASH=$(cat win_setup.hash)
+        LINUX_HASH=$(cat linux_binary.hash)
+        rm win_portable.hash win_setup.hash linux_binary.hash
+        echo "==================================================" > manifest.txt
+        echo "   PROJECT SAVER GLOBAL DEPLOYMENT MANIFEST       " >> manifest.txt
+        echo "==================================================" >> manifest.txt
+        echo "Build Timestamp : $(date -u)" >> manifest.txt
+        echo "Version Tag     : ${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
+        echo "--------------------------------------------------" >> manifest.txt
+        echo "💻 WINDOWS x64 PLATFORM TARGETS" >> manifest.txt
+        echo "1. Portable Asset : project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe" >> manifest.txt
+        echo "   SHA-256 Checksum: $WIN_PORTABLE_HASH" >> manifest.txt
+        echo "2. Setup Installer: project_saver_setup.exe" >> manifest.txt
+        echo "   SHA-256 Checksum: $WIN_SETUP_HASH" >> manifest.txt
+        echo "--------------------------------------------------" >> manifest.txt
+        echo "🐧 LINUX x64 PLATFORM TARGETS" >> manifest.txt
+        echo "3. Standalone App : project_saver_${{ needs.build-and-release.outputs.app_version }}_linux" >> manifest.txt
+        echo "   SHA-256 Checksum: $LINUX_HASH" >> manifest.txt
+        echo "==================================================" >> manifest.txt
+        
+        echo "[+] Created manifest.txt successfully."
+
+
     - name: Create Official GitHub Release
       uses: ncipollo/release-action@v1
       with:
@@ -255,6 +260,6 @@ jobs:
           Standalone application binary file deployment packages compiled successfully.
           
           ### Verification Footprint Note
-          Please inspect the `manifest_linux.txt` or `manifest_windows.txt` to verify your matching SHA-256 integrity hash keys.
+          Please inspect the `manifest.txt` to verify your matching SHA-256 integrity hash keys.
         artifacts: "release_files/*"
         token: ${{ secrets.GITHUB_TOKEN }}
