@@ -2,11 +2,12 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.73"
+$InstallVersion = "v0.0.74"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
 
+$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
 $InstallDir = Join-Path $env:USERPROFILE "AppData\Local\ProjectSaver"
 $MyDocuments = [Environment]::GetFolderPath('MyDocuments')
 $ExportFolder = Join-Path $MyDocuments "Project-Saver\export"
