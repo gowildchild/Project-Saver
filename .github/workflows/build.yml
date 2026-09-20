@@ -49,16 +49,16 @@ jobs:
     - name: Generate Dynamic Version Info Resource File
       shell: bash
       run: |
-        VER="\${{ needs.build-and-release.outputs.app_version }}"
+        VER="${{ needs.build-and-release.outputs.app_version }}"
         CLEAN_VER=(echo VER | sed 's/[vV]//g')
-        IFS='.' read -r major minor patch <<< "\$CLEAN_VER"
-        major=\${major:-0}; minor=minor:-0; patch={patch:-0}
+        IFS='.' read -r major minor patch <<< "$CLEAN_VER"
+        major=${major:-0}; minor=minor:-0; patch={patch:-0}
         
         cat <<EOF > master/version_info.txt
         VSVersionInfo(
           ffi=FixedFileInfo(
-            filevers=(\$major, minor, patch, 0),
-            prodvers=(\$major, minor, patch, 0),
+            filevers=($major, minor, patch, 0),
+            prodvers=($major, minor, patch, 0),
             mask=0x3f,
             flags=0x0,
             OS=0x40004,
