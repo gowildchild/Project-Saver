@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://raw.githubusercontent.com/gowildchild/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.64"
+$InstallVersion = "v0.0.65"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -172,4 +172,39 @@ while ($true) {
         Write-Host "Exiting installer safely. Goodbye!           " -ForegroundColor Gray
         break
     }
+}
+
+# ====================================================================================
+# 10. AUTOMATED WINDOWS TASK SCHEDULER INTERACTIVE STARTUP REGISTRATION
+# ====================================================================================
+Write-Host "[*] Registering automated interactive logon startup triggers..." -ForegroundColor Cyan
+
+$TaskName = "ProjectSaverDaemon"
+$TaskDescription = "Launches Project Saver interactive updater countdown and background port service daemon on user logon."
+
+# Verify if an old instance configuration task is already tracked inside system tables, and clear it out gracefully
+$ExistingTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+if ($ExistingTask) {
+    Write-Host "[*] Removing legacy task scheduling definitions..."
+    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false | Out-Null
+}
+
+try {
+    # 1. Define the execution boundary parameters to run natively when your specific user logs in
+    $Trigger = New-ScheduledTaskTrigger -AtLogOn
+
+    # 2. Configure the action loop to boot your application executable directly inside a visible console wrapper frame
+    # Crucial trick: We point arguments directly to powershell executing your path to prevent invisible background process hang blocks
+    $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Normal -Command & '$BinPath'"
+
+    # 3. Establish structural policy controls to allow processing on laptops/battery power scopes cleanly
+    $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Compatibility Win8
+
+    # 4. Inject the interactive configuration variables natively straight into the local Task Scheduler database engine
+    Register-ScheduledTask -TaskName $TaskName -Trigger $Trigger -Action $Action -Settings $Settings -Description $TaskDescription | Out-Null
+    
+    Write-Host "[+] Interactive startup automation tasks registered successfully!" -ForegroundColor Green
+    Write-Host "    -> Project Saver will now boot visibly inside a prompt window on your next Windows Logon." -ForegroundColor Gray
+} catch {
+    Write-Host "[-] Automation Error: Could not provision scheduled task triggers. Run installer as Admin if required." -ForegroundColor Red
 }
