@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.54"
+$InstallVersion = "v0.55"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -55,7 +55,8 @@ Invoke-WebRequest -Uri $ManifestAsset.browser_download_url -OutFile $TempManifes
 Write-Host "[*] Evaluating security footprint hash keys..."
 
 $ManifestContent = Get-Content -Path $TempManifestPath
-$OfficialHashLine = $ManifestContent | Where-Object { $_.Contains("SHA-1 Checksum") }
+$OfficialHashLine = $ManifestContent | Where-Object { $_.Contains("SHA-1 Checksum") } | Select-Object -First 1
+
 if (-not $OfficialHashLine) {
     Write-Host "[-] Verification Error: Manifest format is malformed or invalid." -ForegroundColor Red
     return
