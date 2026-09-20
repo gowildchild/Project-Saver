@@ -14,8 +14,8 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.44"
-PORT = 8000
+VERSION = "v0.0.45"
+PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
 REPO_NAME = "Project-Saver"
