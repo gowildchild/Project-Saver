@@ -157,8 +157,8 @@ jobs:
         cd dist
         EXE_NAME="project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe"
         SETUP_NAME="project_saver_setup.exe"
-        PORTABLE_HASH=$(certutil -hashfile "$EXE_NAME" SHA1 | sed -n '2p' | tr -d '[:space:]')
-        SETUP_HASH=$(certutil -hashfile "$SETUP_NAME" SHA1 | sed -n '2p' | tr -d '[:space:]')
+        PORTABLE_HASH=$(certutil -hashfile "$EXE_NAME" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        SETUP_HASH=$(certutil -hashfile "$SETUP_NAME" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
         echo "==================================================" > manifest_windows.txt
         echo "   PROJECT SAVER WINDOWS RELEASE MANIFEST         " >> manifest_windows.txt
         echo "==================================================" >> manifest_windows.txt
@@ -166,11 +166,11 @@ jobs:
         echo "Version Tag     : ${{ needs.build-and-release.outputs.app_version }}" >> manifest_windows.txt
         echo "Platform        : Windows x64 Standalone Asset" >> manifest_windows.txt
         echo "--------------------------------------------------" >> manifest_windows.txt
-        echo "1. Portable Asset : $EXE_NAME" >> manifest_windows.txt
-        echo "   SHA-1 Checksum : $PORTABLE_HASH" >> manifest_windows.txt
+        echo "1. Portable Asset   : $EXE_NAME" >> manifest_windows.txt
+        echo "   SHA-256 Checksum : $PORTABLE_HASH" >> manifest_windows.txt
         echo "--------------------------------------------------" >> manifest_windows.txt
-        echo "2. Setup Installer: $SETUP_NAME" >> manifest_windows.txt
-        echo "   SHA-1 Checksum : $SETUP_HASH" >> manifest_windows.txt
+        echo "2. Setup Installer  : $SETUP_NAME" >> manifest_windows.txt
+        echo "   SHA-256 Checksum : $SETUP_HASH" >> manifest_windows.txt
         echo "==================================================" >> manifest_windows.txt
 
     - name: Upload Windows Asset to Job Memory
@@ -208,7 +208,7 @@ jobs:
       run: |
         cd dist
         mv project_saver project_saver_${{ needs.build-and-release.outputs.app_version }}_linux
-        RAW_HASH=$(sha1sum project_saver_${{ needs.build-and-release.outputs.app_version }}_linux | awk '{print $1}')
+        RAW_HASH=$(sha256sum project_saver_${{ needs.build-and-release.outputs.app_version }}_linux | awk '{print $1}')
         echo "==================================================" > manifest_linux.txt
         echo "   PROJECT SAVER RELEASE MANIFEST                 " >> manifest_linux.txt
         echo "==================================================" >> manifest_linux.txt
@@ -217,7 +217,7 @@ jobs:
         echo "Platform        : Linux x64 Standalone Asset" >> manifest_linux.txt
         echo "Application File: project_saver_${{ needs.build-and-release.outputs.app_version }}_linux" >> manifest_linux.txt
         echo "--------------------------------------------------" >> manifest_linux.txt
-        echo "SHA-1 Checksum  : $RAW_HASH" >> manifest_linux.txt
+        echo "SHA-256 Checksum  : $RAW_HASH" >> manifest_linux.txt
         echo "==================================================" >> manifest_linux.txt
 
     - name: Upload Linux Asset to Job Memory
@@ -255,6 +255,6 @@ jobs:
           Standalone application binary file deployment packages compiled successfully.
           
           ### Verification Footprint Note
-          Please inspect the `manifest_linux.txt` or `manifest_windows.txt` to verify your matching SHA-1 integrity hash keys.
+          Please inspect the `manifest_linux.txt` or `manifest_windows.txt` to verify your matching SHA-256 integrity hash keys.
         artifacts: "release_files/*"
         token: ${{ secrets.GITHUB_TOKEN }}
