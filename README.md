@@ -70,10 +70,10 @@ If you boot the system manually from a command terminal, you can control your dy
   ```bash
   project_saver.exe --export-type code --export-format markdown
   ```
-* **Route outputs to a custom network shared storage vault library directory:**
+* **Route outputs to a custom network shared storage directory:**
   ```bash
-  project_saver.exe --export-folder "\\yourserver\Vault" --export-format "markdown,pdf"
-  ```
+  project_saver.exe --export-folder "\\yourserver\Export" --export-format "markdown,pdf"
+  ```  
 * **View your dynamic developer credit metrics layout screen:**
   ```bash
   project_saver.exe --about
