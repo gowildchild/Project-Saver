@@ -289,13 +289,16 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                 final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
                 continue
             text = element.get_text() if element.name in ['pre', 'code'] else element.get_text().strip()
-            if not text or len(text.strip()) < 2: 
+
+            if not text or len(text.strip()) < 2 or text.strip().startswith("data:image/"): 
                 continue
 
             is_pre_block = element.name == 'pre'
+            
             is_inline_code = element.name == 'code' and (any(
-                re.search(pattern, text.strip()) for pattern in [r'^import\s', r'^def\s', r'^\$', r'^use strict;']
+                re.search(pattern, text.strip()) for pattern in [r'^import\s', r'^def\s', r'^\$', r'^use strict;', r'^class\s', r'^\s*def\s']
             ) or (text.strip().startswith('{') and text.strip().endswith('}')))
+
 
             if is_pre_block or is_inline_code:
                 if text.strip().startswith('{') and text.strip().endswith('}'):
@@ -338,7 +341,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                 else:
                     if final_markdown_blocks and final_markdown_blocks[-1] == text_clean: 
                         continue
-                    final_markdown_blocks.append(text_clean)
+                    final_markdown_blocks.append(f"\n{text_clean}\n")
 
     target_formats = [f.strip().lower() for f in export_format.split(',')]
     if 'html' in target_formats:
