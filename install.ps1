@@ -9,7 +9,7 @@ $RepoName  = "Project-Saver"
 
 $InstallDir = Join-Path $env:USERPROFILE "AppData\Local\ProjectSaver"
 $MyDocuments = [Environment]::GetFolderPath('MyDocuments')
-$ExportFolder = Join-Path $MyDocuments "Project-Saver\export"
+$ExportFilesDir = Join-Path $MyDocuments "Project-Saver\export"
 $BinPath = Join-Path $InstallDir "project_saver.exe"
 $ManifestPath = Join-Path $InstallDir "manifest.txt"
 $ShortcutPath = "$([Environment]::GetFolderPath('Desktop'))\Project Saver.lnk"
@@ -117,7 +117,7 @@ Set-Content -Path $JsonPath -Value $SingleFileConfig -Encoding UTF8
 $CfgPath = Join-Path $InstallDir "project_saver.cfg"
 $CfgContent = @(
     "token=$NewToken"
-    "export_folder=$ExportVaultDir"
+    "export_folder=$ExportFilesDir"
 )
 $CfgContent | Set-Content -Path $CfgPath
 
@@ -183,7 +183,7 @@ try {
 Write-Host "📂 QUICK NAVIGATION LINKS" -ForegroundColor Cyan
 Write-Host "------------------------------------------------------------"
 Write-Host " -> Press [A] to instantly open the Application Core Folder" -ForegroundColor Yellow
-Write-Host " -> Press [E] to instantly open the Export Vault Folder" -ForegroundColor Yellow
+Write-Host " -> Press [E] to instantly open the Export Files Folder" -ForegroundColor Yellow
 Write-Host " -> Press [Enter] to exit this installer setup wizard safely" -ForegroundColor Gray
 Write-Host "------------------------------------------------------------"
 
