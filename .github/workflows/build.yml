@@ -79,7 +79,7 @@ jobs:
                 "040904b0",
                 [
                   StringStruct("CompanyName", "Gunther Voet"),
-                  StringStruct("FileDescription", "Project Saver Background Service Daemon"),
+                  StringStruct("FileDescription", "Project Saver Service Daemon"),
                   StringStruct("FileVersion", "{3}"),
                   StringStruct("InternalName", "project_saver"),
                   StringStruct("LegalCopyright", "Copyright (c) 2026 Gunther Voet. All Rights Reserved."),
