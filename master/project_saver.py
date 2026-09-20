@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.75"
+VERSION = "v0.0.76-alpha"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -71,7 +71,9 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
                 "profile": "Project Saver",
                 "autoSaveProfile": "Project Saver"
             }
-        ]
+        ],
+        "maxParallelWorkers": 24,
+        "processInForeground": False
     }
     
     try:
