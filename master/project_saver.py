@@ -473,14 +473,14 @@ def run_server():
         f"Server Listening:    http://localhost:{PORT}",
         f"Security Token:      {EXPECTED_TOKEN}",
         "---",
-        f"📂 Target Folder:    {os.path.abspath(cli_dict.get('export-folder'))}",
+        f"📂 Target Folder:   {os.path.abspath(cli_dict.get('export-folder'))}",
         f"⚙️ Profile Mode:    {str(cli_dict.get('export-type')).upper()}",
         f"🗒️ Formats Enabled: {str(cli_dict.get('export-format')).upper()}",
         "---",
         "💡 Quick Action:    Import singlefile-project-saver-config.json straight into SingleFile Options."
     ]
     # Enforces a solid structural margin to display the long hash strings beautifully
-    render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=65)
+    render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=60)
         
     try:
         httpd.serve_forever()
