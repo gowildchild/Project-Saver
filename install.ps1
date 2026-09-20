@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.55"
+$InstallVersion = "v0.56"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -13,7 +13,7 @@ $ManifestPath = Join-Path $InstallDir "manifest_windows.txt"
 $ShortcutPath = "$([Environment]::GetFolderPath('Desktop'))\Project Saver.lnk"
 
 Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "Project Saver Verified Network Setup version $InstallVersion" -ForegroundColor Cyan
+Write-Host "Project Saver Verified Network Setup ($InstallVersion)" -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Cyan
 
 # 1. Fetch live production release definitions from GitHub API
@@ -55,7 +55,7 @@ Invoke-WebRequest -Uri $ManifestAsset.browser_download_url -OutFile $TempManifes
 Write-Host "[*] Evaluating security footprint hash keys..."
 
 $ManifestContent = Get-Content -Path $TempManifestPath
-$OfficialHashLine = $ManifestContent | Where-Object { $_.Contains("SHA-1 Checksum") } | Select-Object -First 1
+$OfficialHashLine = $ManifestContent | Where-Object { $_.Contains("SHA-256 Checksum") } | Select-Object -First 1
 
 if (-not $OfficialHashLine) {
     Write-Host "[-] Verification Error: Manifest format is malformed or invalid." -ForegroundColor Red
@@ -63,7 +63,7 @@ if (-not $OfficialHashLine) {
 }
 
 $OfficialHash = ($OfficialHashLine.Split(":")[1]).Trim().ToLower()
-$LocalHash = (Get-FileHash -Path $TempExePath -Algorithm SHA1).Hash.ToLower()
+$LocalHash = (Get-FileHash -Path $TempExePath -Algorithm SHA256).Hash.ToLower()
 
 Write-Host "    -> Expected Hash: $OfficialHash" -ForegroundColor Yellow
 Write-Host "    -> Computed Hash: $LocalHash" -ForegroundColor Yellow
