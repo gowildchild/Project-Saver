@@ -9,7 +9,7 @@ $RepoName  = "Project-Saver"
 
 $InstallDir = Join-Path $env:USERPROFILE "AppData\Local\ProjectSaver"
 $BinPath = Join-Path $InstallDir "project_saver.exe"
-$ManifestPath = Join-Path $InstallDir "manifest.txt"
+$ManifestPath = Join-Path $InstallDir "manifest_windows.txt"
 $ShortcutPath = "$([Environment]::GetFolderPath('Desktop'))\Project Saver.lnk"
 
 Write-Host "==================================================" -ForegroundColor Cyan
@@ -32,7 +32,7 @@ Write-Host "[+] Target release version isolated: [$LatestVersion]" -ForegroundCo
 
 # 2. Extract specific binary asset URLs
 $ExeAsset = $ReleaseData.assets | Where-Object { $_.name -like "*.exe" -and $_.name -notlike "*setup*" } | Select-Object -First 1
-$ManifestAsset = $ReleaseData.assets | Where-Object { $_.name -eq "manifest.txt" } | Select-Object -First 1
+$ManifestAsset = $ReleaseData.assets | Where-Object { $_.name -eq "manifest_windows.txt" } | Select-Object -First 1
 
 if (-not $ExeAsset -or -not $ManifestAsset) {
     Write-Host "[-] Critical Error: Missing executable or manifest file in release." -ForegroundColor Red
@@ -44,7 +44,7 @@ if (Test-Path $TempFolder) { Remove-Item $TempFolder -Recurse -Force | Out-Null 
 New-Item -ItemType Directory -Path $TempFolder | Out-Null
 
 $TempExePath = Join-Path $TempFolder $ExeAsset.name
-$TempManifestPath = Join-Path $TempFolder "manifest.txt"
+$TempManifestPath = Join-Path $TempFolder "manifest_windows.txt"
 
 # 4. Download files down into temporary sandbox
 Write-Host "[*] Fetching delivery assets for integrity verification..."
