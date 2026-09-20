@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.60-beta"
+VERSION = "v0.0.61-beta"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -431,9 +431,9 @@ def run_server():
         f"Server Listening:    http://localhost:{PORT}",
         f"Security Token:      {EXPECTED_TOKEN}",
 		"---",
-        f"📂 Target Folder:    {CLI_ARGS.export_folder or 'Default Environment Root'}",
-        f"⚙️  Profile Mode:    {CLI_ARGS.export_type.upper()}",
-        f"🗒️  Formats Enabled: {CLI_ARGS.export_format.upper()}",
+        f"📂 Target Folder:    {os.path.abspath(CLI_ARGS.export_folder)}",
+        f"⚙️ Profile Mode:    {CLI_ARGS.export_type.upper()}",
+        f"🗒️ Formats Enabled: {CLI_ARGS.export_format.upper()}",
         "---",
         "💡 Quick Action:    Import singlefile-project-saver-config.json straight into SingleFile Options."
     ]
@@ -447,7 +447,11 @@ def run_server():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Project Saver Server.")
-    parser.add_argument("--export-folder", default="", help="Target base folder path where files will be written.")
+    if platform.system().lower() == "windows":
+        default_export_dir = os.path.join(os.environ["USERPROFILE"], "Documents", "Project-Saver", "export")
+    else:
+        default_export_dir = os.path.join(os.path.expanduser("~"), "Documents", "Project-Saver", "export")
+    parser.add_argument("--export-folder", default=default_export_dir, help="Target base folder path where files will be written.")
     parser.add_argument("--export-format", default="markdown", help="Comma-separated dumping targets: markdown, html, pdf.")
     parser.add_argument("--export-type", default="auto", choices=["auto", "code", "web"], help="Parsing layout configuration profile strategy.")
     parser.add_argument("--remote-address", default="", help="Turns runtime engine into proxy router.")
