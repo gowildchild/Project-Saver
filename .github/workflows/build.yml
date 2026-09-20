@@ -1,4 +1,4 @@
-name: Compile Standalone Binaries
+name: Compile Standalone Binary
 
 on:
   push:
@@ -58,7 +58,7 @@ jobs:
         cd dist
         RAW_HASH=\$(certutil -hashfile project_saver.exe SHA1 | sed -n '2p' | tr -d '[:space:]')
         echo "==================================================" > manifest.txt
-        echo "📦 PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
+        echo "PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
         echo "==================================================" >> manifest.txt
         echo "Build Timestamp : \$(date -u)" >> manifest.txt
         echo "Version Tag     : \${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
@@ -103,7 +103,7 @@ jobs:
         cd dist
         RAW_HASH=\$(sha1sum project_saver | awk '{print \$1}')
         echo "==================================================" > manifest.txt
-        echo "📦 PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
+        echo "PROJECT SAVER RELEASE MANIFEST                 " >> manifest.txt
         echo "==================================================" >> manifest.txt
         echo "Build Timestamp : \$(date -u)" >> manifest.txt
         echo "Version Tag     : \${{ needs.build-and-release.outputs.app_version }}" >> manifest.txt
