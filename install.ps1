@@ -117,7 +117,7 @@ $SingleFileConfig = @{
         @{
             "url"             = "^https?://.*" # Match every HTTP and HTTPS web address layout natively
             "profile"         = "Project Saver"
-            "autoSaveProfile" = "__Disabled_Settings__"
+            "autoSaveProfile" = "Project Saver"
         }
     )
 } | ConvertTo-Json -Depth 4
