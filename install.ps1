@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.72"
+$InstallVersion = "v0.0.73"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -133,9 +133,13 @@ $Shortcut.Save()
 $BoxTotalWidth = 60
 $VersionText   = "  │ Version Deployed : $LatestVersion"
 $PaddingNeeded = $BoxTotalWidth - $VersionText.Length - 1
+
+if ($PaddingNeeded -lt 0) { $PaddingNeeded = 0 }
 $PadSpaces     = " " * $PaddingNeeded
 
+# Force the output encoding to handle the shapes locally
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 Write-Host "`n  ┌────────────────────────────────────────────────────────────┐" -ForegroundColor Green
 Write-Host "  │   SUCCESS: Project Saver Installation Complete!            │" -ForegroundColor Green
 Write-Host "  ├────────────────────────────────────────────────────────────┤" -ForegroundColor Green
