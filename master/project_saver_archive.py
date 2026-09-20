@@ -253,7 +253,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
     
     ExporterClass = EXPORTER_REGISTRY.get(export_mode, EXPORTER_REGISTRY["code_dev"])
     # RESTORED: Passes your core system global VERSION parameter cleanly
-    exporter = ExporterClass(base_dir, safe_title, VERSION)
+    exporter = ExporterClass(base_dir, safe_title, app_version if app_version else "v0.0.60")
 
     # If --auto was passed, override the standard prompt timers with your custom seconds duration
     timeout_duration = auto_timeout if auto_timeout is not None else 5
