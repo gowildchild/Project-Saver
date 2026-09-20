@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.59"
+$InstallVersion = "v0.0.60"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -77,13 +77,25 @@ if ($LocalHash -ne $OfficialHash) {
 }
 Write-Host "[+] Cryptographic Verification Passed: Binary file code matches perfectly." -ForegroundColor Green
 
-# 6. Copy verified files to production AppData workspace environment path
+# 6a Copy verified files to production AppData workspace environment path
 if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Path $InstallDir | Out-Null
 }
 Copy-Item -Path $TempExePath -Destination $BinPath -Force
 Copy-Item -Path $TempManifestPath -Destination $ManifestPath -Force
 Remove-Item $TempFolder -Recurse -Force | Out-Null
+
+# 6b Install in path
+Write-Host "[*] Registering installation folder path inside system environment..."
+$UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($UserPath -split ";" -notcontains $InstallDir) {
+    $NewUserPath = "$UserPath;$InstallDir"
+    [Environment]::SetEnvironmentVariable("Path", $NewUserPath, "User")
+    $env:Path = "$env:Path;$InstallDir" 
+    Write-Host "[+] Environmental paths updated successfully." -ForegroundColor Green
+} else {
+    Write-Host "[+] Installation path is already registered inside environment scopes." -ForegroundColor Gray
+}
 
 # 7. Provision SingleFile configuration files automatically with secure port 19763
 Write-Host "[*] Provisioning unique browser extension connection tokens..."
