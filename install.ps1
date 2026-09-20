@@ -113,15 +113,15 @@ $Shortcut.IconLocation = "shell32.dll,44"
 $Shortcut.Save()
 
 $BoxTotalWidth = 60
-$VersionText   = "│ Version Deployed : $LatestVersion"
+$VersionText   = "  │ Version Deployed : $LatestVersion"
 $PaddingNeeded = $BoxTotalWidth - $VersionText.Length - 1
 $PadSpaces     = " " * $PaddingNeeded
 
-Write-Host "`n┌────────────────────────────────────────────────────────────┐" -ForegroundColor Green
-Write-Host "│   SUCCESS: Project Saver Installation Complete!            │" -ForegroundColor Green
-Write-Host "├────────────────────────────────────────────────────────────┤" -ForegroundColor Green
+Write-Host "`n  ┌────────────────────────────────────────────────────────────┐" -ForegroundColor Green
+Write-Host "  │   SUCCESS: Project Saver Installation Complete!            │" -ForegroundColor Green
+Write-Host "  ├────────────────────────────────────────────────────────────┤" -ForegroundColor Green
 Write-Host "$VersionText$PadSpaces  │" -ForegroundColor Green
-Write-Host "│ Security Check   : SHA-256 Verified (Match Confirmed)      │" -ForegroundColor Green
-Write-Host "│ Location Locked  : AppData\Local\ProjectSaver              │" -ForegroundColor Green
-Write-Host "│ Created By       : Gunther Voet                            │" -ForegroundColor Green
-Write-Host "└────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
+Write-Host "  │ Security Check   : SHA-256 Verified (Match Confirmed)      │" -ForegroundColor Green
+Write-Host "  │ Location Locked  : AppData\Local\ProjectSaver              │" -ForegroundColor Green
+Write-Host "  │ Created By       : Gunther Voet                            │" -ForegroundColor Green
+Write-Host "  └────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
