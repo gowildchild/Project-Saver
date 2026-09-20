@@ -137,3 +137,37 @@ Write-Host "  │ Security Check   : SHA-256 Verified (Match Confirmed)      │
 Write-Host "  │ Location Locked  : AppData\Local\ProjectSaver              │" -ForegroundColor Green
 Write-Host "  │ Created By       : Gunther Voet                            │" -ForegroundColor Green
 Write-Host "  └────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
+
+# ====================================================================================
+# 9. INTERACTIVE POST-INSTALL WORKSPACE NAVIGATION DASHBOARD
+# ====================================================================================
+Write-Host "📂 QUICK NAVIGATION LINKS ACCELERATOR" -ForegroundColor Cyan
+Write-Host "------------------------------------------------------------"
+Write-Host " -> Press [A] to instantly open the Application Core Folder" -ForegroundColor Yellow
+Write-Host " -> Press [E] to instantly open the Export Vault Folder" -ForegroundColor Yellow
+Write-Host " -> Press [Enter] to exit this installer setup wizard safely" -ForegroundColor Gray
+Write-Host "------------------------------------------------------------"
+
+# Establish localized path references for opening folders natively
+ExportFolder = Join-Path InstallDir "export"
+
+while (\$true) {
+    Write-Host -NoNewline "`r[?] Select navigation destination index action: "
+    \(KeyInfo = [Console]::ReadKey(\)true)
+    KeyChar = KeyInfo.KeyChar.ToString().ToLower()
+
+    if (\$KeyChar -eq 'a') {
+        Write-Host "Opening Application folder...                      " -ForegroundColor Green
+        Start-Process explorer.exe -ArgumentList "`"$InstallDir`""
+    }
+    elif (\$KeyChar -eq 'e') {
+        # Safely create the export directory profile loop if it doesn't exist yet so explorer doesn't throw a crash error
+        if (-not (Test-Path ExportFolder)) New-Item -ItemType Directory -Path ExportFolder | Out-Null }
+        Write-Host "Opening Export folder...                      " -ForegroundColor Green
+        Start-Process explorer.exe -ArgumentList "`"$ExportFolder`""
+    }
+    elif (\$KeyInfo.Key -eq 'Enter') {
+        Write-Host "Exiting installer safely. Goodbye!                  " -ForegroundColor Gray
+        break
+    }
+}
