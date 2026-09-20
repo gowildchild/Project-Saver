@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.66"
+$InstallVersion = "v0.0.67"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -139,9 +139,6 @@ Write-Host "  │ Location Locked  : AppData\Local\ProjectSaver              │
 Write-Host "  │ Created By       : Gunther Voet                            │" -ForegroundColor Green
 Write-Host "  └────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
 
-# ====================================================================================
-# 9. INTERACTIVE POST-INSTALL WORKSPACE NAVIGATION DASHBOARD
-# ====================================================================================
 Write-Host "📂 QUICK NAVIGATION LINKS ACCELERATOR" -ForegroundColor Cyan
 Write-Host "------------------------------------------------------------"
 Write-Host " -> Press [A] to instantly open the Application Core Folder" -ForegroundColor Yellow
@@ -150,7 +147,7 @@ Write-Host " -> Press [Enter] to exit this installer setup wizard safely" -Foreg
 Write-Host "------------------------------------------------------------"
 
 # Establish localized path references for opening folders natively
-ExportFolder = Join-Path InstallDir "export"
+$ExportFolder = Join-Path $InstallDir "export"
 
 while ($true) {
     Write-Host -NoNewline "`r[?] Select navigation destination index action: "
