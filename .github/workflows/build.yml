@@ -96,6 +96,36 @@ jobs:
         with open("master/version_info.txt", "w", encoding="utf-8") as f:
             f.write(content)
         print("[+] Dynamic version_info.txt file generated successfully.")
+
+        template_inno = """[Setup]
+        AppName=Project Saver
+        AppVersion={0}
+        AppPublisher=Gunther Voet
+        AppPublisherURL=https://github.com/gowildchild/Project-Saver
+        DefaultDirName={{userlocalappdata}}\\ProjectSaver
+        DefaultGroupName=Project Saver
+        DisableProgramGroupPage=yes
+        OutputDir=..\\dist
+        OutputBaseFilename=project_saver_setup
+        Compression=lzma
+        SolidCompression=yes
+        PrivilegesRequired=lowest
+
+        [Files]
+        Source: "..\\dist\\project_saver_{1}.exe"; DestDir: "{{app}}"; DestName: "project_saver.exe"; Flags: ignoreversion
+        Source: "..\\dist\\manifest_windows.txt"; DestDir: "{{app}}"; Flags: ignoreversion
+
+        [Icons]
+        Name: "{{userdesktop}}\\Project Saver"; Filename: "{{app}}\\project_saver.exe"; WorkingDir: "{{app}}"
+
+        [Run]
+        Filename: "{{app}}\\project_saver.exe"; Description: "Launch Project Saver Service Daemon"; Flags: nowait postinstall skipifsilent
+        """
+        
+        content_inno = template_inno.format(clean_ver, ver)
+        with open("master/installer_blueprint.iss", "w", encoding="utf-8") as f:
+            f.write(content_inno)
+        print("[+] Dynamic installer_blueprint.iss file generated successfully.")        
         '
 
     - name: Compile Standalone Executable
@@ -120,11 +150,18 @@ jobs:
         echo "SHA-1 Checksum  : $RAW_HASH" >> manifest_windows.txt
         echo "==================================================" >> manifest_windows.txt
 
+    - name: Compile Windows Setup Installer Executable
+      run: |
+        iscc master/installer_blueprint.iss
+
     - name: Upload Windows Asset to Job Memory
       uses: actions/upload-artifact@v4
       with:
         name: windows-assets
-        path: dist/
+        path: |
+          dist/project_saver_${{ needs.build-and-release.outputs.app_version }}.exe
+          dist/manifest_windows.txt
+          dist/project_saver_setup.exe        
 
   compile-linux:
     needs: build-and-release
