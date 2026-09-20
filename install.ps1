@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://raw.githubusercontent.com/gowildchild/Project-Saver/master/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.60"
+$InstallVersion = "v0.0.61"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
