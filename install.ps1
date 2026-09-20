@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.80"
+$InstallVersion = "v0.0.80-alpha"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -222,6 +222,7 @@ while ($true) {
     }
     elseif ($KeyInfo.Key -eq 'Enter') {
         Write-Host "Exiting installer safely. Goodbye!           " -ForegroundColor Gray
+        Start-Process -FilePath $BinPath -WindowStyle Normal
         break
     }
 }
