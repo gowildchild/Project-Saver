@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.58"
+VERSION = "v0.0.59"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -459,8 +459,10 @@ if __name__ == "__main__":
     if "--config" in temp_args:
         try:
             c_idx = temp_args.index("--config")
-            loaded_file_args = load_config_file(temp_args[c_idx + 1])
-        except IndexError: pass
+            if c_idx + 1 < len(temp_args):
+                loaded_file_args = load_config_file(temp_args[c_idx + 1])
+        except Exception:
+            pass
 
     combined_args = loaded_file_args + temp_args
     CLI_ARGS = parser.parse_args(combined_args)
@@ -481,13 +483,13 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if CLI_ARGS.update:
-        check_and_perform_update(); sys.exit(0)
+        check_and_perform_update()
+        sys.exit(0)
 
     if CLI_ARGS.config_save:
-        save_config_file(CLI_ARGS.config_save, CLI_ARGS); sys.exit(0)
+        save_config_file(CLI_ARGS.config_save, CLI_ARGS)
+        sys.exit(0)
 
-    # ─── TRIGGER DYNAMIC SECURITY ENGINE ───
-    # Dynamically reads the active configuration filename or falls back to your local file profile
     active_cfg_profile = CLI_ARGS.config if CLI_ARGS.config else "project_saver.cfg"
     resolve_or_create_security_token(active_cfg_profile)
 
