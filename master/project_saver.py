@@ -265,7 +265,7 @@ def check_for_startup_update_and_run():
             latest_version_tag = data.get("tag_name", "").strip()
             
             if latest_version_tag and latest_version_tag == VERSION:
-                print("[+] Running the latest version profile framework.")
+                print(f"[+] Running the latest version {VERSION}.")
                 print("[*] Advancing straight to active daemon mode...\n")
                 return
                 
@@ -332,7 +332,7 @@ def check_and_perform_update():
             
             # If triggered manually via CLI but already matching, exit early safely
             if latest == VERSION and "--update" in sys.argv:
-                print("[+] Already running the latest version profile framework.")
+                print(f"[+] Already running the latest version {VERSION}.")
                 return
             
             download_url = None
