@@ -288,23 +288,45 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                     continue
                 
                 img_alt = element.get('alt', '').strip() or element.get('title', '').strip() or "Captured Image"
+                if img_src.startswith("http://") or img_src.startswith("https://"):
+                    final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
+                    continue
+                    
+                # If SingleFile bundled the page using localized files or raw data maps, handle it safely
                 if img_src.startswith("data:image/"):
                     try:
+                        import base64
                         header, base64_data = img_src.split(',', 1)
-                        # Strip any hidden DOM whitespace / newlines introduced by SingleFile's big assets
-                        cleaned_base64 = re.sub(r'\s+', '', base64_data).strip().rstrip('"').rstrip(')').rstrip('>')
                         
-                        # Fix missing padding to keep markdown engines completely happy
-                        missing_padding = len(cleaned_base64) % 4
+                        # Scrub all hidden line breaks and whitespace from the stream interior
+                        base64_data = re.sub(r'\s+', '', base64_data).strip().rstrip('"').rstrip(')').rstrip('>')
+                        
+                        missing_padding = len(base64_data) % 4
                         if missing_padding:
-                            cleaned_base64 += '=' * (4 - missing_padding)
+                            base64_data += '=' * (4 - missing_padding)
+                            
+                        # Isolate the proper file extension
+                        img_ext = "png"
+                        if "image/" in header:
+                            img_ext = header.split(';')[0].split('/')[1]
+                            
+                        decoded_bytes = base64.b64decode(base64_data.encode('utf-8'))
                         
-                        # Reassemble the clean inline data-URI asset string
-                        img_src = f"{header},{cleaned_base64}"
+                        # Generate a clean filename for the asset folder
+                        img_filename = f"image_{code_block_index}.{img_ext}"
+                        img_filepath = os.path.join(exporter.asset_folder if export_detailed else base_dir, img_filename)
+                        
+                        # Write the real binary image file directly to your disk
+                        with open(img_filepath, "wb") as img_file:
+                            img_file.write(decoded_bytes)
+                            
+                        # Link the newly created local file directly to your Markdown document
+                        local_link = os.path.join(f"{safe_title}_extracted_scripts", img_filename) if export_detailed else img_filename
+                        final_markdown_blocks.append(exporter.format_image(img_alt, local_link))
+                        code_block_index += 1
                     except Exception:
-                        pass # Falls back gracefully to original string formatting if split fails
+                        pass
 
-                # Natively embeds the image inline (works flawlessly with both clean base64 data strings and standard web URLs)
                 final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
                 continue
                 
