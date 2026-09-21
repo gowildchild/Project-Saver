@@ -292,33 +292,28 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                     try:
                         import base64
                         header, base64_data = img_src.split(',', 1)
+                        
+                        # ─── CRITICAL CLEANING LAYER: STRIP ALL INNER LINE BREAKS & SPACE CLUTTER ───
+                        # White space and newlines are never part of base64 data but break length math
+                        base64_data = re.sub(r'\s+', '', base64_data)
                         base64_data = base64_data.strip().rstrip('"').rstrip(')').rstrip('>')
+
                         missing_padding = len(base64_data) % 4
                         if missing_padding:
                             base64_data += '=' * (4 - missing_padding)
-                        img_ext = header.split(';')[0].split('/')[1]
-                        img_hash = hashlib.md5(base64_data.encode('utf-8')).hexdigest()[:10]
-                        local_img_name = f"image_{code_block_index}_{img_hash}.{img_ext}"
-                        print(f"[D] Debug: {local_img_name} {img_ext} {code_block_index} ")
-                        
-                        target_folder = exporter.asset_folder if export_detailed else base_dir
-                        if not os.path.exists(target_folder):
-                            os.makedirs(target_folder, exist_ok=True)
                             
-                        local_img_path = os.path.join(target_folder, local_img_name)
-                        with open(local_img_path, "wb") as img_file:
-                            img_file.write(base64.b64decode(base64_data))
+                        img_ext = "png"
+                        if "image/" in header:
+                            img_ext = header.split(';')[0].split('/')[1]
+                        decoded_img_bytes = base64.b64decode(base64_data.encode('utf-8'))
                         
-                        markdown_link_path = os.path.join(os.path.basename(exporter.asset_folder), local_img_name) if export_detailed else local_img_name
-                        final_markdown_blocks.append(exporter.format_image(img_alt, markdown_link_path))
-                        code_block_index += 1
-                        continue
-                    except Exception as e:
-                        print(f"[-] Warning: Failed to decode embedded base64 asset string line: {e}")
-                        continue
-                else:
-                    final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
+                    except Exception as img_err:
+                        print(f"[-] Warning: Failed to decode embedded base64 asset string line: {img_err}")
                     continue
+                    
+                img_alt = element.get('alt', '').strip() or element.get('title', '').strip() or "Captured Image"
+                final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
+                continue
             text = element.get_text() if element.name in ['pre', 'code'] else element.get_text().strip()
 
             if not text or len(text.strip()) < 2 or text.strip().startswith("data:image/"): 
