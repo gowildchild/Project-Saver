@@ -2,7 +2,7 @@
 # PROJECT SAVER AUTOMATED NETWORK INSTALLATION & VALIDATION ENGINE
 # irm https://gowildchild.github.io/Project-Saver/install.ps1 | iex
 # ====================================================================================
-$InstallVersion = "v0.0.80-delta"
+$InstallVersion = "v0.0.80-echo"
 $ErrorActionPreference = "Stop"
 $RepoOwner = "gowildchild"
 $RepoName  = "Project-Saver"
@@ -159,7 +159,7 @@ $BottomBar = $BL + $LineHZ + $BR
 
 # Dynamic space padding calculation to keep the right border straight
 $BoxTotalWidth = 60
-$RawTextContent = " Version Deployed : $LatestVersion"
+$RawTextContent = " Version Deployed : $LatestVersion  "
 $PaddingNeeded = $BoxTotalWidth - $RawTextContent.Length - 2
 
 if ($PaddingNeeded -lt 0) { $PaddingNeeded = 0 }
