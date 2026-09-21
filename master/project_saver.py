@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-foxtrot"
+VERSION = "v0.0.76-golf"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -253,7 +253,7 @@ def check_for_startup_update_and_run():
 
     api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
     print("==================================================")
-    print("⏰ PROJECT SAVER INITIALIZATION SEQUENCE")
+    print("⏰ PROJECT SAVER INITIALIZATION")
     print("==================================================")
     print(f"[*] Querying latest active release definitions from: {api_url}")
     
@@ -412,7 +412,7 @@ def check_and_perform_update():
                 os.chmod(final_linux_path, 0o755)
 
             print(f"[+] SUCCESS: Secure upgrade complete.")
-			print("Please restart Project Saver to run the new version!")
+			#print("Please restart Project Saver to run the new version!")
             sys.exit(0)
             
     except Exception as e:
