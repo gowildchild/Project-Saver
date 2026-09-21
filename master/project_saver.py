@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-niko"
+VERSION = "v0.0.76-oskar"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -317,7 +317,7 @@ def check_and_perform_update():
     import hashlib
 
     is_windows = platform.system().lower() == "windows"
-	expected_version = None
+	expected_version = ""
     api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
     print(f"[*] Initializing secure system upgrade check via: {api_url}")
     
