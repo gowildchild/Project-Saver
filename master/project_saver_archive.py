@@ -292,6 +292,10 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                     try:
                         import base64
                         header, base64_data = img_src.split(',', 1)
+                        base64_data = base64_data.strip().rstrip('"').rstrip(')').rstrip('>')
+                        missing_padding = len(base64_data) % 4
+                        if missing_padding:
+                            base64_data += '=' * (4 - missing_padding)
                         img_ext = header.split(';')[0].split('/')[1]
                         
                         img_hash = hashlib.md5(base64_data.encode('utf-8')).hexdigest()[:10]
