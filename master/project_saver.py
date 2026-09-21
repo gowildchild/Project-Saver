@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-alpha"
+VERSION = "v0.0.76-charlie"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -58,6 +58,18 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
     singlefile_config_payload = {
         "profiles": {
             "Project Saver": {
+                "_migratedDeferredContentOptions": True,
+                "_migratedTemplateFormat": True,
+				"autoSaveDelay": 1,
+				"autoSaveLoad": False,
+                "autoSaveLoadOrUnload": True,
+                "autoSaveRemove": True,
+                "autoSaveRepeat": False,
+                "autoSaveRepeatDelay": 10,
+                "autoSaveUnload": False,
+                "backgroundSave": True,
+				"autoSaveDiscard": True,
+				"progressBarEnabled": True,
                 "saveToRestFormApi": True,
                 "saveToRestFormApiUrl": f"http://localhost:{PORT}",
                 "saveToRestFormApiToken": EXPECTED_TOKEN,
