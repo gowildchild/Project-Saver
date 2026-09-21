@@ -482,8 +482,8 @@ def run_server():
 
     cli_dict = vars(CLI_ARGS)
     startup_log = [
-        f"Server Listening:    http://localhost:{PORT}",
-        f"Security Token:      {EXPECTED_TOKEN}",
+        f"Server Listening:   http://localhost:{PORT}",
+        f"Security Token:     {EXPECTED_TOKEN}",
         "---",
         f"📂 Target Folder:   {os.path.abspath(cli_dict.get('export-folder'))}",
         f"⚙️ Profile Mode:    {str(cli_dict.get('export-type')).upper()}",
