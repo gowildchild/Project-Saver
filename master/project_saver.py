@@ -393,7 +393,7 @@ def check_and_perform_update():
                 os.remove(temp_download_path)
                 return
 
-			verification_status = "[+] SHA-256 Integrity Verification Passed"
+            verification_status = "[+] SHA-256 Integrity Verification Passed"
             #print("[+] Cryptographic Verification Passed: Binary file code matches perfectly.")
 
             # 4. ATOMIC HOT-SWAP REPLACEMENT CHOREOGRAPHY
@@ -403,7 +403,7 @@ def check_and_perform_update():
                     try: os.remove(old_exe_path)
                     except Exception: pass
 
-				verification_status += ", Performing safe hot-swap update..."
+                verification_status += ", Performing safe hot-swap update..."
                 print(f"{verification_status}")
                 os.rename(current_exe_path, old_exe_path)
                 os.rename(temp_download_path, current_exe_path)
@@ -418,7 +418,7 @@ def check_and_perform_update():
                 os.chmod(final_linux_path, 0o755)
 
             print("[+] SUCCESS: Secure upgrade to latest version completed...")
-			print(f"[+] Please restart Project Saver to run {expected_version}!")
+            print(f"[+] Please restart Project Saver to run {expected_version}!")
             sys.exit(0)
             
     except Exception as e:
