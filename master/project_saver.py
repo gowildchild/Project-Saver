@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-papa"
+VERSION = "v0.0.76-quebec"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -392,8 +392,9 @@ def check_and_perform_update():
                 print("    Upgrade aborted automatically to protect this machine.")
                 os.remove(temp_download_path)
                 return
-            
-            print("[+] Cryptographic Verification Passed: Binary file code matches perfectly.")
+
+			verification_status = "[+] SHA-256 Integrity Verification Passed"
+            #print("[+] Cryptographic Verification Passed: Binary file code matches perfectly.")
 
             # 4. ATOMIC HOT-SWAP REPLACEMENT CHOREOGRAPHY
             if is_windows:
@@ -401,8 +402,9 @@ def check_and_perform_update():
                 if os.path.exists(old_exe_path):
                     try: os.remove(old_exe_path)
                     except Exception: pass
-                
-                print("[*] Performing safe atomic hot-swap file replacements...")
+
+				verification_status += ", Performing safe hot-swap update..."
+                print(f"{verification_status}")
                 os.rename(current_exe_path, old_exe_path)
                 os.rename(temp_download_path, current_exe_path)
                 
@@ -415,8 +417,8 @@ def check_and_perform_update():
                 os.rename(temp_download_path, final_linux_path)
                 os.chmod(final_linux_path, 0o755)
 
-            print(f"[+] SUCCESS: Secure upgrade complete {expected_version}...")
-			#print("Please restart Project Saver to run the new version!")
+            print("[+] SUCCESS: Secure upgrade to latest version completed...")
+			print(f"[+] Please restart Project Saver to run {expected_version}!")
             sys.exit(0)
             
     except Exception as e:
