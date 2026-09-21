@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-hotel"
+VERSION = "v0.0.76-india"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -167,11 +167,11 @@ class RestApiHandler(BaseHTTPRequestHandler):
         intercept_log = [
             "\033[93m📥 Intercepted Web Stream Archive payload from browser!\033[0m",
             "---",
-            f"📄 Title: {page_title if len(page_title) <= 52 else f'{page_title[:82]}...'}",
-            f"🌐 Origin: {page_url if len(page_url) <= 52 else f'{page_url[:82]}...'}"
+            f"📄 Title: {page_title if len(page_title) <= 84 else f'{page_title[:84]}..'}",
+            f"🌐 Origin: {page_url if len(page_url) <= 84 else f'{page_url[:84]}..'}"
         ]
         print() # Print empty line break for clean display
-        render_better_box(intercept_log, title_str="Network Interception Notice", box_width_override=85)
+        render_better_box(intercept_log, title_str="Network Interception Notice", box_width_override=86)
 
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
