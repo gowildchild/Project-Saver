@@ -363,7 +363,7 @@ def check_and_perform_update():
                 manifest_lines = stream.read().decode('utf-8').splitlines()
                 # Locate the very first SHA-256 Checksum string in the document (corresponds to asset 1)
                 for line in manifest_lines:
-					if "Version Tag" in line:
+                    if "Version Tag" in line:
                         expected_version = line.split(":")[1].strip().lower()
                     if "SHA-256 Checksum" in line:
                         expected_hash = line.split(":")[1].strip().lower()
