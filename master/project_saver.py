@@ -411,7 +411,7 @@ def check_and_perform_update():
                 os.rename(temp_download_path, final_linux_path)
                 os.chmod(final_linux_path, 0o755)
 
-            print(f"[+] SUCCESS: Secure system upgrade complete {latest}.")
+            print(f"[+] SUCCESS: Secure upgrade complete.")
 			print("Please restart Project Saver to run the new version!")
             sys.exit(0)
             
