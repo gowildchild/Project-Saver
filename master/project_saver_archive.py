@@ -286,38 +286,35 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                 img_src = element.get('src', '').strip()
                 if not img_src: 
                     continue
-                img_alt = element.get('alt', '').strip() or element.get('title', '').strip() or "Captured_Image"
                 
+                img_alt = element.get('alt', '').strip() or element.get('title', '').strip() or "Captured Image"
+                
+                # Check for inline data-URI images to fix any chunked whitespace corruption before embedding
                 if img_src.startswith("data:image/"):
                     try:
-                        import base64
                         header, base64_data = img_src.split(',', 1)
+                        # Strip any hidden DOM whitespace / newlines introduced by SingleFile's big assets
+                        cleaned_base64 = re.sub(r'\s+', '', base64_data).strip().rstrip('"').rstrip(')').rstrip('>')
                         
-                        # ─── CRITICAL CLEANING LAYER: STRIP ALL INNER LINE BREAKS & SPACE CLUTTER ───
-                        # White space and newlines are never part of base64 data but break length math
-                        base64_data = re.sub(r'\s+', '', base64_data)
-                        base64_data = base64_data.strip().rstrip('"').rstrip(')').rstrip('>')
-
-                        missing_padding = len(base64_data) % 4
+                        # Fix missing padding to keep markdown engines completely happy
+                        missing_padding = len(cleaned_base64) % 4
                         if missing_padding:
-                            base64_data += '=' * (4 - missing_padding)
-                            
-                        img_ext = "png"
-                        if "image/" in header:
-                            img_ext = header.split(';')[0].split('/')[1]
-                        decoded_img_bytes = base64.b64decode(base64_data.encode('utf-8'))
+                            cleaned_base64 += '=' * (4 - missing_padding)
                         
-                    except Exception as img_err:
-                        print(f"[-] Warning: Failed to decode embedded base64 asset string line: {img_err}")
-                    continue
-                    
-                img_alt = element.get('alt', '').strip() or element.get('title', '').strip() or "Captured Image"
+                        # Reassemble the clean inline data-URI asset string
+                        img_src = f"{header},{cleaned_base64}"
+                    except Exception:
+                        pass # Falls back gracefully to original string formatting if split fails
+
+                # Natively embeds the image inline (works flawlessly with both clean base64 data strings and standard web URLs)
                 final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
                 continue
+                
             text = element.get_text() if element.name in ['pre', 'code'] else element.get_text().strip()
 
             if not text or len(text.strip()) < 2 or text.strip().startswith("data:image/"): 
                 continue
+
 
             is_pre_block = element.name == 'pre'
             
