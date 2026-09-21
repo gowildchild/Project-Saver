@@ -33,8 +33,8 @@ class CodeDocumentExporter(BaseExporter):
         for block in blocks:
             if not block: continue
             
-            # If the block is a special Markdown structural layout command, leave it untouched
-            if any(block.startswith(p) for p in ["#", "*", "\n###", "!["]):
+            # FIXED: Protect structural layout lines, list tags, code blocks, and media strings from tag bleed
+            if any(block.strip().startswith(p) for p in ["#", "*", "###", "![", "```"]):
                 mf.write(f"{block}\n")
             else:
                 mf.write(f"<small>{block}</small>\n\n")
@@ -49,10 +49,10 @@ class WebPageArticleExporter(BaseExporter):
     def write_blocks(self, mf, blocks):
         for block in blocks:
             if not block: continue
-            if block.startswith("#"): 
+            
+            # FIXED: Safely bypass wrapping if the block string is an image link or code snippet wrapper
+            if any(block.strip().startswith(p) for p in ["#", "*", "###", "![", "```", "---"]): 
                 mf.write(f"\n{block}\n")
-            elif block.startswith("*"): 
-                mf.write(f"{block}\n")
             else:
                 mf.write(f"<small>{block}</small>\n\n")
 
