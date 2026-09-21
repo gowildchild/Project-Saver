@@ -297,9 +297,9 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                         if missing_padding:
                             base64_data += '=' * (4 - missing_padding)
                         img_ext = header.split(';')[0].split('/')[1]
-                        
                         img_hash = hashlib.md5(base64_data.encode('utf-8')).hexdigest()[:10]
                         local_img_name = f"image_{code_block_index}_{img_hash}.{img_ext}"
+                        print(f"[D] Debug: {local_img_name} {img_ext} {code_block_index} ")
                         
                         target_folder = exporter.asset_folder if export_detailed else base_dir
                         if not os.path.exists(target_folder):
