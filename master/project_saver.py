@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-mama"
+VERSION = "v0.0.76-niko"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -317,6 +317,7 @@ def check_and_perform_update():
     import hashlib
 
     is_windows = platform.system().lower() == "windows"
+	expected_version = None
     api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
     print(f"[*] Initializing secure system upgrade check via: {api_url}")
     
@@ -362,9 +363,12 @@ def check_and_perform_update():
                 manifest_lines = stream.read().decode('utf-8').splitlines()
                 # Locate the very first SHA-256 Checksum string in the document (corresponds to asset 1)
                 for line in manifest_lines:
+					if "Version Tag" in line:
+						expected_version = line.split(":")[1].strip().lower()
                     if "SHA-256 Checksum" in line:
                         expected_hash = line.split(":")[1].strip().lower()
                         break
+
 
             if not expected_hash:
                 print("[-] Verification Error: Manifest format is malformed or invalid.")
@@ -411,7 +415,7 @@ def check_and_perform_update():
                 os.rename(temp_download_path, final_linux_path)
                 os.chmod(final_linux_path, 0o755)
 
-            print(f"[+] SUCCESS: Secure upgrade complete.")
+            print(f"[+] SUCCESS: Secure upgrade complete. {expected_version}")
 			#print("Please restart Project Saver to run the new version!")
             sys.exit(0)
             
