@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-echo"
+VERSION = "v0.0.76-foxtrot"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -411,7 +411,8 @@ def check_and_perform_update():
                 os.rename(temp_download_path, final_linux_path)
                 os.chmod(final_linux_path, 0o755)
 
-            print("[🎉] SUCCESS: Secure system upgrade complete. Please restart Project Saver to run the new version!")
+            print(f"[+] SUCCESS: Secure system upgrade complete {latest}.")
+			print("Please restart Project Saver to run the new version!")
             sys.exit(0)
             
     except Exception as e:
