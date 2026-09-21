@@ -213,7 +213,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
         export_mode = "code_dev"
     elif export_type == "web":
         export_mode = "web_article"
-    else: # Default behavior ("auto")
+    else: 
         origin_lower = source_origin.lower()
         if "github.com" in origin_lower or "google.com" in origin_lower:
             export_mode = "code_dev"
@@ -235,7 +235,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
             parsing_root = reader_container
             print("[*] Target Match: Isolated Reader-View structure for processing.")
 
-    url_clean = source_origin.split('?')[0].split('#')[0]
+    url_clean = source_origin.split('?')[0].split('#')[0]               
     url_match = re.search(r'\.([a-zA-Z0-9]+)$', url_clean)
     url_extension = url_match.group(1).lower() if url_match else None
     
@@ -288,8 +288,6 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                     continue
                 
                 img_alt = element.get('alt', '').strip() or element.get('title', '').strip() or "Captured Image"
-                
-                # Check for inline data-URI images to fix any chunked whitespace corruption before embedding
                 if img_src.startswith("data:image/"):
                     try:
                         header, base64_data = img_src.split(',', 1)
@@ -310,6 +308,8 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                 final_markdown_blocks.append(exporter.format_image(img_alt, img_src))
                 continue
                 
+            if element.find('img'):
+                continue
             text = element.get_text() if element.name in ['pre', 'code'] else element.get_text().strip()
 
             if not text or len(text.strip()) < 2 or text.strip().startswith("data:image/"): 
