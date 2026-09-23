@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.77-gamma"
+VERSION = "v0.0.77-hotel"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -698,6 +698,10 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     os._exit(0)
                 continue
 
+            if is_windows:
+                while msvcrt.kbhit():
+                    msvcrt.getch()
+			
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 last_pressed_key = None
                 consecutive_press_count = 0
