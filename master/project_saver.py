@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.77-alpha"
+VERSION = "v0.0.77-gamma"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -581,6 +581,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
     last_pressed_key = None
     consecutive_press_count = 0
     latest_discovered_version = None
+	prompt_visible = False
     
     cli_dict = vars(CLI_ARGS)
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
@@ -593,8 +594,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
     while True:
         try:
-            # ─── DYNAMIC CONSOLE PROMPT RENDERING ENGINE ───
-            # Try to acquire the console lock cleanly without blocking payload transactions
             if CONSOLE_LOCK.acquire(False):
                 try:
                     if last_pressed_key == 'q' and consecutive_press_count > 0:
@@ -607,7 +606,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                         sys.stdout.flush()
                     else:
                         sys.stdout.write("\r[?] Ready for hotkey: ")
-                        sys.stdout.flush()
+                    sys.stdout.flush()
+					prompt_visible = True
                 finally:
                     CONSOLE_LOCK.release()
 
@@ -627,15 +627,14 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 else:
                     continue
 
-            # ─── EVALUATE INTERACTIVE BUTTON PRESS REPETITION COUNTS ───
             if user_triggered_key != "":
+                prompt_visible = False 
                 if user_triggered_key == last_pressed_key:
                     consecutive_press_count += 1
                 else:
                     last_pressed_key = user_triggered_key
                     consecutive_press_count = 1
 
-            # ─── INTERACTIVE ROUTING ACTION MATRIX ───
             if user_triggered_key == 'e':
                 clear_interactive_line()
                 export_path = os.path.abspath(cli_dict.get('export-folder'))
