@@ -548,8 +548,8 @@ def run_server():
         f"🗒️ [F]ormats Enabled: {str(cli_dict.get('export-format')).upper()}",
         "---",
         f"💡 [I]mport Config:   Open folder containing singlefile-project-saver-config.json configuration.",
-        f"   [R]enew Token:     Regenerate randomized API access authorization key.",
-        f"   [U]pdate: Verify integrity hash and update application (1x=check, 2x=update).",
+        f"   [R]enew Token:      Regenerate randomized API access authorization key.",
+        f"   [U]pdate:           Verify integrity hash and update application (1x=check, 2x=update).",
         f"   [Q]uit Application: Requires 3 consecutive taps with the shoes to escape Kansas."
 		
     ]
@@ -587,9 +587,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
     while True:
         try:
-            # ─── DYNAMIC CONSOLE PROMPT RENDERING ENGINE ───
             if last_pressed_key == 'q' and consecutive_press_count > 0:
-				latch_step = int(consecutive_press_count)
+                latch_step = int(consecutive_press_count)
                 sys.stdout.write(f"\r⚠️ Press [Q]uit again [{latch_step}/3] times to escape Kansas...")
                 sys.stdout.flush()
             elif last_pressed_key == 'u' and consecutive_press_count == 1:
