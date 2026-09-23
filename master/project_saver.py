@@ -568,18 +568,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
     quit_press_counter = 0
     update_press_counter = 0
     latest_discovered_version = None
-	prompt_visible = Falsedef execute_interactive_dashboard_monitor(httpd_server_reference):
-    """Processes server traffic and terminal hotkeys sequentially without high-speed loop cascades."""
-    import sys
-    import os
-    import subprocess
-    import time
-
-    quit_press_counter = 0
-    update_press_counter = 0
-    latest_discovered_version = None
     
-    # FIXED: Tracking flag to print the prompt exactly ONCE instead of scrolling continuously
     prompt_visible = False
     
     cli_dict = vars(CLI_ARGS)
