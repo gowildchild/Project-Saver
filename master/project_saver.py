@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.77-hotel"
+VERSION = "v0.0.77-india"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -570,6 +570,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
     import sys
     import os  # Required for clean OS process tree termination
     import subprocess
+    import time  # FIXED: Imported time to resolve NameError crashes on Windows loop pause
     
     is_windows = os.name == 'nt'
     if is_windows:
@@ -616,9 +617,10 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             # ─── NON-BLOCKING KEY INTERCEPTION LAYER ───
             if is_windows:
                 if msvcrt.kbhit():
-                    user_triggered_key = msvcrt.getwche().lower()
+                    # FIXED: Reads key silently without printing artifacts to console or leaving scan bytes behind
+                    user_triggered_key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
                 else:
-                    time.sleep(0.1)
+                    time.sleep(0.1)  # FIXED: Resolves the NameError loop crash 
                     continue
             else:
                 ready, _, _ = select.select([sys.stdin], [], [], 0.1)
@@ -674,7 +676,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             elif user_triggered_key == 'u':
                 if consecutive_press_count == 1:
                     clear_interactive_line()
-                    # Bitmask 1: Performs remote API release asset tag version check only
                     latest_discovered_version = check_and_perform_update(mode_override=1)
                     if not latest_discovered_version or latest_discovered_version == VERSION:
                         last_pressed_key = None
@@ -686,7 +687,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     clear_interactive_line()
                     print("\n[*] Update Started: Initializing secure system upgrade sequence...")
                     httpd_server_reference.shutdown()
-                    # Bitmask 4: Executes complete file validation and atomic update hot-swap
                     check_and_perform_update(mode_override=4)
                     os._exit(0)
 
@@ -708,7 +708,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 latest_discovered_version = None
 
         except KeyboardInterrupt:
-            # Clean exit capture for standard console shortcuts (Ctrl+C)
             print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
             httpd_server_reference.shutdown()
             os._exit(0)
