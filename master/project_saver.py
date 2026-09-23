@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.77-mama"
+VERSION = "v0.0.77-nike"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -568,44 +568,63 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
     quit_press_counter = 0
     update_press_counter = 0
     latest_discovered_version = None
+	prompt_visible = Falsedef execute_interactive_dashboard_monitor(httpd_server_reference):
+    """Processes server traffic and terminal hotkeys sequentially without high-speed loop cascades."""
+    import sys
+    import os
+    import subprocess
+    import time
+
+    quit_press_counter = 0
+    update_press_counter = 0
+    latest_discovered_version = None
+    
+    # FIXED: Tracking flag to print the prompt exactly ONCE instead of scrolling continuously
+    prompt_visible = False
+    
     cli_dict = vars(CLI_ARGS)
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
 
     while True:
         try:
-            # 1. Process exactly ONE incoming web request payload if SingleFile is waiting.
-            # Timeout = 0.1 seconds means it checks for network traffic briefly and moves on.
+            # 1. Non-blocking network check. Timeout = 0.1 prevents a frozen interface.
             httpd_server_reference.timeout = 0.1
             httpd_server_reference.handle_request()
 
-            # 2. Render the static interface status line safely
-            if quit_press_counter > 0:
-                sys.stdout.write(f"\r⚠️ Press [Q]uit again [{quit_press_counter}/3] times to escape Kansas...")
-            elif update_press_counter == 1:
-                v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
-                sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
-            else:
-                sys.stdout.write("\n[?] Ready for hotkey: ")
-            sys.stdout.flush()
+            # 2. Render the static interface status line exactly ONCE
+            if not prompt_visible:
+                if quit_press_counter > 0:
+                    sys.stdout.write(f"\r⚠️ Press [Q]uit again [{quit_press_counter}/3] times to escape Kansas...")
+                elif update_press_counter == 1:
+                    v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
+                    sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
+                else:
+                    sys.stdout.write("\r[?] Ready for hotkey: ")
+                sys.stdout.flush()
+                prompt_visible = True
 
-            # 3. Standard blocking input check using hardware polling
+            # 3. Non-blocking keyboard hardware capture loop
             user_triggered_key = ""
             if os.name == 'nt':
                 import msvcrt
                 if msvcrt.kbhit():
                     user_triggered_key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-                    # Hard flush any trailing scan codes from multi-byte key presses instantly
                     while msvcrt.kbhit():
                         msvcrt.getch()
                 else:
-                    time.sleep(0.1)
+                    # Throttles loop execution when completely idle to protect CPU cores
+                    time.sleep(0.05)
                     continue
             else:
                 import select
-                ready, _, _ = select.select([sys.stdin], [], [], 0.1)
+                ready, _, _ = select.select([sys.stdin], [], [], 0.05)
                 if not ready:
                     continue
                 user_triggered_key = sys.stdin.readline().strip().lower()
+
+            # Reset prompt state on any key interaction to allow message repainting
+            if user_triggered_key != "":
+                prompt_visible = False
 
             # ─── HOTKEY MATRIX ACTIONS ───
             if user_triggered_key == 'e':
@@ -613,21 +632,15 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 print(f"\n[E] Export folder opened: {export_path}")
                 if not os.path.exists(export_path):
                     os.makedirs(export_path, exist_ok=True)
-                if os.name == 'nt':
-                    subprocess.Popen(f'explorer.exe "{export_path}"')
-                elif sys.platform == 'darwin':
-                    subprocess.Popen(['open', export_path])
-                else:
-                    subprocess.Popen(['xdg-open', export_path])
+                if os.name == 'nt': subprocess.Popen(f'explorer.exe "{export_path}"')
+                elif sys.platform == 'darwin': subprocess.Popen(['open', export_path])
+                else: subprocess.Popen(['xdg-open', export_path])
 
             elif user_triggered_key == 'i':
                 print(f"\n[I] Import SingleFile JSON config folder opened: {script_base_dir}")
-                if os.name == 'nt':
-                    subprocess.Popen(f'explorer.exe "{script_base_dir}"')
-                elif sys.platform == 'darwin':
-                    subprocess.Popen(['open', script_base_dir])
-                else:
-                    subprocess.Popen(['xdg-open', script_base_dir])
+                if os.name == 'nt': subprocess.Popen(f'explorer.exe "{script_base_dir}"')
+                elif sys.platform == 'darwin': subprocess.Popen(['open', script_base_dir])
+                else: subprocess.Popen(['xdg-open', script_base_dir])
 
             elif user_triggered_key == 'r':
                 print("\n[R] Re-creating secure token...")
@@ -646,7 +659,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     if not latest_discovered_version or latest_discovered_version == VERSION:
                         update_press_counter = 0
                 elif update_press_counter >= 2:
-                    print("\r[*] Update Started: Initializing secure system upgrade sequence...")
+                    print("\n[*] Update Started: Initializing secure system upgrade sequence...")
                     check_and_perform_update(mode_override=4)
                     os._exit(0)
                 continue
@@ -654,7 +667,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             elif user_triggered_key == 'q':
                 quit_press_counter += 1
                 if quit_press_counter >= 3:
-                    print("\r[-] Shutting down: Project Saver API Server Daemon. Goodbye!")
+                    print("\n[-] Shutting down: Project Saver API Server Daemon. Goodbye!")
                     os._exit(0)
                 continue
 
@@ -663,8 +676,9 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 update_press_counter = 0
 
         except KeyboardInterrupt:
-            print("\r[-] Shutting down Project Saver API Server Daemon cleanly.")
+            print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
             os._exit(0)
+
 
 
 			
