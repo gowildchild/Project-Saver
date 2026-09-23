@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-quebec"
+VERSION = "v0.0.76-romeo"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -29,9 +29,13 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
     global EXPECTED_TOKEN
     token_key = ""
 
+    script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))    
+    resolved_config_path = config_path if os.path.isabs(config_path) else os.path.join(script_base_dir, config_path)
+
+	
     # 1. Attempt to check if a token already exists inside an active config file
-    if os.path.exists(config_path):
-        with open(config_path, "r", encoding="utf-8") as f:
+    if os.path.exists(resolved_config_path):
+        with open(resolved_config_path, "r", encoding="utf-8") as f:
             for line in f:
                 if line.strip().startswith("token="):
                     token_key = line.split("=", 1)[1].strip()
@@ -44,7 +48,7 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
         
         # Append it cleanly to the default local configuration file profile
         try:
-            with open(config_path, "a", encoding="utf-8") as f:
+            with open(resolved_config_path, "a", encoding="utf-8") as f:
                 f.write(f"\ntoken={token_key}\n")
         except:
             pass
@@ -52,9 +56,8 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
     # 3. Lock it into global application state memory fields
     EXPECTED_TOKEN = token_key
 
-    # 4. AUTOMATIC SINGLEFILE BROWSER CONFIG GENERATOR
-    # Dynamically inject this exact token string into the configuration json file profile asset
-    singlefile_json_path = "singlefile-project-saver-config.json"
+    # 4. AUTOMATIC SINGLEFILE CONFIG GENERATOR
+    singlefile_json_path = os.path.join(script_base_dir, "singlefile-project-saver-config.json")
     singlefile_config_payload = {
         "profiles": {
             "Project Saver": {
