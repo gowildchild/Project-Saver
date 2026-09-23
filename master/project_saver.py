@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.77-kilo"
+VERSION = "v0.0.77-mama"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -342,7 +342,7 @@ def check_and_perform_update(mode_override: int = 0):
             try: os.remove(cfg_file_path)
             except: pass
         resolve_or_create_security_token("project_saver.cfg")
-        print(f"[+] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
+        print(f"\r[+] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
         print("💡 Tip: Re-import your fresh singlefile configuration profile into your browser extension.")
         if mode_override == 8:
             return
@@ -351,7 +351,7 @@ def check_and_perform_update(mode_override: int = 0):
     if not (mode_override & 1 or mode_override & 2 or mode_override & 4):
         return
 
-    print(f"[*] Initializing secure system upgrade check via: {api_url}")
+    print(f"\n[*] Initializing secure system upgrade check via: {api_url}")
     
     try:
         current_exe_path = os.path.abspath(sys.executable)
@@ -546,7 +546,7 @@ def run_server():
         f"⚙️ [P]rofile Mode:    {str(cli_dict.get('export-type')).upper()}",
         f"🗒️ [F]ormats Enabled: {str(cli_dict.get('export-format')).upper()}",
         "---",
-        f"💡 [I]mport Config:   Open folder containing singlefile-project-saver-config.json configuration.",
+        f"💡 [I]mport Config:    Open folder containing singlefile-project-saver-config.json configuration.",
         f"   [R]enew Token:      Regenerate randomized API access authorization key.",
         f"   [U]pdate:           Verify integrity hash and update application (1x=check, 2x=update).",
         f"   [Q]uit Application: Requires 3 consecutive taps with the shoes to escape Kansas."
@@ -585,7 +585,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
                 sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
             else:
-                sys.stdout.write("\r[?] Ready for hotkey: ")
+                sys.stdout.write("\n[?] Ready for hotkey: ")
             sys.stdout.flush()
 
             # 3. Standard blocking input check using hardware polling
@@ -646,7 +646,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     if not latest_discovered_version or latest_discovered_version == VERSION:
                         update_press_counter = 0
                 elif update_press_counter >= 2:
-                    print("\n[*] Update Started: Initializing secure system upgrade sequence...")
+                    print("\r[*] Update Started: Initializing secure system upgrade sequence...")
                     check_and_perform_update(mode_override=4)
                     os._exit(0)
                 continue
@@ -654,7 +654,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             elif user_triggered_key == 'q':
                 quit_press_counter += 1
                 if quit_press_counter >= 3:
-                    print("\n[-] Shutting down: Project Saver API Server Daemon. Goodbye!")
+                    print("\r[-] Shutting down: Project Saver API Server Daemon. Goodbye!")
                     os._exit(0)
                 continue
 
@@ -663,7 +663,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 update_press_counter = 0
 
         except KeyboardInterrupt:
-            print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
+            print("\r[-] Shutting down Project Saver API Server Daemon cleanly.")
             os._exit(0)
 
 
