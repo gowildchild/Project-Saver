@@ -15,9 +15,10 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-xray"
+VERSION = "v0.0.77-alpha"
 PORT = 19763
 EXPECTED_TOKEN = ""
+CONSOLE_LOCK = threading.Lock()
 REPO_OWNER = "gowildchild"
 REPO_NAME = "Project-Saver"
 
@@ -104,14 +105,16 @@ class RestApiHandler(BaseHTTPRequestHandler):
         
         if token != EXPECTED_TOKEN:
             # Render unauthorized connection warning logs inside the clean box engine
-            alert_log = [
-                "⚠️  SECURITY ALERT: Unauthorized Request Blocked!",
-                "---",
-                f"Source IP Network: {self.client_address[0]}",
-                "Reason: Transmission Authorization Token Mismatch.",
-				f"Token: {token} Expected: {EXPECTED_TOKEN}",
-            ]
-            render_better_box(alert_log, title_str="Security Warning", box_width_override=70)
+            # Protected by console lock to prevent prompt text layout clipping
+            with CONSOLE_LOCK:
+                alert_log = [
+                    "⚠️  SECURITY ALERT: Unauthorized Request Blocked!",
+                    "---",
+                    f"Source IP Network: {self.client_address[0]}",
+                    "Reason: Transmission Authorization Token Mismatch.",
+                    f"Token: {token} Expected: {EXPECTED_TOKEN}",
+                ]
+                render_better_box(alert_log, title_str="Security Warning", box_width_override=70)
             self.send_response(401)
             self.end_headers()
             return
@@ -166,15 +169,17 @@ class RestApiHandler(BaseHTTPRequestHandler):
 
         soup = BeautifulSoup(html_content, "html.parser")
         page_title = soup.title.string.strip() if soup.title else "AI_Chat_Session"      
+        
         # ─── THE NEW INTERCEPTED VISUAL BOX ENGINE LOGGER ───
         intercept_log = [
-#            "\033[93m📥 Intercepted Web Stream Archive payload from browser!\033[0m",
-#            "---",
             f"📄 Title: {page_title if len(page_title) <= 84 else f'{page_title[:84]}..'}",
             f"🌐 Origin: {page_url if len(page_url) <= 84 else f'{page_url[:84]}..'}"
         ]
-        print() # Print empty line break for clean display
-        render_better_box(intercept_log, title_str="\033[93mNetwork Interception Notice\033[0m", box_width_override=86)
+        
+        # FIXED: Synchronize console outputs via shared thread lock to prevent hotkey prompt overrides
+        with CONSOLE_LOCK:
+            print() # Print empty line break for clean display
+            render_better_box(intercept_log, title_str="\033[93mNetwork Interception Notice\033[0m", box_width_override=86)
 
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
@@ -197,6 +202,7 @@ class RestApiHandler(BaseHTTPRequestHandler):
             },
             daemon=True
         ).start()
+
 
 
 def check_for_updates_silently():
@@ -587,17 +593,23 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
     while True:
         try:
-            if last_pressed_key == 'q' and consecutive_press_count > 0:
-                latch_step = int(consecutive_press_count)
-                sys.stdout.write(f"\r⚠️ Press [Q]uit again [{latch_step}/3] times to escape Kansas...")
-                sys.stdout.flush()
-            elif last_pressed_key == 'u' and consecutive_press_count == 1:
-                v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
-                sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to {v_msg}...")
-                sys.stdout.flush()
-            else:
-                sys.stdout.write("\r[?] Ready for hotkey: ")
-                sys.stdout.flush()
+            # ─── DYNAMIC CONSOLE PROMPT RENDERING ENGINE ───
+            # Try to acquire the console lock cleanly without blocking payload transactions
+            if CONSOLE_LOCK.acquire(False):
+                try:
+                    if last_pressed_key == 'q' and consecutive_press_count > 0:
+                        latch_step = int(consecutive_press_count)
+                        sys.stdout.write(f"\r⚠️ Press [Q]uit again [{latch_step}/3] times to escape Kansas...")
+                        sys.stdout.flush()
+                    elif last_pressed_key == 'u' and consecutive_press_count == 1:
+                        v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
+                        sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to {v_msg}...")
+                        sys.stdout.flush()
+                    else:
+                        sys.stdout.write("\r[?] Ready for hotkey: ")
+                        sys.stdout.flush()
+                finally:
+                    CONSOLE_LOCK.release()
 
             user_triggered_key = ""
 
@@ -697,6 +709,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
             httpd_server_reference.shutdown()
             os._exit(0)
+
 
 			
 
