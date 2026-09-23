@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-victor"
+VERSION = "v0.0.76-whiskey"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -182,17 +182,21 @@ class RestApiHandler(BaseHTTPRequestHandler):
         self.wfile.write(b'{"status": "saved"}')
         self.wfile.flush()
 
-        process_html_content(
-            html_string=html_content, 
-            page_title=page_title, 
-            source_origin=page_url,
-            export_folder=cli_dict.get("export-folder"),
-            export_format=cli_dict.get("export-format"),
-            export_type=cli_dict.get("export-type"),
-            auto_timeout=CLI_ARGS.auto,
-            editor_override=cli_dict.get("chosen-editor"),
-            app_version=VERSION
-        )
+        threading.Thread(
+            target=process_html_content,
+            kwargs={
+                "html_string": html_content, 
+                "page_title": page_title, 
+                "source_origin": page_url,
+                "export_folder": cli_dict.get("export-folder"),
+                "export_format": cli_dict.get("export-format"),
+                "export_type": cli_dict.get("export-type"),
+                "auto_timeout": CLI_ARGS.auto,
+                "editor_override": cli_dict.get("chosen-editor"),
+                "app_version": VERSION
+            },
+            daemon=True
+        ).start()
 
 
 def check_for_updates_silently():
@@ -531,6 +535,9 @@ def run_server():
     server_address = ('', PORT)
     httpd = HTTPServer(server_address, RestApiHandler)
 
+    server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    server_thread.start()	
+
     cli_dict = vars(CLI_ARGS)
     startup_log = [
         f"Server Listening:   http://localhost:{PORT}",
@@ -546,7 +553,7 @@ def run_server():
         f"   [Q]uit Application: Requires 3 consecutive taps with the shoes to escape Kansas."
 		
     ]
-    # Enforces a solid structural margin to display the long hash strings beautifully
+
     render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=60)
         
     execute_interactive_dashboard_monitor(httpd)
@@ -582,7 +589,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
         try:
             # ─── DYNAMIC CONSOLE PROMPT RENDERING ENGINE ───
             if last_pressed_key == 'q' and consecutive_press_count > 0:
-                sys.stdout.write(f"\r⚠️ Press [Q]uit again [{round((int(consecutive_press_count) or 0) / 3)}/3] times to escape Kansas...")
+				latch_step = int(consecutive_press_count)
+                sys.stdout.write(f"\r⚠️ Press [Q]uit again [{latch_step}/3] times to escape Kansas...")
                 sys.stdout.flush()
             elif last_pressed_key == 'u' and consecutive_press_count == 1:
                 v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
