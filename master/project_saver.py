@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-romeo"
+VERSION = "v0.0.76-sierra"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -309,8 +309,15 @@ def check_for_startup_update_and_run():
         print("[+] Launching background listening socket loops...\n")
 
 
-def check_and_perform_update():
-    """Performs manual force upgrade downloads via --update with full SHA-256 manifest validation."""
+def check_and_perform_update(mode_override: int = 0):
+    """
+    Performs manual force upgrade downloads via --update with full SHA-256 manifest validation
+    Bitmask stacking flags (0-15):
+      1 = Check Version
+      2 = Check Update
+      4 = Update (Hot-Swap)
+      8 = New token + renew singlefile JSON configuration profile
+    """
     import platform
     import os
     import sys
@@ -321,7 +328,26 @@ def check_and_perform_update():
 
     is_windows = platform.system().lower() == "windows" 
     expected_version = ""
-    api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
+    api_url = f"https://github.com{REPO_OWNER}/{REPO_NAME}/releases/latest"
+    
+    # ─── 1. EVALUATE BITMASK: TOKEN AND CONFIGURATION GENERATION (Bit 8) ───
+    if mode_override & 8:
+        script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        cfg_file_path = os.path.join(script_base_dir, "project_saver.cfg")
+        if os.path.exists(cfg_file_path):
+            try: os.remove(cfg_file_path)
+            except: pass
+        resolve_or_create_security_token("project_saver.cfg")
+        print(f"[+] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
+        print("💡 Tip: Re-import your fresh singlefile configuration profile into your browser extension.")
+        # If ONLY bit 8 was set, we can exit early safely
+        if mode_override == 8:
+            return
+
+    # Skip network queries if no update or version bits are stacked
+    if not (mode_override & 1 or mode_override & 2 or mode_override & 4):
+        return
+
     print(f"[*] Initializing secure system upgrade check via: {api_url}")
     
     try:
@@ -338,6 +364,15 @@ def check_and_perform_update():
                 print(f"[+] Already running the latest version {VERSION}.")
                 return
             
+            # ─── 2. EVALUATE BITMASK: CHECK VERSION ONLY (Bit 1) ───
+            if (mode_override & 1) and not (mode_override & 4):
+                if latest == VERSION:
+                    print(f"[+] You are running the latest release ({VERSION}).")
+                else:
+                    print(f"[📢] UPDATE FOUND: Github version is [{latest}]. Local version is [{VERSION}].")
+                if mode_override == 1:
+                    return latest
+
             download_url = None
             manifest_url = None
             for asset in data.get("assets", []):
@@ -351,81 +386,84 @@ def check_and_perform_update():
                 print("[-] Error: Missing distribution executable or master manifest.txt in release.")
                 return
 
-            print(f"[*] Fetching delivery assets for integrity verification...")
-            temp_download_name = "project_saver.new" if is_windows else f"project_saver_{latest}_linux"
-            temp_download_path = os.path.join(install_dir, temp_download_name)
-            
-            # 1. Download the new binary payload
-            with urllib.request.urlopen(download_url) as stream:
-                with open(temp_download_path, "wb") as f: 
-                    f.write(stream.read())
-            
-            # 2. Download the unified manifest.txt file strings into runner memory
-            expected_hash = None
-            with urllib.request.urlopen(manifest_url) as stream:
-                manifest_lines = stream.read().decode('utf-8').splitlines()
-                # Locate the very first SHA-256 Checksum string in the document (corresponds to asset 1)
-                for line in manifest_lines:
-                    if "Version Tag" in line:
-                        expected_version = line.split(":")[1].strip().lower()
-                    if "SHA-256 Checksum" in line:
-                        expected_hash = line.split(":")[1].strip().lower()
-                        break
-
-
-            if not expected_hash:
-                print("[-] Verification Error: Manifest format is malformed or invalid.")
-                os.remove(temp_download_path)
-                return
-
-            # 3. NATIVE CRYPTOGRAPHIC SHA-256 CALCULATION LOOP
-            print("[*] Evaluating security footprint hash keys...")
-            sha256_hash = hashlib.sha256()
-            with open(temp_download_path, "rb") as f:
-                for byte_block in iter(lambda: f.read(4096), b""):
-                    sha256_hash.update(byte_block)
-            computed_hash = sha256_hash.hexdigest().lower()
-
-            print(f"    -> Expected Hash: {expected_hash}")
-            print(f"    -> Computed Hash: {computed_hash}")
-
-            if computed_hash != expected_hash:
-                print("\n[🚨] SECURITY BARRICADE: SHA-256 Integrity Hash Mismatch!")
-                print("    The downloaded upgrade executable failed security checksum validation.")
-                print("    Upgrade aborted automatically to protect this machine.")
-                os.remove(temp_download_path)
-                return
-
-            verification_status = "[+] SHA-256 Integrity Verification Passed"
-            #print("[+] Cryptographic Verification Passed: Binary file code matches perfectly.")
-
-            # 4. ATOMIC HOT-SWAP REPLACEMENT CHOREOGRAPHY
-            if is_windows:
-                old_exe_path = os.path.join(install_dir, "project_saver.old")
-                if os.path.exists(old_exe_path):
-                    try: os.remove(old_exe_path)
-                    except Exception: pass
-
-                verification_status += ", Performing safe hot-swap update..."
-                print(f"{verification_status}")
-                os.rename(current_exe_path, old_exe_path)
-                os.rename(temp_download_path, current_exe_path)
+            # ─── 3. EVALUATE BITMASK: EXECUTE DOWNSTREAM UPDATE PROCESS (Bit 4) ───
+            if mode_override & 4:
+                print(f"[*] Pre-Fetching Project Saver for integrity verification...")
+                temp_download_name = "project_saver.new" if is_windows else f"project_saver_{latest}_linux"
+                temp_download_path = os.path.join(install_dir, temp_download_name)
                 
-                cleanup_cmd = f"timeout /t 2 >nul && del \"{old_exe_path}\""
-                subprocess.Popen(cleanup_cmd, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
-            else:
-                final_linux_path = os.path.join(install_dir, "project_saver")
-                if os.path.exists(final_linux_path):
-                    os.remove(final_linux_path)
-                os.rename(temp_download_path, final_linux_path)
-                os.chmod(final_linux_path, 0o755)
+                # Download binary payload
+                with urllib.request.urlopen(download_url) as stream:
+                    with open(temp_download_path, "wb") as f: 
+                        f.write(stream.read())
+                
+                # Download manifest payload
+                expected_hash = None
+                with urllib.request.urlopen(manifest_url) as stream:
+                    manifest_lines = stream.read().decode('utf-8').splitlines()
+                    for line in manifest_lines:
+                        if "Version Tag" in line:
+                            expected_version = line.split(":")[1].strip().lower()
+                        if "SHA-256 Checksum" in line:
+                            expected_hash = line.split(":")[1].strip().lower()
+                            break
 
-            print("[+] SUCCESS: Secure upgrade to latest version completed...")
-            print(f"[+] Please restart Project Saver to run {expected_version}!")
-            sys.exit(0)
+                if not expected_hash:
+                    print("[-] Verification Error: Manifest format is malformed or invalid.")
+                    try: os.remove(temp_download_path)
+                    except: pass
+                    return
+
+                # Cryptographic Validation Loop
+                print("[*] Verifying Project Saver integrity hash...")
+                sha256_hash = hashlib.sha256()
+                with open(temp_download_path, "rb") as f:
+                    for byte_block in iter(lambda: f.read(4096), b""):
+                        sha256_hash.update(byte_block)
+                computed_hash = sha256_hash.hexdigest().lower()
+
+                print(f"    -> Expected Hash: {expected_hash}")
+                print(f"    -> Computed Hash: {computed_hash}")
+
+                if computed_hash != expected_hash:
+                    print("\n[!] SECURITY ISSUE: SHA-256 Integrity Hash Mismatch!")
+                    print("    The downloaded upgrade executable failed security checksum validation.")
+                    print("    Upgrade aborted automatically to protect this machine.")
+                    try: os.remove(temp_download_path)
+                    except: pass
+                    return
+
+                verification_status = "[+] SHA-256 Integrity Verification Passed"
+
+                if is_windows:
+                    old_exe_path = os.path.join(install_dir, "project_saver.old")
+                    if os.path.exists(old_exe_path):
+                        try: os.remove(old_exe_path)
+                        except Exception: pass
+
+                    verification_status += ", Performing safe hot-swap update..."
+                    print(f"{verification_status}")
+                    os.rename(current_exe_path, old_exe_path)
+                    os.rename(temp_download_path, current_exe_path)
+                    
+                    cleanup_cmd = f"timeout /t 2 >nul && del \"{old_exe_path}\""
+                    subprocess.Popen(cleanup_cmd, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                else:
+                    final_linux_path = os.path.join(install_dir, "project_saver")
+                    if os.path.exists(final_linux_path):
+                        os.remove(final_linux_path)
+                    os.rename(temp_download_path, final_linux_path)
+                    os.chmod(final_linux_path, 0o755)
+
+                print("[+] SUCCESS: Secure upgrade to latest version completed...")
+                print(f"[+] Please restart Project Saver to run {expected_version if expected_version else latest}!")
+                sys.exit(0)
+                
+            return latest
             
     except Exception as e:
         print(f"[-] Secure upgrade block failed: {e}")
+        return None
 
 def save_config_file(filepath, args_namespace):
     try:
@@ -494,19 +532,170 @@ def run_server():
         f"Server Listening:   http://localhost:{PORT}",
         f"Security Token:     {EXPECTED_TOKEN}",
         "---",
-        f"📂 Target Folder:   {os.path.abspath(cli_dict.get('export-folder'))}",
-        f"⚙️ Profile Mode:    {str(cli_dict.get('export-type')).upper()}",
-        f"🗒️ Formats Enabled: {str(cli_dict.get('export-format')).upper()}",
+        f"📂 [E]xport Folder:   {os.path.abspath(cli_dict.get('export-folder'))}",
+        f"⚙️ [P]rofile Mode:    {str(cli_dict.get('export-type')).upper()}",
+        f"🗒️ [F]ormats Enabled: {str(cli_dict.get('export-format')).upper()}",
         "---",
-        "💡 Quick Action:    Import singlefile-project-saver-config.json straight into SingleFile Options."
+        f"💡 [I]mport Config:   Open folder containing singlefile-project-saver-config.json configuration.",
+        f"  [R]enew Token:     Regenerate randomized API access authorization key.",
+        f"  [U]pdate: Verify integrity hash and update application (1x=check, 2x=update).",
+        f"  [Q]uit Application: Requires 3 consecutive taps with the shoes to escape Kansas."
+		
     ]
     # Enforces a solid structural margin to display the long hash strings beautifully
     render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=60)
         
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
+    execute_interactive_dashboard_monitor(httpd)
+
+
+def execute_interactive_dashboard_monitor(httpd_server_reference):
+    """Listens for live hotkey inputs  without freezing the server socket."""
+    import sys
+    import subprocess
+    import urllib.request
+    import json
+    
+    is_windows = os.name == 'nt'
+    if is_windows:
+        import msvcrt
+    else:
+        import select
+
+    quit_press_counter = 0
+    update_press_counter = 0
+    latest_discovered_version = None
+    
+    cli_dict = vars(CLI_ARGS)
+    script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+
+    def clear_interactive_line():
+        """Cleans out prompt echoes from terminal memory lines."""
+        if is_windows:
+            sys.stdout.write("\r" + " " * 78 + "\r")
+            sys.stdout.flush()
+
+    while True:
+        try:
+            # ─── DYNAMIC CONSOLE PROMPT RENDERING ENGINE ───
+            if quit_press_counter > 0:
+                sys.stdout.write(f"\r⚠️ Press [Q]uit again [{quit_press_counter / 3}] times to escape Kansas...")
+                sys.stdout.flush()
+            elif update_press_counter == 1:
+                v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
+                sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to {v_msg}...")
+                sys.stdout.flush()
+            else:
+                sys.stdout.write("\r[?] Ready for hotkey: ")
+                sys.stdout.flush()
+
+            user_triggered_key = ""
+
+            # ─── NON-BLOCKING KEY INTERCEPTION LAYER ───
+            if is_windows:
+                if msvcrt.kbhit():
+                    user_triggered_key = msvcrt.getwche().lower()
+                else:
+                    time.sleep(0.1)
+                    continue
+            else:
+                ready, _, _ = select.select([sys.stdin], [], [], 0.1)
+                if ready:
+                    user_triggered_key = sys.stdin.readline().strip().lower()
+                else:
+                    continue
+
+            # ─── INTERACTIVE ROUTING ACTION MATRIX ───
+            if user_triggered_key == 'e':
+                clear_interactive_line()
+                export_path = os.path.abspath(cli_dict.get('export-folder'))
+                print(f"[E] Opening export folder: {export_path}")
+                if not os.path.exists(export_path):
+                    os.makedirs(export_path, exist_ok=True)
+                if is_windows:
+                    subprocess.Popen(f'explorer.exe "{export_path}"')
+                elif sys.platform == 'darwin':
+                    subprocess.Popen(['open', export_path])
+                else:
+                    subprocess.Popen(['xdg-open', export_path])
+
+            elif user_triggered_key == 'i':
+                clear_interactive_line()
+                print(f"[I] Opening folder to SingleFile JSON configuration file: {script_base_dir}")
+                if is_windows:
+                    subprocess.Popen(f'explorer.exe "{script_base_dir}"')
+                elif sys.platform == 'darwin':
+                    subprocess.Popen(['open', script_base_dir])
+                else:
+                    subprocess.Popen(['xdg-open', script_base_dir])
+
+            elif user_triggered_key == 'r':
+                clear_interactive_line()
+                print("[R] Re-creating secure token...")
+                # Re-use config resolution parameter logic natively to reset the system token state
+                resolve_or_create_security_token("project_saver.cfg")
+                print(f"[🎉] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
+                print("💡 Tip: Re-import your new singlefile configuration profile into your browser extension.")
+
+            elif user_triggered_key == 'f':
+                clear_interactive_line()
+                print(f"[F] Formats active profile values: {str(cli_dict.get('export-format')).upper()}")
+
+            elif user_triggered_key == 'p':
+                clear_interactive_line()
+                print(f"[P] Parsing profile strategy layout mode: {str(cli_dict.get('export-type')).upper()}")
+
+            elif user_triggered_key == 'u':
+                update_press_counter += 1
+                if update_press_counter == 1:
+                    clear_interactive_line()
+                    print("[*] Contacting GitHub API manifest repository to check for updates...")
+                    try:
+                        api_url = f"https://github.com/{REPO_OWNER}/{REPO_NAME}/releases/latest"
+                        req = urllib.request.Request(api_url, headers={'User-Agent': 'Project-Saver-Hotkey-Check'})
+                        with urllib.request.urlopen(req, timeout=3) as response:
+                            data = json.loads(response.read().decode('utf-8'))
+                            latest_discovered_version = data.get("tag_name", "").strip()
+                            
+                            if latest_discovered_version == VERSION:
+                                print(f"[+] You are already running the latest release ({VERSION}).")
+                                update_press_counter = 0
+                                latest_discovered_version = None
+                            else:
+                                print(f"[!] UPDATE FOUND: Newest version is [{latest_discovered_version}]. Local version is [{VERSION}].")
+                    except Exception:
+                        print("[-] Network Status: Could not ping GitHub API. Update check aborted.")
+                        update_press_counter = 0
+                        latest_discovered_version = None
+                    continue
+                    
+                elif update_press_counter >= 2:
+                    clear_interactive_line()
+                    print("\n[*] Update Started: Initializing secure system upgrade sequence...")
+                    httpd_server_reference.shutdown()
+                    check_and_perform_update()
+                    sys.exit(0)
+
+            elif user_triggered_key == 'q':
+                quit_press_counter += 1
+                if quit_press_counter >= 3:
+                    clear_interactive_line()
+                    print("\n[-] Shutting down: Project Saver API Server Daemon listening threads. Goodbye!")
+                    httpd_server_reference.shutdown()
+                    sys.exit(0)
+                continue
+
+            # ─── SAFETY SEQUENTIAL LATENCY RESET RESET ───
+            if user_triggered_key != 'q' and user_triggered_key != "":
+                quit_press_counter = 0
+            if user_triggered_key != 'u' and user_triggered_key != "":
+                update_press_counter = 0
+                latest_discovered_version = None
+
+        except KeyboardInterrupt:
+            print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
+            httpd_server_reference.shutdown()
+            sys.exit(0)
+			
 
 if __name__ == "__main__":
     if os.name == 'nt':
