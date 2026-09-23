@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-uniform"
+VERSION = "v0.0.76-victor"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -314,8 +314,8 @@ def check_and_perform_update(mode_override: int = 0):
     Performs manual force upgrade downloads via --update with full SHA-256 manifest validation
     Bitmask stacking flags (0-15):
       1 = Check Version
-      2 = Check Update
-      4 = Update (Hot-Swap)
+      2 = Check Update (Manifest Parsing / Fetch expected hash)
+      4 = Update (Hot-Swap / Download & Replace Executable)
       8 = New token + renew singlefile JSON configuration profile
     """
     import platform
@@ -328,6 +328,7 @@ def check_and_perform_update(mode_override: int = 0):
 
     is_windows = platform.system().lower() == "windows" 
     expected_version = ""
+    expected_hash = None
     api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
     
     # ─── 1. EVALUATE BITMASK: TOKEN AND CONFIGURATION GENERATION (Bit 8) ───
@@ -340,7 +341,6 @@ def check_and_perform_update(mode_override: int = 0):
         resolve_or_create_security_token("project_saver.cfg")
         print(f"[+] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
         print("💡 Tip: Re-import your fresh singlefile configuration profile into your browser extension.")
-        # If ONLY bit 8 was set, we can exit early safely
         if mode_override == 8:
             return
 
@@ -365,6 +365,7 @@ def check_and_perform_update(mode_override: int = 0):
                 return
             
             # ─── 2. EVALUATE BITMASK: CHECK VERSION ONLY (Bit 1) ───
+            # Only intercept and return early if bit 1 is set EXCLUSIVELY without update execution triggers
             if (mode_override & 1) and not (mode_override & 4):
                 if latest == VERSION:
                     print(f"[+] You are running the latest release ({VERSION}).")
@@ -386,7 +387,20 @@ def check_and_perform_update(mode_override: int = 0):
                 print("[-] Error: Missing distribution executable or master manifest.txt in release.")
                 return
 
-            # ─── 3. EVALUATE BITMASK: EXECUTE DOWNSTREAM UPDATE PROCESS (Bit 4) ───
+            # ─── 3. EVALUATE BITMASK: VERIFY MANIFEST FILES (Bit 2) ───
+            # Download and parse manifest fields if either manifest check (2) or execution update (4) bits are set
+            if mode_override & 2 or mode_override & 4:
+                print(f"[*] Fetching delivery assets for integrity verification...")
+                with urllib.request.urlopen(manifest_url) as stream:
+                    manifest_lines = stream.read().decode('utf-8').splitlines()
+                    for line in manifest_lines:
+                        if "Version Tag" in line:
+                            expected_version = line.split(":")[1].strip().lower()
+                        if "SHA-256 Checksum" in line:
+                            expected_hash = line.split(":")[1].strip().lower()
+                            break
+
+            # ─── 4. EVALUATE BITMASK: EXECUTE DOWNSTREAM UPDATE PROCESS (Bit 4) ───
             if mode_override & 4:
                 print(f"[*] Pre-Fetching Project Saver for integrity verification...")
                 temp_download_name = "project_saver.new" if is_windows else f"project_saver_{latest}_linux"
@@ -396,17 +410,6 @@ def check_and_perform_update(mode_override: int = 0):
                 with urllib.request.urlopen(download_url) as stream:
                     with open(temp_download_path, "wb") as f: 
                         f.write(stream.read())
-                
-                # Download manifest payload
-                expected_hash = None
-                with urllib.request.urlopen(manifest_url) as stream:
-                    manifest_lines = stream.read().decode('utf-8').splitlines()
-                    for line in manifest_lines:
-                        if "Version Tag" in line:
-                            expected_version = line.split(":")[1].strip().lower()
-                        if "SHA-256 Checksum" in line:
-                            expected_hash = line.split(":")[1].strip().lower()
-                            break
 
                 if not expected_hash:
                     print("[-] Verification Error: Manifest format is malformed or invalid.")
@@ -464,6 +467,7 @@ def check_and_perform_update(mode_override: int = 0):
     except Exception as e:
         print(f"[-] Secure upgrade failed: {e}")
         return None
+
 
 def save_config_file(filepath, args_namespace):
     try:
@@ -767,7 +771,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if cli_dict.get("update"):
-        check_and_perform_update()
+        check_and_perform_update(mode_override=7)
         sys.exit(0)
 
     if cli_dict.get("config-save"):
