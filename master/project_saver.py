@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-sierra"
+VERSION = "v0.0.76-tango"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -248,7 +248,7 @@ def check_for_startup_update_and_run():
     # We only use interactive keyboard prompts on Windows nodes natively
     is_windows = platform.system().lower() == "windows"
     if not is_windows:
-        print("[*] Project Saver core daemon processing initialized on local port 19763...")
+        print("[*] Project Saver daemon initialized on local port 19763...")
         return
 
     # Import native Windows tracking library without external dependencies
@@ -328,7 +328,7 @@ def check_and_perform_update(mode_override: int = 0):
 
     is_windows = platform.system().lower() == "windows" 
     expected_version = ""
-    api_url = f"https://github.com{REPO_OWNER}/{REPO_NAME}/releases/latest"
+    api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
     
     # ─── 1. EVALUATE BITMASK: TOKEN AND CONFIGURATION GENERATION (Bit 8) ───
     if mode_override & 8:
@@ -369,7 +369,7 @@ def check_and_perform_update(mode_override: int = 0):
                 if latest == VERSION:
                     print(f"[+] You are running the latest release ({VERSION}).")
                 else:
-                    print(f"[📢] UPDATE FOUND: Github version is [{latest}]. Local version is [{VERSION}].")
+                    print(f"[U] UPDATE FOUND: Latest version is [{latest}]. Local version is [{VERSION}].")
                 if mode_override == 1:
                     return latest
 
@@ -415,7 +415,7 @@ def check_and_perform_update(mode_override: int = 0):
                     return
 
                 # Cryptographic Validation Loop
-                print("[*] Verifying Project Saver integrity hash...")
+                print("[*] Verifying Project Saver integrity SHA-256 hash...")
                 sha256_hash = hashlib.sha256()
                 with open(temp_download_path, "rb") as f:
                     for byte_block in iter(lambda: f.read(4096), b""):
@@ -462,7 +462,7 @@ def check_and_perform_update(mode_override: int = 0):
             return latest
             
     except Exception as e:
-        print(f"[-] Secure upgrade block failed: {e}")
+        print(f"[-] Secure upgrade failed: {e}")
         return None
 
 def save_config_file(filepath, args_namespace):
@@ -537,9 +537,9 @@ def run_server():
         f"🗒️ [F]ormats Enabled: {str(cli_dict.get('export-format')).upper()}",
         "---",
         f"💡 [I]mport Config:   Open folder containing singlefile-project-saver-config.json configuration.",
-        f"  [R]enew Token:     Regenerate randomized API access authorization key.",
-        f"  [U]pdate: Verify integrity hash and update application (1x=check, 2x=update).",
-        f"  [Q]uit Application: Requires 3 consecutive taps with the shoes to escape Kansas."
+        f"   [R]enew Token:     Regenerate randomized API access authorization key.",
+        f"   [U]pdate: Verify integrity hash and update application (1x=check, 2x=update).",
+        f"   [Q]uit Application: Requires 3 consecutive taps with the shoes to escape Kansas."
 		
     ]
     # Enforces a solid structural margin to display the long hash strings beautifully
@@ -608,7 +608,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             if user_triggered_key == 'e':
                 clear_interactive_line()
                 export_path = os.path.abspath(cli_dict.get('export-folder'))
-                print(f"[E] Opening export folder: {export_path}")
+                print(f"[E] Export folder opened: {export_path}")
                 if not os.path.exists(export_path):
                     os.makedirs(export_path, exist_ok=True)
                 if is_windows:
@@ -620,7 +620,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
             elif user_triggered_key == 'i':
                 clear_interactive_line()
-                print(f"[I] Opening folder to SingleFile JSON configuration file: {script_base_dir}")
+                print(f"[I] Import SingleFile JSON config folder opened: {script_base_dir}")
                 if is_windows:
                     subprocess.Popen(f'explorer.exe "{script_base_dir}"')
                 elif sys.platform == 'darwin':
@@ -633,7 +633,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 print("[R] Re-creating secure token...")
                 # Re-use config resolution parameter logic natively to reset the system token state
                 resolve_or_create_security_token("project_saver.cfg")
-                print(f"[🎉] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
+                print(f"[+] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
                 print("💡 Tip: Re-import your new singlefile configuration profile into your browser extension.")
 
             elif user_triggered_key == 'f':
@@ -650,7 +650,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     clear_interactive_line()
                     print("[*] Contacting GitHub API manifest repository to check for updates...")
                     try:
-                        api_url = f"https://github.com/{REPO_OWNER}/{REPO_NAME}/releases/latest"
+                        api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
                         req = urllib.request.Request(api_url, headers={'User-Agent': 'Project-Saver-Hotkey-Check'})
                         with urllib.request.urlopen(req, timeout=3) as response:
                             data = json.loads(response.read().decode('utf-8'))
