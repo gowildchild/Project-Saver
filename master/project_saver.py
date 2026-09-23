@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.76-tango"
+VERSION = "v0.0.76-uniform"
 PORT = 19763
 EXPECTED_TOKEN = ""
 REPO_OWNER = "gowildchild"
@@ -549,11 +549,10 @@ def run_server():
 
 
 def execute_interactive_dashboard_monitor(httpd_server_reference):
-    """Listens for live hotkey inputs  without freezing the server socket."""
+    """Listens for live hotkey inputs using consecutive bitmask actions without freezing the server socket."""
     import sys
+    import os  # Required for clean OS process tree termination
     import subprocess
-    import urllib.request
-    import json
     
     is_windows = os.name == 'nt'
     if is_windows:
@@ -561,8 +560,9 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
     else:
         import select
 
-    quit_press_counter = 0
-    update_press_counter = 0
+    # ─── UNIVERSAL CONSECUTIVE BUTTON PRESS STATE MACHINE ───
+    last_pressed_key = None
+    consecutive_press_count = 0
     latest_discovered_version = None
     
     cli_dict = vars(CLI_ARGS)
@@ -577,10 +577,10 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
     while True:
         try:
             # ─── DYNAMIC CONSOLE PROMPT RENDERING ENGINE ───
-            if quit_press_counter > 0:
-                sys.stdout.write(f"\r⚠️ Press [Q]uit again [{quit_press_counter / 3}] times to escape Kansas...")
+            if last_pressed_key == 'q' and consecutive_press_count > 0:
+                sys.stdout.write(f"\r⚠️ Press [Q]uit again [{round((int(consecutive_press_count) or 0) / 3)}/3] times to escape Kansas...")
                 sys.stdout.flush()
-            elif update_press_counter == 1:
+            elif last_pressed_key == 'u' and consecutive_press_count == 1:
                 v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
                 sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to {v_msg}...")
                 sys.stdout.flush()
@@ -603,6 +603,14 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     user_triggered_key = sys.stdin.readline().strip().lower()
                 else:
                     continue
+
+            # ─── EVALUATE INTERACTIVE BUTTON PRESS REPETITION COUNTS ───
+            if user_triggered_key != "":
+                if user_triggered_key == last_pressed_key:
+                    consecutive_press_count += 1
+                else:
+                    last_pressed_key = user_triggered_key
+                    consecutive_press_count = 1
 
             # ─── INTERACTIVE ROUTING ACTION MATRIX ───
             if user_triggered_key == 'e':
@@ -631,10 +639,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             elif user_triggered_key == 'r':
                 clear_interactive_line()
                 print("[R] Re-creating secure token...")
-                # Re-use config resolution parameter logic natively to reset the system token state
-                resolve_or_create_security_token("project_saver.cfg")
-                print(f"[+] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
-                print("💡 Tip: Re-import your new singlefile configuration profile into your browser extension.")
+                check_and_perform_update(mode_override=8)
 
             elif user_triggered_key == 'f':
                 clear_interactive_line()
@@ -645,56 +650,43 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 print(f"[P] Parsing profile strategy layout mode: {str(cli_dict.get('export-type')).upper()}")
 
             elif user_triggered_key == 'u':
-                update_press_counter += 1
-                if update_press_counter == 1:
+                if consecutive_press_count == 1:
                     clear_interactive_line()
-                    print("[*] Contacting GitHub API manifest repository to check for updates...")
-                    try:
-                        api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
-                        req = urllib.request.Request(api_url, headers={'User-Agent': 'Project-Saver-Hotkey-Check'})
-                        with urllib.request.urlopen(req, timeout=3) as response:
-                            data = json.loads(response.read().decode('utf-8'))
-                            latest_discovered_version = data.get("tag_name", "").strip()
-                            
-                            if latest_discovered_version == VERSION:
-                                print(f"[+] You are already running the latest release ({VERSION}).")
-                                update_press_counter = 0
-                                latest_discovered_version = None
-                            else:
-                                print(f"[!] UPDATE FOUND: Newest version is [{latest_discovered_version}]. Local version is [{VERSION}].")
-                    except Exception:
-                        print("[-] Network Status: Could not ping GitHub API. Update check aborted.")
-                        update_press_counter = 0
+                    # Bitmask 1: Performs remote API release asset tag version check only
+                    latest_discovered_version = check_and_perform_update(mode_override=1)
+                    if not latest_discovered_version or latest_discovered_version == VERSION:
+                        last_pressed_key = None
+                        consecutive_press_count = 0
                         latest_discovered_version = None
                     continue
                     
-                elif update_press_counter >= 2:
+                elif consecutive_press_count >= 2:
                     clear_interactive_line()
                     print("\n[*] Update Started: Initializing secure system upgrade sequence...")
                     httpd_server_reference.shutdown()
-                    check_and_perform_update()
-                    sys.exit(0)
+                    # Bitmask 4: Executes complete file validation and atomic update hot-swap
+                    check_and_perform_update(mode_override=4)
+                    os._exit(0)
 
             elif user_triggered_key == 'q':
-                quit_press_counter += 1
-                if quit_press_counter >= 3:
+                if consecutive_press_count >= 3:
                     clear_interactive_line()
                     print("\n[-] Shutting down: Project Saver API Server Daemon listening threads. Goodbye!")
                     httpd_server_reference.shutdown()
-                    sys.exit(0)
+                    os._exit(0)
                 continue
 
-            # ─── SAFETY SEQUENTIAL LATENCY RESET RESET ───
-            if user_triggered_key != 'q' and user_triggered_key != "":
-                quit_press_counter = 0
-            if user_triggered_key != 'u' and user_triggered_key != "":
-                update_press_counter = 0
+            if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
+                last_pressed_key = None
+                consecutive_press_count = 0
                 latest_discovered_version = None
 
         except KeyboardInterrupt:
+            # Clean exit capture for standard console shortcuts (Ctrl+C)
             print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
             httpd_server_reference.shutdown()
-            sys.exit(0)
+            os._exit(0)
+
 			
 
 if __name__ == "__main__":
