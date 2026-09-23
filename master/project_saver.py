@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.77-india"
+VERSION = "v0.0.77-julliet"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -104,17 +104,14 @@ class RestApiHandler(BaseHTTPRequestHandler):
         token = auth_header.replace("Bearer ", "").strip() if auth_header else ""
         
         if token != EXPECTED_TOKEN:
-            # Render unauthorized connection warning logs inside the clean box engine
-            # Protected by console lock to prevent prompt text layout clipping
-            with CONSOLE_LOCK:
-                alert_log = [
-                    "⚠️  SECURITY ALERT: Unauthorized Request Blocked!",
-                    "---",
-                    f"Source IP Network: {self.client_address[0]}",
-                    "Reason: Transmission Authorization Token Mismatch.",
-                    f"Token: {token} Expected: {EXPECTED_TOKEN}",
-                ]
-                render_better_box(alert_log, title_str="Security Warning", box_width_override=70)
+            alert_log = [
+                "⚠️  SECURITY ALERT: Unauthorized Request Blocked!",
+                "---",
+                f"Source IP Network: {self.client_address[0]}",
+                "Reason: Transmission Authorization Token Mismatch.",
+                f"Token: {token} Expected: {EXPECTED_TOKEN}",
+            ]
+            render_better_box(alert_log, title_str="Security Warning", box_width_override=70)
             self.send_response(401)
             self.end_headers()
             return
@@ -176,10 +173,8 @@ class RestApiHandler(BaseHTTPRequestHandler):
             f"🌐 Origin: {page_url if len(page_url) <= 84 else f'{page_url[:84]}..'}"
         ]
         
-        # FIXED: Synchronize console outputs via shared thread lock to prevent hotkey prompt overrides
-        with CONSOLE_LOCK:
-            print() # Print empty line break for clean display
-            render_better_box(intercept_log, title_str="\033[93mNetwork Interception Notice\033[0m", box_width_override=86)
+        print() # Print empty line break for clean display
+        render_better_box(intercept_log, title_str="\033[93mNetwork Interception Notice\033[0m", box_width_override=86)
 
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
@@ -187,21 +182,19 @@ class RestApiHandler(BaseHTTPRequestHandler):
         self.wfile.write(b'{"status": "saved"}')
         self.wfile.flush()
 
-        threading.Thread(
-            target=process_html_content,
-            kwargs={
-                "html_string": html_content, 
-                "page_title": page_title, 
-                "source_origin": page_url,
-                "export_folder": cli_dict.get("export-folder"),
-                "export_format": cli_dict.get("export-format"),
-                "export_type": cli_dict.get("export-type"),
-                "auto_timeout": CLI_ARGS.auto,
-                "editor_override": cli_dict.get("chosen-editor"),
-                "app_version": VERSION
-            },
-            daemon=True
-        ).start()
+        # FIXED: Processes page archiving sequentially on the main loop without thread clutter
+        process_html_content(
+            html_string=html_content, 
+            page_title=page_title, 
+            source_origin=page_url,
+            export_folder=cli_dict.get("export-folder"),
+            export_format=cli_dict.get("export-format"),
+            export_type=cli_dict.get("export-type"),
+            auto_timeout=CLI_ARGS.auto,
+            editor_override=cli_dict.get("chosen-editor"),
+            app_version=VERSION
+        )
+
 
 
 
@@ -536,13 +529,13 @@ def run_server():
     set_terminal_title("Project Saver", VERSION, "Server Running")
     
     # Launches the silent background check thread for new GitHub releases
-    threading.Thread(target=check_for_updates_silently, daemon=True).start()
+    # threading.Thread(target=check_for_updates_silently, daemon=True).start()
 
     server_address = ('', PORT)
     httpd = HTTPServer(server_address, RestApiHandler)
 
-    server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-    server_thread.start()	
+    #server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    #server_thread.start()	
 
     cli_dict = vars(CLI_ARGS)
     startup_log = [
@@ -566,84 +559,61 @@ def run_server():
 
 
 def execute_interactive_dashboard_monitor(httpd_server_reference):
-    """Listens for live hotkey inputs using consecutive bitmask actions without freezing the server socket."""
+    """Processes server traffic and terminal hotkeys sequentially without high-speed loop cascades."""
     import sys
-    import os  # Required for clean OS process tree termination
+    import os
     import subprocess
-    import time  # FIXED: Imported time to resolve NameError crashes on Windows loop pause
-    
-    is_windows = os.name == 'nt'
-    if is_windows:
-        import msvcrt
-    else:
-        import select
+    import time
 
-    # ─── UNIVERSAL CONSECUTIVE BUTTON PRESS STATE MACHINE ───
-    last_pressed_key = None
-    consecutive_press_count = 0
+    quit_press_counter = 0
+    update_press_counter = 0
     latest_discovered_version = None
-    prompt_visible = False
-    
     cli_dict = vars(CLI_ARGS)
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
 
-    def clear_interactive_line():
-        """Cleans out prompt echoes from terminal memory lines."""
-        if is_windows:
-            sys.stdout.write("\r" + " " * 78 + "\r")
-            sys.stdout.flush()
-
     while True:
         try:
-            if CONSOLE_LOCK.acquire(False):
-                try:
-                    if last_pressed_key == 'q' and consecutive_press_count > 0:
-                        latch_step = int(consecutive_press_count)
-                        sys.stdout.write(f"\r⚠️ Press [Q]uit again [{latch_step}/3] times to escape Kansas...")
-                        sys.stdout.flush()
-                    elif last_pressed_key == 'u' and consecutive_press_count == 1:
-                        v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
-                        sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to {v_msg}...")
-                        sys.stdout.flush()
-                    else:
-                        sys.stdout.write("\r[?] Ready for hotkey: ")
-                    sys.stdout.flush()
-                    prompt_visible = True
-                finally:
-                    CONSOLE_LOCK.release()
+            # 1. Process exactly ONE incoming web request payload if SingleFile is waiting.
+            # Timeout = 0.1 seconds means it checks for network traffic briefly and moves on.
+            httpd_server_reference.timeout = 0.1
+            httpd_server_reference.handle_request()
 
+            # 2. Render the static interface status line safely
+            if quit_press_counter > 0:
+                sys.stdout.write(f"\r⚠️ Press [Q]uit again [{quit_press_counter}/3] times to escape Kansas...")
+            elif update_press_counter == 1:
+                v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
+                sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
+            else:
+                sys.stdout.write("\r[?] Ready for hotkey: ")
+            sys.stdout.flush()
+
+            # 3. Standard blocking input check using hardware polling
             user_triggered_key = ""
-
-            # ─── NON-BLOCKING KEY INTERCEPTION LAYER ───
-            if is_windows:
+            if os.name == 'nt':
+                import msvcrt
                 if msvcrt.kbhit():
-                    # FIXED: Reads key silently without printing artifacts to console or leaving scan bytes behind
                     user_triggered_key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
+                    # Hard flush any trailing scan codes from multi-byte key presses instantly
+                    while msvcrt.kbhit():
+                        msvcrt.getch()
                 else:
-                    time.sleep(0.1)  # FIXED: Resolves the NameError loop crash 
+                    time.sleep(0.1)
                     continue
             else:
+                import select
                 ready, _, _ = select.select([sys.stdin], [], [], 0.1)
-                if ready:
-                    user_triggered_key = sys.stdin.readline().strip().lower()
-                else:
+                if not ready:
                     continue
+                user_triggered_key = sys.stdin.readline().strip().lower()
 
-            if user_triggered_key != "":
-                prompt_visible = False 
-                if user_triggered_key == last_pressed_key:
-                    consecutive_press_count += 1
-                else:
-                    last_pressed_key = user_triggered_key
-                    consecutive_press_count = 1
-
+            # ─── HOTKEY MATRIX ACTIONS ───
             if user_triggered_key == 'e':
-                clear_interactive_line()
                 export_path = os.path.abspath(cli_dict.get('export-folder'))
-                print(f"[E] Export folder opened: {export_path}")
+                print(f"\n[E] Export folder opened: {export_path}")
                 if not os.path.exists(export_path):
                     os.makedirs(export_path, exist_ok=True)
-                if is_windows:
+                if os.name == 'nt':
                     subprocess.Popen(f'explorer.exe "{export_path}"')
                 elif sys.platform == 'darwin':
                     subprocess.Popen(['open', export_path])
@@ -651,9 +621,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     subprocess.Popen(['xdg-open', export_path])
 
             elif user_triggered_key == 'i':
-                clear_interactive_line()
-                print(f"[I] Import SingleFile JSON config folder opened: {script_base_dir}")
-                if is_windows:
+                print(f"\n[I] Import SingleFile JSON config folder opened: {script_base_dir}")
+                if os.name == 'nt':
                     subprocess.Popen(f'explorer.exe "{script_base_dir}"')
                 elif sys.platform == 'darwin':
                     subprocess.Popen(['open', script_base_dir])
@@ -661,55 +630,40 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     subprocess.Popen(['xdg-open', script_base_dir])
 
             elif user_triggered_key == 'r':
-                clear_interactive_line()
-                print("[R] Re-creating secure token...")
+                print("\n[R] Re-creating secure token...")
                 check_and_perform_update(mode_override=8)
 
             elif user_triggered_key == 'f':
-                clear_interactive_line()
-                print(f"[F] Formats active profile values: {str(cli_dict.get('export-format')).upper()}")
+                print(f"\n[F] Formats active profile values: {str(cli_dict.get('export-format')).upper()}")
 
             elif user_triggered_key == 'p':
-                clear_interactive_line()
-                print(f"[P] Parsing profile strategy layout mode: {str(cli_dict.get('export-type')).upper()}")
+                print(f"\n[P] Parsing profile strategy layout mode: {str(cli_dict.get('export-type')).upper()}")
 
             elif user_triggered_key == 'u':
-                if consecutive_press_count == 1:
-                    clear_interactive_line()
+                update_press_counter += 1
+                if update_press_counter == 1:
                     latest_discovered_version = check_and_perform_update(mode_override=1)
                     if not latest_discovered_version or latest_discovered_version == VERSION:
-                        last_pressed_key = None
-                        consecutive_press_count = 0
-                        latest_discovered_version = None
-                    continue
-                    
-                elif consecutive_press_count >= 2:
-                    clear_interactive_line()
+                        update_press_counter = 0
+                elif update_press_counter >= 2:
                     print("\n[*] Update Started: Initializing secure system upgrade sequence...")
-                    httpd_server_reference.shutdown()
                     check_and_perform_update(mode_override=4)
-                    os._exit(0)
-
-            elif user_triggered_key == 'q':
-                if consecutive_press_count >= 3:
-                    clear_interactive_line()
-                    print("\n[-] Shutting down: Project Saver API Server Daemon listening threads. Goodbye!")
-                    httpd_server_reference.shutdown()
                     os._exit(0)
                 continue
 
-            if is_windows:
-                while msvcrt.kbhit():
-                    msvcrt.getch()
-			
+            elif user_triggered_key == 'q':
+                quit_press_counter += 1
+                if quit_press_counter >= 3:
+                    print("\n[-] Shutting down: Project Saver API Server Daemon. Goodbye!")
+                    os._exit(0)
+                continue
+
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
-                last_pressed_key = None
-                consecutive_press_count = 0
-                latest_discovered_version = None
+                quit_press_counter = 0
+                update_press_counter = 0
 
         except KeyboardInterrupt:
             print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
-            httpd_server_reference.shutdown()
             os._exit(0)
 
 
