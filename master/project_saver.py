@@ -581,7 +581,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
     last_pressed_key = None
     consecutive_press_count = 0
     latest_discovered_version = None
-	prompt_visible = False
+    prompt_visible = False
     
     cli_dict = vars(CLI_ARGS)
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
@@ -607,7 +607,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     else:
                         sys.stdout.write("\r[?] Ready for hotkey: ")
                     sys.stdout.flush()
-					prompt_visible = True
+                    prompt_visible = True
                 finally:
                     CONSOLE_LOCK.release()
 
