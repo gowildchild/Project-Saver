@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.77-nike"
+VERSION = "v0.0.77-oskar"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -315,11 +315,7 @@ def check_for_startup_update_and_run():
 def check_and_perform_update(mode_override: int = 0):
     """
     Performs manual force upgrade downloads via --update with full SHA-256 manifest validation
-    Bitmask stacking flags (0-15):
-      1 = Check Version
-      2 = Check Update (Manifest Parsing / Fetch expected hash)
-      4 = Update (Hot-Swap / Download & Replace Executable)
-      8 = New token + renew singlefile JSON configuration profile
+    Bitmask stacking flags (0-15): 1 = Check Version, 2 = SHA-256 Integrity Check, 4 = Update (Hot-Swap), 8 = New Token and renew singlefile JSON config profile
     """
     import platform
     import os
@@ -583,12 +579,12 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             # 2. Render the static interface status line exactly ONCE
             if not prompt_visible:
                 if quit_press_counter > 0:
-                    sys.stdout.write(f"\r⚠️ Press [Q]uit again [{quit_press_counter}/3] times to escape Kansas...")
+                    sys.stdout.write(f"\x1b[2K\r⚠️ Press [Q]uit again [{quit_press_counter}/3] times to escape Kansas...")
                 elif update_press_counter == 1:
                     v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
-                    sys.stdout.write(f"\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
+                    sys.stdout.write(f"\x1b[2K\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
                 else:
-                    sys.stdout.write("\r[?] Ready for hotkey: ")
+                    sys.stdout.write("\x1b[2K\r[?] Ready for hotkey: ")
                 sys.stdout.flush()
                 prompt_visible = True
 
