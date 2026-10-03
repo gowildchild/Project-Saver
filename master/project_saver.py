@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-echo"
+VERSION = "v0.0.78-golf"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -220,7 +220,7 @@ def refresh_dashboard_view(cli_dict):
         update_menu_string = f"   [U]pdate:            Verify integrity hash and update application (1x=check, 2x=update)."
 		
     startup_log = [
-        f"⚙️ Server Details:      http://localhost:{PORT} (Token: {EXPECTED_TOKEN})",
+        f"   Server Details:      http://localhost:{PORT} (Token: {EXPECTED_TOKEN})",
         "---",
         f"⚙️ [P]rofile Mode:      {str(cli_dict.get('export-type')).upper()}",
         f"🗒️ [F]ormats Enabled:   {str(cli_dict.get('export-format')).upper()}",
@@ -230,7 +230,7 @@ def refresh_dashboard_view(cli_dict):
         f"   [R]enew Token:       Regenerate randomized API access authorization key.",
         "---",
 		update_menu_string,
-        f"   [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
+        f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
     ]
 
     render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=65)
@@ -582,5 +582,7 @@ if __name__ == "__main__":
     if os.environ.get("GITHUB_ACTIONS") == "true":
         LATEST_AVAILABLE_VERSION = "v0.0.76-gunther"     
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
+    cli_dict = vars(CLI_ARGS)
+    refresh_dashboard_view(cli_dict)
     run_server()
 
