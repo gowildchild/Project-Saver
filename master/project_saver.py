@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.77-romeo"
+VERSION = "v0.0.77-sierra"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -248,6 +248,7 @@ def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", bo
             else: width += 1
         return width
 
+	print() 
     filtered_lines = [line for line in raw_lines_list if str(line).strip() != "---"]
     max_len = max((get_visual_width(line) for line in filtered_lines), default=len(title_str))
     target_width = box_width_override if box_width_override > 0 else 76
