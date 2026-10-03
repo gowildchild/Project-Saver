@@ -48,20 +48,19 @@ def load_config_file(filepath):
     return args_list
 
 
-def save_config_file(filepath, args_namespace):
-    import configparser
+def save_config_file(filepath, args_namespace, current_version="v0.0.79", latest_version=None):
     try:
         config = configparser.ConfigParser()
         if os.path.exists(filepath):
             config.read(filepath, encoding="utf-8")
             
-        # * [FIXED] Properly initialize ALL required structural sections to prevent NoSectionError crashes
+        # Properly initialize ALL required structural sections to prevent NoSectionError crashes
         if not config.has_section("global"):     config.add_section("global")
         if not config.has_section("update"):     config.add_section("update")
         if not config.has_section("save"):       config.add_section("save")
         if not config.has_section("singlefile"): config.add_section("singlefile")
 
-        # * [FIXED] Safely set the token inside the newly created [singlefile] section
+        # Safely set the token inside the newly created [singlefile] section
         if EXPECTED_TOKEN:
             config.set("singlefile", "token", EXPECTED_TOKEN)
             
@@ -73,9 +72,9 @@ def save_config_file(filepath, args_namespace):
         if args_dict.get('chosen_editor'):    config.set("global", "chosen-editor", str(args_dict['chosen_editor']))
         if args_dict.get('auto') is not None: config.set("global", "auto", str(args_dict['auto']))
 
-        config.set("update", "version_current", VERSION)
-        if LATEST_AVAILABLE_VERSION:
-            config.set("update", "version_newest", LATEST_AVAILABLE_VERSION)
+        config.set("update", "version_current", current_version)
+        if latest_version:
+            config.set("update", "version_newest", latest_version)
 
         # Enforce clean default entries under the [save] container block if they don't exist yet
         if not config.has_option("save", "export_format_autosave"):
@@ -95,10 +94,11 @@ def save_config_file(filepath, args_namespace):
         print(f"[-] Could not export section configuration profile safely: {e}")
 
 
-def resolve_or_create_security_token(config_path="project_saver.cfg"):
+
+def resolve_or_create_security_token(config_path="project_saver.cfg", port_num=19763):
     """
-    Checks for an existing token in the active config file. 
-    If missing, it creates a new secure token and builds the SingleFile JSON asset automatically.
+    Checks for an existing token inside the active structural configuration database profile. 
+    If missing, it creates a secure token and outputs a native SingleFile JSON extension file profile.
     """
     global EXPECTED_TOKEN
     token_key = ""
@@ -106,54 +106,56 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))    
     resolved_config_path = config_path if os.path.isabs(config_path) else os.path.join(script_base_dir, config_path)
 
-
-	
-    # 1. Attempt to check if a token already exists inside an active config file
-    if SYSTEM_CONFIG.get("singlefile_token"):
-        token_key = SYSTEM_CONFIG["singlefile_token"].strip()
-    elif os.path.exists(resolved_config_path):
-        with open(resolved_config_path, "r", encoding="utf-8") as f:
-            for line in f:
-                if line.strip().startswith("token="):
-                    token_key = line.split("=", 1)[1].strip()
-                    break
-
-    # 2. If no token is found, generate a fresh secure token key string
-    if not token_key:
-        print("[*] Security setup: Generating a new randomized API Authorization Token...")
-        token_key = secrets.token_hex(16) # Creates a highly secure 32-character hex key string
-        
-        # Append it cleanly to the default local configuration file profile
+    config = configparser.ConfigParser()
+    if os.path.exists(resolved_config_path):
         try:
-            with open(resolved_config_path, "a", encoding="utf-8") as f:
-                f.write(f"\ntoken={token_key}\n")
+            config.read(resolved_config_path, encoding="utf-8")
+            if config.has_option("singlefile", "token"):
+                token_key = config.get("singlefile", "token").strip()
         except:
             pass
 
-    # 3. Lock it into global application state memory fields
+    # If no token is found in memory arrays or the configuration file, provision a fresh hex signature
+    if not token_key:
+        print("[*] Security setup: Generating a new randomized API Authorization Token...")
+        token_key = secrets.token_hex(16)
+        
+        # Write out to the ini file using a native config section to prevent parsing header crashes
+        if not config.has_section("singlefile"):
+            config.add_section("singlefile")
+        config.set("singlefile", "token", token_key)
+        
+        try:
+            with open(resolved_config_path, "w", encoding="utf-8") as f:
+                f.write(f"# Project Saver Configuration Profile\n")
+                config.write(f)
+        except Exception as e:
+            print(f"[-] Could not write generated token out to configuration database: {e}")
+
+    # Synchronize tracking references inside global state pools
     EXPECTED_TOKEN = token_key
 
-    # 4. AUTOMATIC SINGLEFILE CONFIG GENERATOR
+    # AUTOMATIC SINGLEFILE CONFIG GENERATOR
     sf_filename = SYSTEM_CONFIG.get("singlefile_config_filename") or "singlefile-project-saver-config.json"
-    
     singlefile_json_path = os.path.join(script_base_dir, sf_filename)
+    
     singlefile_config_payload = {
         "profiles": {
             "Project Saver": {
                 "_migratedDeferredContentOptions": True,
                 "_migratedTemplateFormat": True,
-				"autoSaveDelay": 1,
-				"autoSaveLoad": False,
+                "autoSaveDelay": 1,
+                "autoSaveLoad": False,
                 "autoSaveLoadOrUnload": True,
                 "autoSaveRemove": True,
                 "autoSaveRepeat": False,
                 "autoSaveRepeatDelay": 10,
                 "autoSaveUnload": False,
                 "backgroundSave": True,
-				"autoSaveDiscard": True,
-				"progressBarEnabled": True,
+                "autoSaveDiscard": True,
+                "progressBarEnabled": True,
                 "saveToRestFormApi": True,
-                "saveToRestFormApiUrl": f"http://localhost:{PORT}",
+                "saveToRestFormApiUrl": f"http://localhost:{port_num}",
                 "saveToRestFormApiToken": EXPECTED_TOKEN,
                 "saveToRestFormApiFileFieldName": "file",
                 "saveToRestFormApiUrlFieldName": "url"
