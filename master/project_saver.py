@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.77-uniform"
+VERSION = "v0.0.77-victor"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -24,6 +24,7 @@ REPO_OWNER = "gowildchild"
 REPO_NAME = "Project-Saver"
 ALLOWED_PROFILES = ["Auto","code_dev","web_article"]
 ALLOWED_FORMATS = ["Markdown","HTML","PDF"]
+LATEST_AVAILABLE_VERSION = None
 
 def resolve_or_create_security_token(config_path="project_saver.cfg"):
     """
@@ -207,19 +208,24 @@ def refresh_dashboard_view(cli_dict):
     
     # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
     os.system('cls' if os.name == 'nt' else 'clear')
-    
+
+	if LATEST_AVAILABLE_VERSION and LATEST_AVAILABLE_VERSION != VERSION:
+        update_menu_string = f"   [U]pdate Available: Verify integrity hash and update to {LATEST_AVAILABLE_VERSION}."
+    else:
+        update_menu_string = "   [U]pdate:           Verify integrity hash and update application (1x=check, 2x=update)."
+		
     startup_log = [
         f"Server Listening:   http://localhost:{PORT}",
         f"Security Token:     {EXPECTED_TOKEN}",
         "---",
-        f"📂 [E]xport Folder:   {os.path.abspath(cli_dict.get('export-folder'))}",
-        f"⚙️ [P]rofile Mode:    {str(cli_dict.get('export-type')).upper()}",
-        f"🗒️ [F]ormats Enabled: {str(cli_dict.get('export-format')).upper()}",
+        f"📂 [E]xport Folder:    {os.path.abspath(cli_dict.get('export-folder'))}",
+        f"⚙️ [P]rofile Mode:     {str(cli_dict.get('export-type')).upper()}",
+        f"🗒️ [F]ormats Enabled:  {str(cli_dict.get('export-format')).upper()}",
         "---",
-        f"💡 [I]mport Config:    Open folder containing singlefile-project-saver-config.json configuration.",
-        f"   [R]enew Token:      Regenerate randomized API access authorization key.",
-        f"   [U]pdate:           Verify integrity hash and update application (1x=check, 2x=update).",
-        f"   [Q]uit Application: Requires 3 consecutive taps with the shoes to escape Kansas."
+        f"💡 [I]mport Config:     Open folder containing singlefile-project-saver-config.json configuration.",
+        f"   [R]enew Token:       Regenerate randomized API access authorization key.",
+		update_menu_string,
+        f"   [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
     ]
 
     render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=60)
