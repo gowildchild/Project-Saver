@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-test-two"
+VERSION = "v0.0.78-victor"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -224,11 +224,12 @@ def refresh_dashboard_view(cli_dict):
     import os
     import sys
 
-    global LATEST_AVAILABLE_VERSION    
+    global SYSTEM_CONFIG, VERSION, LATEST_AVAILABLE_VERSION   
     # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    if LATEST_AVAILABLE_VERSION and str(LATEST_AVAILABLE_VERSION).strip() != str(VERSION).strip():
+    LATEST_AVAILABLE_VERSION = SYSTEM_CONFIG.get("update_version_newest") or ""    
+    if saved_newest and str(saved_newest).strip() != str(VERSION).strip():
         update_menu_string = f"💡 [U]pdate Available:  Verify integrity hash and update to {LATEST_AVAILABLE_VERSION}."
     else:
         update_menu_string = f"   [U]pdate:            Verify integrity hash and update application (1x=check, 2x=update)."
@@ -297,58 +298,82 @@ def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", bo
     print("└" + "─" * box_width + "┘")
 
 def save_config_file(filepath, args_namespace):
+    import configparser
     try:
+        config = configparser.ConfigParser()
+        if os.path.exists(filepath):
+            config.read(filepath, encoding="utf-8")
+            
+        if not config.has_section("global"):  config.add_section("global")
+        if not config.has_section("update"):  config.add_section("update")
+        if not config.has_section("save"):    config.add_section("save")
+
+        if EXPECTED_TOKEN:
+            config.set("global", "token", EXPECTED_TOKEN)
+            
+        args_dict = vars(args_namespace)
+        if args_dict.get('export_folder'):    config.set("global", "export-folder", str(args_dict['export_folder']))
+        if args_dict.get('export_format'):    config.set("global", "export-format", str(args_dict['export_format']))
+        if args_dict.get('export_type'):      config.set("global", "export-type", str(args_dict['export_type']))
+        if args_dict.get('remote_address'):   config.set("global", "remote-address", str(args_dict['remote_address']))
+        if args_dict.get('chosen_editor'):    config.set("global", "chosen-editor", str(args_dict['chosen_editor']))
+        if args_dict.get('auto') is not None: config.set("global", "auto", str(args_dict['auto']))
+
+        config.set("update", "version_current", VERSION)
+        if LATEST_AVAILABLE_VERSION:
+            config.set("update", "version_newest", LATEST_AVAILABLE_VERSION)
+
+        # * [FIXED] Enforce clean default entries under the [save] container block if they don't exist yet
+        if not config.has_option("save", "export_format_autosave"):
+            config.set("save", "export_format_autosave", "manual")
+        if not config.has_option("save", "export_type_autosave"):
+            config.set("save", "export_type_autosave", "manual")
+
         with open(filepath, "w", encoding="utf-8") as f:
-            f.write(f"# Project Saver {VERSION} Configuration Profile\n")
-            
-            # Securely preserve your authorization token
-            if EXPECTED_TOKEN:
-                f.write(f"token={EXPECTED_TOKEN}\n")
-            
-            # Convert namespace to a dictionary to check raw dash keys directly
-            args_dict = vars(args_namespace)
-            
-            # Pure dash-only configuration lookup and output
-            if args_dict.get('export_folder'):
-                f.write(f"export-folder={args_dict['export_folder']}\n")
-            if args_dict.get('export_format'):
-                f.write(f"export-format={args_dict['export_format']}\n")
-            if args_dict.get('export_type'):
-                f.write(f"export-type={args_dict['export_type']}\n")
-            if args_dict.get('remote_address'):
-                f.write(f"remote-address={args_dict['remote_address']}\n")
-            if args_dict.get('chosen_editor'):
-                f.write(f"chosen-editor={args_dict['chosen_editor']}\n")
-            if args_dict.get('auto') is not None:
-                f.write(f"auto={args_dict['auto']}\n")
-            f.write(f"version_current={VERSION}\n")
-            if LATEST_AVAILABLE_VERSION:
-                f.write(f"version_newest={LATEST_AVAILABLE_VERSION}\n")
-        print(f"[+] Active configuration written to profile: {filepath}")
+            f.write(f"# Project Saver Configuration Profile\n")
+            config.write(f)
+                
+        print(f"[+] Active configuration successfully written to sections: {filepath}")
     except Exception as e:
-        print(f"[-] Could not export configuration profile: {e}")
+        print(f"[-] Could not export section configuration profile safely: {e}")
+
 
 
 def load_config_file(filepath):
+    import configparser
     args_list = []
+    global SYSTEM_CONFIG
+    
     if not os.path.exists(filepath): 
         return args_list
-    with open(filepath, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"): 
-                continue
-            if "=" in line:
-                key, val = line.split("=", 1)
-                key, val = key.strip().lower(), val.strip()
+        
+    try:
+        config = configparser.ConfigParser()
+        config.read(filepath, encoding="utf-8")
+        
+        # 1. Dynamically cache ALL file sections and keys into our system config box
+        for section in config.sections():
+            for key, val in config.items(section):
+                SYSTEM_CONFIG[f"{section}_{key.strip().lower()}"] = val.strip()
+
+        # 2. Convert ONLY the [global] parameters into command-line arguments for argparse
+        if config.has_section("global"):
+            for key, val in config.items("global"):
+                key = key.strip().lower()
+                val = val.strip()
                 if val:
-                    if key in ["token", "version_current", "version_newest"]:
+                    # Skip internal connectivity parameters to protect boot sequences
+                    if key in ["token"] or "_" in key:
                         continue
-                    # Appends exactly what is written in the file (e.g., --export-folder)
                     args_list.append(f"--{key}")
                     if val.lower() != "true": 
                         args_list.append(val)
+                        
+    except Exception as e:
+        print(f"[-] Error loading configuration sections: {e}")
+        
     return args_list
+
 	
 def run_server():
     set_terminal_title("Project Saver", VERSION, "Server Running")
@@ -361,12 +386,12 @@ def run_server():
     
 	#server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     #server_thread.start()
-    global CLI_ARGS
+    global CLI_ARGS, LATEST_AVAILABLE_VERSION, active_cfg_profile
     cli_dict = vars(CLI_ARGS)
 
     if LATEST_AVAILABLE_VERSION and LATEST_AVAILABLE_VERSION != VERSION:
         # Assumes active_cfg_profile is handled globally or accessible natively via loop variables
-        save_config_file("project_saver.cfg", CLI_ARGS)	
+        save_config_file("project_saver.cfg", CLI_ARGS) 
     refresh_dashboard_view(cli_dict)
     execute_interactive_dashboard_monitor(httpd)
 	
@@ -460,9 +485,11 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     current_fmt = "markdown"
                 current_idx = formats_lower.index(current_fmt)
                 next_idx = (current_idx + 1) % len(formats_lower)
-                cli_dict['export_format'] = formats_lower[next_idx]
+                if SYSTEM_CONFIG.get("save_export_format_autosave") == "yes":
+                    save_config_file("project_saver.cfg", CLI_ARGS)
                 refresh_dashboard_view(cli_dict)
 
+			
             elif user_triggered_key == 'p':
                 # * [FIXED] Changed lookup and dictionary writing targets to use underscore notation keys
                 current_prof = cli_dict.get('export_type', 'auto').lower()
@@ -472,6 +499,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 current_idx = profiles_lower.index(current_prof)
                 next_idx = (current_idx + 1) % len(profiles_lower)
                 cli_dict['export_type'] = profiles_lower[next_idx]
+                if SYSTEM_CONFIG.get("save_export_type_autosave") == "yes":
+                    save_config_file("project_saver.cfg", CLI_ARGS)
                 refresh_dashboard_view(cli_dict)
 
             elif user_triggered_key == 'u':
@@ -498,6 +527,23 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     print("\n[-] Shutting down: Project Saver API Server Daemon. Goodbye!")
                     os._exit(0)
                 continue
+
+            elif user_triggered_key == 's':
+                # * [ADDED] MANUAL PROFILE STATE EXPORT WRITER
+                print("\n[S] Manual Save: Writing current dashboard settings out to profile file...")
+                save_config_file("project_saver.cfg", CLI_ARGS)
+                refresh_dashboard_view(cli_dict)
+
+            elif user_triggered_key == 'l':
+                # * [ADDED] MANUAL PROFILE STATE RE-LOADER
+                print("\n[L] Manual Load: Discarding active session drafts and re-indexing configuration...")
+                load_config_file("project_saver.cfg")
+                # Synchronize argparse values natively from our newly re-parsed dictionary parameters
+                if SYSTEM_CONFIG.get("global_export-format"):
+                    cli_dict['export_format'] = SYSTEM_CONFIG["global_export-format"]
+                if SYSTEM_CONFIG.get("global_export-type"):
+                    cli_dict['export_type'] = SYSTEM_CONFIG["global_export-type"]
+                refresh_dashboard_view(cli_dict)			
 
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
