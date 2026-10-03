@@ -491,6 +491,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 			
 
 if __name__ == "__main__":
+	global LATEST_AVAILABLE_VERSION
     print(f"\n[*] Project Saver {VERSION} Starting up, Please wait for system to be ready...")
     if os.name == 'nt':
         os.system('mode con: cols=105 lines=30')
@@ -507,7 +508,6 @@ if __name__ == "__main__":
     else:
         default_export_dir = os.path.join(os.path.expanduser("~"), "Documents", "Project-Saver", "export")
 
-    global LATEST_AVAILABLE_VERSION
     LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16)
 		
     parser.add_argument("--export-folder", default=argparse.SUPPRESS, help=f"Target base folder path where files will be written. (Default: {default_export_dir})")
