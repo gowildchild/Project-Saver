@@ -1,3 +1,8 @@
+# ==========================================================================
+# Project Saver: Modular System to (currently) archive sites and (AI) code.
+# Copyright (c) 2002-2026 by Gunther Voet (GoWildchild) All Rights Reserved. 
+# Released under strict Non-Commercial Open-Source License terms.
+# ==========================================================================
 import os
 import re
 import sys
@@ -16,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.77-zoeloe"
+VERSION = "v0.0.78-alpha"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -501,6 +506,9 @@ if __name__ == "__main__":
         default_export_dir = os.path.join(os.environ["USERPROFILE"], "Documents", "Project-Saver", "export")
     else:
         default_export_dir = os.path.join(os.path.expanduser("~"), "Documents", "Project-Saver", "export")
+
+	global LATEST_AVAILABLE_VERSION
+	LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16)
 		
     parser.add_argument("--export-folder", default=argparse.SUPPRESS, help=f"Target base folder path where files will be written. (Default: {default_export_dir})")
     parser.add_argument("--export-format", default=argparse.SUPPRESS, help="Comma-separated dumping targets: markdown, html, pdf. (Default: markdown)")
