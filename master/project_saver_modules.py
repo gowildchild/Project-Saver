@@ -75,15 +75,25 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                     #ledger_path = os.path.join(script_base_dir, "dist_modules", "manifest.json")
                     ledger_path = os.path.join(modules_dir, "manifest.json")
                     manifest_data = {}
-                    
+                    print(f"\n[DEBUG] File Sweeper Match  : {file_entry}")
+                    print(f"[DEBUG] Computed Module Name: {module_name}")
+                    print(f"[DEBUG] Target Modules Dir  : {os.path.abspath(modules_dir)}")
+                    print(f"[DEBUG] Target Ledger Path  : {os.path.abspath(ledger_path)}")
+                    print(f"[DEBUG] File Physical Exist : {os.path.exists(ledger_path)}")                    
                     if os.path.exists(ledger_path):
                         try:
                             with open(ledger_path, "r", encoding="utf-8") as lf:
-                                manifest_data = json.load(lf).get("modules", {}).get(module_name.lower(), {})
-                        except: pass
+                                raw_json = json.load(lf)
+                                print(f"[DEBUG] JSON Successfully Loaded!")
+                                manifest_data = raw_json.get("modules", {}).get(module_name.lower(), {})
+                                print(f"[DEBUG] Extracted JSON Entry: {manifest_data}")
+                        except Exception as json_err:
+                            print(f"[DEBUG] JSON Parsing Fatal Exception: {json_err}")
+                    else:
+                        print(f"[DEBUG] CRITICAL: File open skipped because os.path.exists returned False.")
+                     
+
                     
-                    # * [MODIFIED] PROVIDE SECURE METADATA ACCELERATION FALLBACKS FOR LOCAL DEV STATIONS
-                    print(f"{modules_dir} / {ledger_path} / {script_base_dir} / currently at {module_name} and {display_name} and {shortcut} of {manifest_data.get('author')} to {manifest_data}")
                     # * [FIXED] READ METADATA DIRECTLY FROM THE FLAT JSON DATA MATRIX STRUCTER
                     display_name = manifest_data.get("display_name") or f"{module_name.capitalize()} Binary Extension"
                     shortcut = manifest_data.get("menu_shortcut") or (module_name.lower() if module_name else "x")
