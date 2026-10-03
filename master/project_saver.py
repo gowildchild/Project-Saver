@@ -21,6 +21,8 @@ EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
 REPO_OWNER = "gowildchild"
 REPO_NAME = "Project-Saver"
+ALLOWED_PROFILES = ["Auto","code_dev","web_article"]
+ALLOWED_FORMATS = ["Markdown","HTML","PDF"]
 
 def resolve_or_create_security_token(config_path="project_saver.cfg"):
     """
