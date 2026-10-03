@@ -2,11 +2,15 @@ name: Compile Pluggable Module Extensions
 
 on:
   push:
-    branches: [ modules ]
+    branches: 
+      - modules-distribution
+      - "modules**"
     paths:
       - 'modules/**'
   pull_request:
-    branches: [ modules ]
+    branches: 
+      - modules-distribution
+      - "modules**"
     paths:
       - 'modules/**'
 
@@ -28,7 +32,8 @@ jobs:
     - name: Install Packaging Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller beautifulsoup4 reportlab
+        pip install pyinstaller 
+    ## beautifulsoup4 reportlab
 
     - name: Run Automated Compilation and Hash Ledger Routine
       shell: bash
@@ -92,6 +97,8 @@ jobs:
                     "pyinstaller",
                     "--onefile",
                     "--clean",
+                    "--exclude-module=reportlab",
+                    "--exclude-module=bs4",                    
                     f"--distpath={dist_dir}",
                     f"--workpath={build_dir}",
                     f"--name={module_name}",
