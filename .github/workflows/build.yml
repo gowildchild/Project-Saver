@@ -52,10 +52,13 @@ jobs:
 
     - name: Generate blueprints
       shell: bash
+      env:
+        TARGET_VERSION: ${{ needs.build-and-release.outputs.app_version }}
       run: |
         python3 -c '
+        import os
         import re
-        ver = "${{ needs.build-and-release.outputs.app_version }}"
+        ver = os.environ.get("TARGET_VERSION", "0.0.1")
         clean_ver = re.sub(r"[vV]", "", ver)
         pure_digits = re.sub(r"[^0-9.]", "", clean_ver)
         parts = pure_digits.split(".")
@@ -142,9 +145,9 @@ jobs:
         pyinstaller --onefile --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt project_saver.py
 
     - name: Rename Portable Windows Binary
+      working-directory: ./dist
       shell: bash
       run: |
-        cd dist
         mv project_saver.exe project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe
 
     - name: Compile Windows Setup Installer
@@ -191,8 +194,8 @@ jobs:
         pyinstaller --onefile --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build project_saver.py
 
     - name: Rename and Pre-Calculate Linux SHA-256 Hash
+      working-directory: ./dist
       run: |
-        cd dist
         mv project_saver project_saver_${{ needs.build-and-release.outputs.app_version }}_linux
         sha256sum project_saver_${{ needs.build-and-release.outputs.app_version }}_linux | awk '{print $1}' > linux_binary.hash
 
