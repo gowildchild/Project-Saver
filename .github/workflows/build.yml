@@ -159,7 +159,21 @@ jobs:
       env:
         PYTHONPATH: ${{ github.workspace }}
       run: |
-        pyinstaller project_saver.py --onefile --paths="${{ github.workspace }}" --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt
+        echo "========================================================================="
+        echo "🚀 WINDOWS COMPILATION ENVIRONMENT DIAGNOSTICS"
+        echo "Active Action Runner Build Number : #${{ github.run_number }}"
+        echo "Current Working Directory Context : $(pwd)"
+        echo "Absolute Workspace Root Context   : ${{ github.workspace }}"
+        echo "-------------------------------------------------------------------------"
+        echo "[*] Auditing files present inside the master directory:"
+        ls -la .
+        echo "-------------------------------------------------------------------------"
+        echo "[*] Auditing files present up in the repository root directory:"
+        ls -la ${{ github.workspace }}
+        echo "========================================================================="       
+        
+        # Execute production PyInstaller build layer using clean local sibling collection
+        pyinstaller project_saver.py --onefile --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt
 
     - name: Rename Portable Windows Binary
       working-directory: ./dist
@@ -210,12 +224,17 @@ jobs:
       env:
         PYTHONPATH: ${{ github.workspace }}
       run: |
+    - name: Compile Linux Binary
+      working-directory: ./master
+      run: |
+        # =========================================================================
+        # 🔍 LINUX BUILD WORKSPACE PATH INTEGRITY DEBUG ROUTINE
+        # =========================================================================
         echo "========================================================================="
         echo "🚀 LINUX COMPILATION ENVIRONMENT DIAGNOSTICS"
         echo "Active Action Runner Build Number : #${{ github.run_number }}"
         echo "Current Working Directory Context : $(pwd)"
         echo "Absolute Workspace Root Context   : ${{ github.workspace }}"
-        echo "Active Python Module Environment  : $PYTHONPATH"
         echo "-------------------------------------------------------------------------"
         echo "[*] Auditing files present inside the master directory:"
         ls -la .
@@ -223,7 +242,7 @@ jobs:
         echo "[*] Auditing files present up in the repository root directory:"
         ls -la ${{ github.workspace }}
         echo "========================================================================="      
-        pyinstaller project_saver.py --onefile --paths="${{ github.workspace }}" --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build
+        pyinstaller project_saver.py --onefile --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build
 
     - name: Rename and Pre-Calculate Linux SHA-256 Hash
       working-directory: ./dist
