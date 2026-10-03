@@ -143,20 +143,64 @@ jobs:
       working-directory: ./master
       shell: bash
       run: |
-        echo "========================================================================="
-        echo "🚀 WINDOWS COMPILATION ENVIRONMENT DIAGNOSTICS"
-        echo "Active Action Runner Build Number : #${{ github.run_number }}"
-        echo "Current Working Directory Context : $(pwd)"
-        echo "Absolute Workspace Root Context   : ${{ github.workspace }}"
-        echo "-------------------------------------------------------------------------"
-        echo "[*] Auditing files present inside the master directory:"
-        ls -la .
-        echo "-------------------------------------------------------------------------"
-        echo "[*] Auditing files present up in the repository root directory:"
-        ls -la ..
-        echo "========================================================================="       
-        pyinstaller project_saver.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt
-        pyinstaller debug_sandbox.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist_debug --workpath ../build_debug
+        # 1. Force write a hard-bound compilation spec sheet blueprint directly to the drive
+        cat << 'EOF' > unified_build.spec
+        # -*- mode: python ; coding: utf-8 -*-
+        
+        block_cipher = None
+        
+        # Hard-lock your sibling script modules directly inside the static analysis grid context
+        a = Analysis(
+            ['project_saver.py'],
+            pathex=['.'],
+            binaries=[],
+            datas=[],
+            hiddenimports=[
+                'project_saver_config',
+                'project_saver_ui',
+                'project_saver_daemon',
+                'project_saver_archive',
+                'project_saver_update',
+                'project_saver_exporter'
+            ],
+            hookspath=[],
+            hooksconfig={},
+            runtime_hooks=[],
+            excludes=[],
+            win_no_prefer_redirects=False,
+            win_private_assemblies=False,
+            cipher=block_cipher,
+            noarchive=False,
+        )
+        
+        pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+        
+        exe = EXE(
+            pyz,
+            a.scripts,
+            a.binaries,
+            a.zipfiles,
+            a.datas,
+            [],
+            name='project_saver',
+            debug=False,
+            bootloader_ignore_signals=False,
+            strip=False,
+            upx=True,
+            upx_exclude=[],
+            runtime_tmpdir=None,
+            console=True,
+            disable_windowed_traceback=False,
+            argv_emulation=False,
+            target_arch=None,
+            codesign_identity=None,
+            entitlements=None,
+            version='version_info.txt'
+        )
+        EOF
+
+        # 2. Force compile your production application using your watertight spec manifest
+        pyinstaller --clean unified_build.spec --distpath ../dist --workpath ../build
 
     - name: Rename Portable Windows Binary
       working-directory: ./dist
@@ -205,8 +249,6 @@ jobs:
 
     - name: Compile Linux Binary
       working-directory: ./master
-      env:
-        PYTHONPATH: ${{ github.workspace }}
       run: |
         # =========================================================================
         # 🔍 LINUX BUILD WORKSPACE PATH INTEGRITY DEBUG ROUTINE
@@ -216,14 +258,64 @@ jobs:
         echo "Active Action Runner Build Number : #${{ github.run_number }}"
         echo "Current Working Directory Context : $(pwd)"
         echo "Absolute Workspace Root Context   : ${{ github.workspace }}"
-        echo "-------------------------------------------------------------------------"
-        echo "[*] Auditing files present inside the master directory:"
-        ls -la .
-        echo "-------------------------------------------------------------------------"
-        echo "[*] Auditing files present up in the repository root directory:"
-        ls -la ${{ github.workspace }}
         echo "========================================================================="      
-        pyinstaller project_saver.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build
+        
+        # 1. Force write a hard-bound compilation spec sheet blueprint directly for the Linux runner
+        cat << 'EOF' > unified_linux_build.spec
+        # -*- mode: python ; coding: utf-8 -*-
+        
+        block_cipher = None
+        
+        a = Analysis(
+            ['project_saver.py'],
+            pathex=['.'],
+            binaries=[],
+            datas=[],
+            hiddenimports=[
+                'project_saver_config',
+                'project_saver_ui',
+                'project_saver_daemon',
+                'project_saver_archive',
+                'project_saver_update',
+                'project_saver_exporter'
+            ],
+            hookspath=[],
+            hooksconfig={},
+            runtime_hooks=[],
+            excludes=[],
+            win_no_prefer_redirects=False,
+            win_private_assemblies=False,
+            cipher=block_cipher,
+            noarchive=False,
+        )
+        
+        pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+        
+        exe = EXE(
+            pyz,
+            a.scripts,
+            a.binaries,
+            a.zipfiles,
+            a.datas,
+            [],
+            name='project_saver',
+            debug=False,
+            bootloader_ignore_signals=False,
+            strip=False,
+            upx=True,
+            upx_exclude=[],
+            runtime_tmpdir=None,
+            console=True,
+            disable_windowed_traceback=False,
+            argv_emulation=False,
+            target_arch=None,
+            codesign_identity=None,
+            entitlements=None,
+        )
+        EOF
+
+        # 2. Force compile your production Linux app using your watertight spec manifest
+        pyinstaller --clean unified_linux_build.spec --distpath ../dist --workpath ../build
 
     - name: Rename and Pre-Calculate Linux SHA-256 Hash
       working-directory: ./dist
@@ -258,11 +350,12 @@ jobs:
     - name: Generate Release manifest.txt
       run: |
         cd release_files
-        
-        # Read the saved hashes out from job memory files
-        WIN_PORTABLE_HASH=$(cat win_portable.hash)
-        WIN_SETUP_HASH=$(cat win_setup.hash)
-        LINUX_HASH=$(cat linux_binary.hash)
+        WIN_PORTABLE_HASH=$(cat windows-assets/win_portable.hash)
+        WIN_SETUP_HASH=$(cat windows-assets/win_setup.hash)
+        LINUX_HASH=$(cat linux-assets/linux_binary.hash)
+        mv windows-assets/* .
+        mv linux-assets/* .
+        rm -rf windows-assets linux-assets
         rm win_portable.hash win_setup.hash linux_binary.hash
         echo "==================================================" > manifest.txt
         echo "   PROJECT SAVER GLOBAL DEPLOYMENT MANIFEST       " >> manifest.txt
