@@ -220,8 +220,9 @@ def refresh_dashboard_view(cli_dict):
     else:
         update_menu_string = f"   [U]pdate:            Verify integrity hash and update application (1x=check, 2x=update)."
 
-    raw_folder_path = cli_dict.get('export-folder') or ""
+    raw_folder_path = cli_dict.get('export_folder') or ""
     resolved_display_path = os.path.abspath(raw_folder_path) if raw_folder_path else "Initializing path.."		
+	
 	
     startup_log = [
         f"   Server Details:      http://localhost:{PORT} (Token: {EXPECTED_TOKEN})",
@@ -411,7 +412,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
             # ─── HOTKEY MATRIX ACTIONS ───
             if user_triggered_key == 'e':
-                export_path = os.path.abspath(cli_dict.get('export-folder'))
+                export_path = os.path.abspath(cli_dict.get('export_folder') or "")
                 print(f"\n[E] Export folder opened: {export_path}")
                 if not os.path.exists(export_path):
                     os.makedirs(export_path, exist_ok=True)
