@@ -185,7 +185,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     cli_dict['export_type'] = project_saver_config.SYSTEM_CONFIG["global_export-type"]
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)			
 
-			elif user_triggered_key == 'm':
+            elif user_triggered_key == 'm':
                 manager_mod = project_saver_modules.ACTIVE_MODULES.get("manager")
                 if manager_mod and hasattr(manager_mod, "execute_interactive_menu"):
                     print("\n[*] Initializing Pluggable Package Manager sub-workspace panel...")
@@ -200,7 +200,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     time.sleep(1.5)
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
-			
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
                 update_press_counter = 0
