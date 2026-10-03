@@ -324,6 +324,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                         local_link = os.path.join(f"{safe_title}_extracted_scripts", img_filename) if export_detailed else img_filename
                         final_markdown_blocks.append(exporter.format_image(img_alt, local_link))
                         code_block_index += 1
+                        continue
                     except Exception:
                         pass
 
