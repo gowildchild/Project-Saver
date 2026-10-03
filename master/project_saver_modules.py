@@ -100,9 +100,12 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                         }
                     
                     # Register into live memory pools context tracking tables
-                    ACTIVE_MODULES[module_name] = MockBinaryModule
+                    ACTIVE_MODULES[module_name] = {
+                        "type": "binary",
+                        "path": module_path,
+                        "mock": MockBinaryModule
+                    }
                     SHORTCUT_MAP[shortcut.lower()] = module_name
-
             except Exception as e:
                 print(f"[-] Failed to dynamic index module [{module_name}]: {e}")
 
@@ -164,7 +167,8 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
         if not ACTIVE_MODULES:
             print("   (No active or enabled module scripts discovered locally.)")
         for name, mod in ACTIVE_MODULES.items():
-            manifest = getattr(mod, "MODULE_MANIFEST", {})
+            mod_obj = entry["mock"] if isinstance(entry, dict) and entry.get("type") == "binary" else entry
+            manifest = getattr(mod_obj, "MODULE_MANIFEST", {})
             meta = manifest.get("meta", {})
             print(f" -> [{name.upper()}] - {manifest.get('display_name')}")
             print(f"    Author : {meta.get('author')} | Version: {meta.get('version')}")
@@ -231,14 +235,19 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
         
         if target_name in ACTIVE_MODULES:
             module_object = ACTIVE_MODULES[target_name]
-            if hasattr(module_object, "execute_interactive_menu"):
+            if isinstance(module_object, dict) and module_object.get("type") == "binary":
+                import subprocess
+                try:
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    print(f"[*] Sub-process offload: Executing standalone binary -> {target_name.upper()}")
+                    subprocess.run([module_object["path"]], check=True)
+                except Exception as bin_err:
+                    print(f"\n[-] Standalone extension binary engine execution crashed: {bin_err}")
+                    time.sleep(2)
+            
+            # ─── FALLBACK MATRIX FOR RAW SCRIPT FILE OBJECT INTERACTION LOOPS ───
+            elif hasattr(module_object, "execute_interactive_menu"):
                 print(f"[*] Booting module target parameter block matrix: {target_name.upper()}")
-                
-                # If optional config overrides or modes are passed (e.g. --module start shutdown timed)
-                # they pass down cleanly inside the sys.argv pipeline parameters automatically
-                module_object.execute_interactive_menu(cli_dict, app_version, port_num)
-            else:
-                print(f"🔴 ERROR: Module '{target_name}' contains no interactive loop hook handler.")
         else:
             print(f"🔴 ERROR: Execution failed. Module '{target_name}' is not currently installed or enabled.")
 
