@@ -20,8 +20,11 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
+import project_saver_config
+import project_saver_ui
+import project_saver_daemon
 
-VERSION = "v0.0.78-victor"
+VERSION = "v0.0.78-whiskey"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -30,372 +33,7 @@ REPO_NAME = "Project-Saver"
 ALLOWED_PROFILES = ["Auto","code_dev","web_article"]
 ALLOWED_FORMATS = ["Markdown","HTML","PDF"]
 LATEST_AVAILABLE_VERSION = None
-
-def log_debug(msg):
-    """Prints immediately to the terminal screen AND appends to debug.log natively."""
-    import time
-    try:
-        # 1. Brute-force write to the text file
-        with open("debug.log", "a", encoding="utf-8") as f:
-            f.write(f"[{time.strftime('%H:%M:%S')}] {str(msg)}\n")
-        
-        # 2. Force injection straight onto the console monitor window line
-        print(f"\n\033[95m[DEBUG]\033[0m {str(msg)}")
-    except:
-        pass
-
-def resolve_or_create_security_token(config_path="project_saver.cfg"):
-    """
-    Checks for an existing token in the active config file. 
-    If missing, it creates a new secure token and builds the SingleFile JSON asset automatically.
-    """
-    global EXPECTED_TOKEN
-    token_key = ""
-
-    script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))    
-    resolved_config_path = config_path if os.path.isabs(config_path) else os.path.join(script_base_dir, config_path)
-
 	
-    # 1. Attempt to check if a token already exists inside an active config file
-    if os.path.exists(resolved_config_path):
-        with open(resolved_config_path, "r", encoding="utf-8") as f:
-            for line in f:
-                if line.strip().startswith("token="):
-                    token_key = line.split("=", 1)[1].strip()
-                    break
-
-    # 2. If no token is found, generate a fresh secure token key string
-    if not token_key:
-        print("[*] Security setup: Generating a new randomized API Authorization Token...")
-        token_key = secrets.token_hex(16) # Creates a highly secure 32-character hex key string
-        
-        # Append it cleanly to the default local configuration file profile
-        try:
-            with open(resolved_config_path, "a", encoding="utf-8") as f:
-                f.write(f"\ntoken={token_key}\n")
-        except:
-            pass
-
-    # 3. Lock it into global application state memory fields
-    EXPECTED_TOKEN = token_key
-
-    # 4. AUTOMATIC SINGLEFILE CONFIG GENERATOR
-    singlefile_json_path = os.path.join(script_base_dir, "singlefile-project-saver-config.json")
-    singlefile_config_payload = {
-        "profiles": {
-            "Project Saver": {
-                "_migratedDeferredContentOptions": True,
-                "_migratedTemplateFormat": True,
-				"autoSaveDelay": 1,
-				"autoSaveLoad": False,
-                "autoSaveLoadOrUnload": True,
-                "autoSaveRemove": True,
-                "autoSaveRepeat": False,
-                "autoSaveRepeatDelay": 10,
-                "autoSaveUnload": False,
-                "backgroundSave": True,
-				"autoSaveDiscard": True,
-				"progressBarEnabled": True,
-                "saveToRestFormApi": True,
-                "saveToRestFormApiUrl": f"http://localhost:{PORT}",
-                "saveToRestFormApiToken": EXPECTED_TOKEN,
-                "saveToRestFormApiFileFieldName": "file",
-                "saveToRestFormApiUrlFieldName": "url"
-            }
-        },
-        "rules": [
-            {
-                "url": "^https?://.*",
-                "profile": "Project Saver",
-                "autoSaveProfile": "Project Saver"
-            }
-        ],
-        "maxParallelWorkers": 24,
-        "processInForeground": False
-    }
-    
-    try:
-        with open(singlefile_json_path, "w", encoding="utf-8") as json_file:
-            json.dump(singlefile_config_payload, json_file, indent=2)
-    except Exception as e:
-        print(f"[-] Could not auto-generate SingleFile config profile configuration: {e}")
-
-class RestApiHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        auth_header = self.headers.get('Authorization', '')
-        token = auth_header.replace("Bearer ", "").strip() if auth_header else ""
-        
-        if token != EXPECTED_TOKEN:
-            alert_log = [
-                "⚠️  SECURITY ALERT: Unauthorized Request Blocked!",
-                "---",
-                f"Source IP Network: {self.client_address[0]}",
-                "Reason: Transmission Authorization Token Mismatch.",
-                f"Token: {token} Expected: {EXPECTED_TOKEN}",
-            ]
-            render_better_box(alert_log, title_str="Security Warning", box_width_override=70)
-            self.send_response(401)
-            self.end_headers()
-            return
-
-        content_length = int(self.headers.get('Content-Length', 0))
-        body_bytes = self.rfile.read(content_length)
-
-        # Convert namespace to a dictionary to extract clean dash keys natively
-        cli_dict = vars(CLI_ARGS)
-
-        # 1. CLIENT-SIDE RELAY FORWARDER SYSTEM
-        if cli_dict.get("remote-address"):
-            print(f"[*] Relaying capture payload to remote destination server: {cli_dict['remote-address']}")
-            try:
-                req = urllib.request.Request(cli_dict["remote-address"], data=body_bytes, headers=dict(self.headers))
-                with urllib.request.urlopen(req) as response:
-                    self.send_response(response.status)
-                    for k, v in response.getheaders(): 
-                        self.send_header(k, v)
-                    self.end_headers()
-                    self.wfile.write(response.read())
-                    return
-            except Exception as e:
-                print(f"[-] Forwarding transaction failed over the network: {e}")
-                self.send_response(502)
-                self.end_headers()
-                return
-
-        # 2. LOCAL DAEMON EXTRACTION ENGINE
-        headers_input = f"Content-Type: {self.headers.get('Content-Type')}\n\n".encode('utf-8')
-        msg = BytesParser().parsebytes(headers_input + body_bytes)
-
-        html_content = ""
-        page_url = "Natively Captured"
-
-        if msg.is_multipart():
-            for part in msg.walk():
-                content_disp = str(part.get('Content-Disposition', ''))
-                if 'name="file"' in content_disp:
-                    payload_bytes = part.get_payload(decode=True)
-                    if payload_bytes:
-                        html_content = payload_bytes.decode('utf-8', errors='ignore')
-                elif 'name="url"' in content_disp:
-                    payload_bytes = part.get_payload(decode=True)
-                    if payload_bytes:
-                        page_url = payload_bytes.decode('utf-8', errors='ignore')
-
-        if not html_content:
-            self.send_response(400)
-            self.end_headers()
-            return
-
-        soup = BeautifulSoup(html_content, "html.parser")
-        page_title = soup.title.string.strip() if soup.title else "AI_Chat_Session"      
-        
-        # ─── THE NEW INTERCEPTED VISUAL BOX ENGINE LOGGER ───
-        intercept_log = [
-            f"📄 Title: {page_title if len(page_title) <= 84 else f'{page_title[:84]}..'}",
-            f"🌐 Origin: {page_url if len(page_url) <= 84 else f'{page_url[:84]}..'}"
-        ]
-        
-        print() # Print empty line break for clean display
-        render_better_box(intercept_log, title_str="\033[93mNetwork Interception Notice\033[0m", box_width_override=86)
-
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        self.wfile.write(b'{"status": "saved"}')
-        self.wfile.flush()
-
-        # FIXED: Processes page archiving sequentially on the main loop without thread clutter
-        process_html_content(
-            html_string=html_content, 
-            page_title=page_title, 
-            source_origin=page_url,
-            export_folder=cli_dict.get("export-folder"),
-            export_format=cli_dict.get("export-format"),
-            export_type=cli_dict.get("export-type"),
-            auto_timeout=CLI_ARGS.auto,
-            editor_override=cli_dict.get("chosen-editor"),
-            app_version=VERSION
-        )
-
-def refresh_dashboard_view(cli_dict):
-    """
-    Clears the screen and renders the standard startup box with the most up-to-date active settings.
-    """
-    import os
-    import sys
-
-    global SYSTEM_CONFIG, VERSION, LATEST_AVAILABLE_VERSION   
-    # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-    LATEST_AVAILABLE_VERSION = SYSTEM_CONFIG.get("update_version_newest") or ""    
-    if saved_newest and str(saved_newest).strip() != str(VERSION).strip():
-        update_menu_string = f"💡 [U]pdate Available:  Verify integrity hash and update to {LATEST_AVAILABLE_VERSION}."
-    else:
-        update_menu_string = f"   [U]pdate:            Verify integrity hash and update application (1x=check, 2x=update)."
-
-    raw_folder_path = cli_dict.get('export_folder') or ""
-    resolved_display_path = os.path.abspath(raw_folder_path) if raw_folder_path else "Initializing path.."		
-	
-	
-    startup_log = [
-        f"   Server Details:      http://localhost:{PORT} (Token: {EXPECTED_TOKEN})",
-        "---",
-        f"⚙️ [P]rofile Mode:      {str(cli_dict.get('export_type') or 'AUTO').upper()}",
-        f"🗒️ [F]ormats Enabled:   {str(cli_dict.get('export_format') or 'MARKDOWN').upper()}",
-        "---",
-        f"📂 [E]xport Folder:     {resolved_display_path}",
-		f"   [I]mport Config:     Open folder containing singlefile-project-saver-config.json configuration.",
-        f"   [R]enew Token:       Regenerate randomized API access authorization key.",
-        "---",
-		update_menu_string,
-        f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
-    ]
-	
-    render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=65)
-
-def check_for_updates_silently():
-    """Safety placeholder to resolve historic background loop definitions."""
-    pass
-
-def set_terminal_title(title_text, run_version, run_text):
-    if os.name == 'nt':
-        import ctypes
-        ctypes.windll.kernel32.SetConsoleTitleW(f"{title_text} {run_version} - {run_text}")
-    else:
-        sys.stdout.write(f"\x1b]2;{title_text} {run_version} - {run_text}\x07")
-        sys.stdout.flush()
-
-def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
-    def get_visual_width(text_line: str) -> int:
-        clean = re.sub(r'\033\[[0-9;]*m', '', str(text_line))
-        width = 0
-        for char in clean:
-            o = ord(char)
-            if o in (0xfe0f, 0x200d): continue
-            if (0x1f300 <= o <= 0x1f9ff) or (0x2600 <= o <= 0x27bf) or (0x2b50 <= o <= 0x2b55): width += 2
-            elif 0x4e00 <= o <= 0x9fff: width += 2
-            else: width += 1
-        return width
-
-    print() 
-    filtered_lines = [line for line in raw_lines_list if str(line).strip() != "---"]
-    max_len = max((get_visual_width(line) for line in filtered_lines), default=len(title_str))
-    target_width = box_width_override if box_width_override > 0 else 76
-    box_width = max(target_width, max_len + 4)
-
-    header_left = f"──┤ {title_str} ├"
-    header_dash_fill = max(4, box_width - get_visual_width(header_left))
-    print(f"┌{header_left}{'─' * header_dash_fill}┐")
-    for line in raw_lines_list:
-        clean_line = str(line).rstrip()
-        if clean_line.strip() == "---":
-            print(f"├{'─' * box_width}┤")
-        else:
-            current_width = get_visual_width(clean_line)
-            padding_spaces = " " * (box_width - current_width - 2)
-            print(f"│ {clean_line}{padding_spaces} │")
-    print("└" + "─" * box_width + "┘")
-
-def save_config_file(filepath, args_namespace):
-    import configparser
-    try:
-        config = configparser.ConfigParser()
-        if os.path.exists(filepath):
-            config.read(filepath, encoding="utf-8")
-            
-        if not config.has_section("global"):  config.add_section("global")
-        if not config.has_section("update"):  config.add_section("update")
-        if not config.has_section("save"):    config.add_section("save")
-
-        if EXPECTED_TOKEN:
-            config.set("global", "token", EXPECTED_TOKEN)
-            
-        args_dict = vars(args_namespace)
-        if args_dict.get('export_folder'):    config.set("global", "export-folder", str(args_dict['export_folder']))
-        if args_dict.get('export_format'):    config.set("global", "export-format", str(args_dict['export_format']))
-        if args_dict.get('export_type'):      config.set("global", "export-type", str(args_dict['export_type']))
-        if args_dict.get('remote_address'):   config.set("global", "remote-address", str(args_dict['remote_address']))
-        if args_dict.get('chosen_editor'):    config.set("global", "chosen-editor", str(args_dict['chosen_editor']))
-        if args_dict.get('auto') is not None: config.set("global", "auto", str(args_dict['auto']))
-
-        config.set("update", "version_current", VERSION)
-        if LATEST_AVAILABLE_VERSION:
-            config.set("update", "version_newest", LATEST_AVAILABLE_VERSION)
-
-        # * [FIXED] Enforce clean default entries under the [save] container block if they don't exist yet
-        if not config.has_option("save", "export_format_autosave"):
-            config.set("save", "export_format_autosave", "manual")
-        if not config.has_option("save", "export_type_autosave"):
-            config.set("save", "export_type_autosave", "manual")
-
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(f"# Project Saver Configuration Profile\n")
-            config.write(f)
-                
-        print(f"[+] Active configuration successfully written to sections: {filepath}")
-    except Exception as e:
-        print(f"[-] Could not export section configuration profile safely: {e}")
-
-
-
-def load_config_file(filepath):
-    import configparser
-    args_list = []
-    global SYSTEM_CONFIG
-    
-    if not os.path.exists(filepath): 
-        return args_list
-        
-    try:
-        config = configparser.ConfigParser()
-        config.read(filepath, encoding="utf-8")
-        
-        # 1. Dynamically cache ALL file sections and keys into our system config box
-        for section in config.sections():
-            for key, val in config.items(section):
-                SYSTEM_CONFIG[f"{section}_{key.strip().lower()}"] = val.strip()
-
-        # 2. Convert ONLY the [global] parameters into command-line arguments for argparse
-        if config.has_section("global"):
-            for key, val in config.items("global"):
-                key = key.strip().lower()
-                val = val.strip()
-                if val:
-                    # Skip internal connectivity parameters to protect boot sequences
-                    if key in ["token"] or "_" in key:
-                        continue
-                    args_list.append(f"--{key}")
-                    if val.lower() != "true": 
-                        args_list.append(val)
-                        
-    except Exception as e:
-        print(f"[-] Error loading configuration sections: {e}")
-        
-    return args_list
-
-	
-def run_server():
-    set_terminal_title("Project Saver", VERSION, "Server Running")
-    
-    # Launches the silent background check thread for new GitHub releases
-    # threading.Thread(target=check_for_updates_silently, daemon=True).start()
-
-    server_address = ('', PORT)
-    httpd = HTTPServer(server_address, RestApiHandler)
-    
-	#server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-    #server_thread.start()
-    global CLI_ARGS, LATEST_AVAILABLE_VERSION, active_cfg_profile
-    cli_dict = vars(CLI_ARGS)
-
-    if LATEST_AVAILABLE_VERSION and LATEST_AVAILABLE_VERSION != VERSION:
-        # Assumes active_cfg_profile is handled globally or accessible natively via loop variables
-        save_config_file("project_saver.cfg", CLI_ARGS) 
-    refresh_dashboard_view(cli_dict)
-    execute_interactive_dashboard_monitor(httpd)
-	
-
 def execute_interactive_dashboard_monitor(httpd_server_reference):
     """Processes server traffic and terminal hotkeys sequentially without high-speed loop cascades."""
     import sys
@@ -474,9 +112,11 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 check_and_perform_update(
                     VERSION, REPO_OWNER, REPO_NAME,
                     mode_override=8, 
-                    resolve_token_callback=resolve_or_create_security_token
+                    resolve_token_callback=lambda path: project_saver_config.resolve_or_create_security_token(PORT, path)
                 )
-                
+                cli_dict['token'] = project_saver_config.EXPECTED_TOKEN
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
+
             elif user_triggered_key == 'f':
                 # * [FIXED] Changed lookup and dictionary writing targets to use underscore notation keys
                 current_fmt = cli_dict.get('export_format', 'markdown').lower()
@@ -485,11 +125,12 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     current_fmt = "markdown"
                 current_idx = formats_lower.index(current_fmt)
                 next_idx = (current_idx + 1) % len(formats_lower)
-                if SYSTEM_CONFIG.get("save_export_format_autosave") == "yes":
-                    save_config_file("project_saver.cfg", CLI_ARGS)
-                refresh_dashboard_view(cli_dict)
+				cli_dict['export_format'] = formats_lower[next_idx]
+				
+                if project_saver_config.SYSTEM_CONFIG.get("save_export_format_autosave") == "yes":
+                    project_saver_config.save_config_file("project_saver.cfg", CLI_ARGS, VERSION, LATEST_AVAILABLE_VERSION)
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
-			
             elif user_triggered_key == 'p':
                 # * [FIXED] Changed lookup and dictionary writing targets to use underscore notation keys
                 current_prof = cli_dict.get('export_type', 'auto').lower()
@@ -499,9 +140,9 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 current_idx = profiles_lower.index(current_prof)
                 next_idx = (current_idx + 1) % len(profiles_lower)
                 cli_dict['export_type'] = profiles_lower[next_idx]
-                if SYSTEM_CONFIG.get("save_export_type_autosave") == "yes":
-                    save_config_file("project_saver.cfg", CLI_ARGS)
-                refresh_dashboard_view(cli_dict)
+                if project_saver_config.SYSTEM_CONFIG.get("save_export_type_autosave") == "yes":
+                    project_saver_config.save_config_file("project_saver.cfg", CLI_ARGS, VERSION, LATEST_AVAILABLE_VERSION)
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key == 'u':
                 update_press_counter += 1
@@ -531,19 +172,18 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             elif user_triggered_key == 's':
                 # * [ADDED] MANUAL PROFILE STATE EXPORT WRITER
                 print("\n[S] Manual Save: Writing current dashboard settings out to profile file...")
-                save_config_file("project_saver.cfg", CLI_ARGS)
-                refresh_dashboard_view(cli_dict)
+                project_saver_config.save_config_file("project_saver.cfg", CLI_ARGS, VERSION, LATEST_AVAILABLE_VERSION)
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key == 'l':
                 # * [ADDED] MANUAL PROFILE STATE RE-LOADER
                 print("\n[L] Manual Load: Discarding active session drafts and re-indexing configuration...")
-                load_config_file("project_saver.cfg")
-                # Synchronize argparse values natively from our newly re-parsed dictionary parameters
-                if SYSTEM_CONFIG.get("global_export-format"):
-                    cli_dict['export_format'] = SYSTEM_CONFIG["global_export-format"]
-                if SYSTEM_CONFIG.get("global_export-type"):
-                    cli_dict['export_type'] = SYSTEM_CONFIG["global_export-type"]
-                refresh_dashboard_view(cli_dict)			
+                project_saver_config.load_config_file("project_saver.cfg")
+                if project_saver_config.SYSTEM_CONFIG.get("global_export-format"):
+                    cli_dict['export_format'] = project_saver_config.SYSTEM_CONFIG["global_export-format"]
+                if project_saver_config.SYSTEM_CONFIG.get("global_export-type"):
+                    cli_dict['export_type'] = project_saver_config.SYSTEM_CONFIG["global_export-type"]
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)		
 
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
@@ -553,21 +193,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
             os._exit(0)
 
-
-def log_debug(msg):
-    """Prints immediately to the terminal screen AND appends to debug.log natively."""
-    import time
-    try:
-        # 1. Brute-force write to the text file
-        with open("debug.log", "a", encoding="utf-8") as f:
-            f.write(f"[{time.strftime('%H:%M:%S')}] {str(msg)}\n")
-        
-        # 2. Force injection straight onto the console monitor window line
-        print(f"\n\033[95m[DEBUG]\033[0m {str(msg)}")
-    except:
-        pass
-
-			
 
 if __name__ == "__main__":
     print(f"\n[*] Project Saver {VERSION} Starting up, Please wait for system to be ready...")
@@ -610,7 +235,7 @@ if __name__ == "__main__":
 
     # ─── 3. COMBINE ARRAYS IN CORRECT OVERRIDE PRIORITY LAYER ORDER ───
     # Configuration options are evaluated first, terminal entries come LAST to explicitly override them
-    loaded_file_args = load_config_file(active_cfg_profile) if os.path.exists(active_cfg_profile) else []
+    loaded_file_args = project_saver_config.load_config_file(active_cfg_profile) if os.path.exists(active_cfg_profile) else []
     combined_args = loaded_file_args + temp_args
     CLI_ARGS = parser.parse_args(combined_args)
     cli_dict = vars(CLI_ARGS)
@@ -628,21 +253,30 @@ if __name__ == "__main__":
             "and web documentation directly into structured Markdown files,",
             "raw backups, or professional PDF layouts."
         ]
-        render_better_box(about_data, title_str="About \"Project Saver\"", box_width_override=70)
+        project_saver_ui.render_better_box(about_data, title_str="About \"Project Saver\"", box_width_override=70)
         sys.exit(0)
 
     if cli_dict.get("update"):
         check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=7)
         sys.exit(0)
 
-    if cli_dict.get("config-save"):
-        save_config_file(cli_dict["config-save"], CLI_ARGS)
+    if cli_dict.get("config_save"):
+        project_saver_config.save_config_file(
+            cli_dict["config_save"], 
+            CLI_ARGS, 
+            VERSION, 
+            LATEST_AVAILABLE_VERSION
+        )
         sys.exit(0)
 
-    resolve_or_create_security_token(active_cfg_profile)
+    project_saver_config.resolve_or_create_security_token(PORT, active_cfg_profile)
     LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=1) or "v0.0.76-gunther"
-    log_debug(f" -> Current: REPO_OWNER {REPO_OWNER} REPO_NAME {REPO_NAME} VERSION: {VERSION} LATEST_AVAILABLE_VERSION: {LATEST_AVAILABLE_VERSION}")
+    project_saver_ui.log_debug(f" -> Current: REPO_OWNER {REPO_OWNER} REPO_NAME {REPO_NAME} VERSION: {VERSION} LATEST_AVAILABLE_VERSION: {LATEST_AVAILABLE_VERSION}")
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
-    log_debug(f" => Current: REPO_OWNER {REPO_OWNER} REPO_NAME {REPO_NAME} VERSION: {VERSION} LATEST_AVAILABLE_VERSION: {LATEST_AVAILABLE_VERSION}")
-    run_server()
 
+	project_saver_daemon.PORT = PORT
+    project_saver_daemon.VERSION = VERSION
+    project_saver_daemon.CLI_ARGS = CLI_ARGS
+    project_saver_daemon.LATEST_AVAILABLE_VERSION = LATEST_AVAILABLE_VERSION
+    project_saver_daemon.execute_interactive_dashboard_monitor = execute_interactive_dashboard_monitor
+    project_saver_daemon.run_server()    
