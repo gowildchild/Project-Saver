@@ -15,7 +15,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.1",
+        "version": "v0.0.2",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -50,7 +50,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         # 2. Dynamically extract live config parameters with safe fallbacks
         timer_min_str = project_saver_config.SYSTEM_CONFIG.get("shutdown_default_timer_minutes", "5")
-        safety_max_str = project_saver_config.SYSTEM_CONFIG.get("shutdown_safety_trigger_count", "2")
+        safety_max_str = project_saver_config.SYSTEM_CONFIG.get("shutdown_safety_trigger_count", "3")
         
         try: timer_minutes = int(timer_min_str)
         except: timer_minutes = 5
@@ -103,6 +103,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         if user_input != 's' and user_input != "":
             safety_counter = 0
 
+        if user_input == "":
+            time.sleep(0.05)
+            continue        
+        
         # ─── ACTION HOTKEY MATRIX DETECTIONS ───
         if user_input == '-':
             status_message = "Dropping out to main loop..."
@@ -131,7 +135,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         elif user_input == 's':
             safety_counter += 1
-            if safety_counter >= safety_max:
+            if safety_counter > safety_max:
                 status_message = "🔥 CRITICAL: Safety limit cleared! Booting power-down loop..."
                 os.system('cls' if is_windows else 'clear')
                 print("\n[!] Initializing forced machine power-down sequence now...")
