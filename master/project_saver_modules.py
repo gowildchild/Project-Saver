@@ -165,9 +165,9 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
         print("📦 PLUGGABLE EXTENSION REGISTRY INVENTORY OVERVIEW")
         print("=" * 50)
         if not ACTIVE_MODULES:
-            print("   (No active or enabled module scripts discovered locally.)")
+            print("   (No active or enabled module scripts discovered locally.)"
         for name, mod in ACTIVE_MODULES.items():
-            mod_obj = entry["mock"] if isinstance(entry, dict) and entry.get("type") == "binary" else entry
+            mod_obj = mod["mock"] if isinstance(mod, dict) and mod.get("type") == "binary" else mod
             manifest = getattr(mod_obj, "MODULE_MANIFEST", {})
             meta = manifest.get("meta", {})
             print(f" -> [{name.upper()}] - {manifest.get('display_name')}")
