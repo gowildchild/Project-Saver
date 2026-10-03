@@ -491,7 +491,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 			
 
 if __name__ == "__main__":
-    global LATEST_AVAILABLE_VERSION
     print(f"\n[*] Project Saver {VERSION} Starting up, Please wait for system to be ready...")
     if os.name == 'nt':
         os.system('mode con: cols=105 lines=30')
