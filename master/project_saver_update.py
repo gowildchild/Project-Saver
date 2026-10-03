@@ -38,11 +38,6 @@ def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callb
                 
             # Intercept block: A newer release exists on the cloud
             print(f"\n📢 UPDATE NOTIFICATION: A newer release [{latest_version_tag}] is available on GitHub!")
-            print("[*] Auto-update is disabled for safety until private key signatures are implemented.")
-            print("[*] Use the [U] hotkey inside the active monitor dashboard if you wish to upgrade manually.")
-            print("--------------------------------------------------")
-            time.sleep(3.0)
-            print("[+] Advancing straight to background listening loops...")
                 
     except Exception:
         print("[-] Network Status: Could not ping GitHub API. Proceeding in offline execution mode.")
@@ -95,7 +90,10 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
             if latest == version and "--update" in sys.argv:
                 print(f"[+] Already running the latest version {version}.")
                 return
-            
+
+            if mode_override & 16:
+                return latest
+
             # ─── 2. EVALUATE BITMASK: CHECK VERSION ONLY (Bit 1) ───
             # Only intercept and return early if bit 1 is set EXCLUSIVELY without update execution triggers
             if (mode_override & 1) and not (mode_override & 4):
