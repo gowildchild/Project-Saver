@@ -84,6 +84,7 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                     # * [MODIFIED] PROVIDE SECURE METADATA ACCELERATION FALLBACKS FOR LOCAL DEV STATIONS
                     display_name = manifest_data.get("display_name") or f"{module_name.capitalize()} Binary Extension"
                     shortcut = manifest_data.get("menu_shortcut") or (module_name[0].lower() if module_name else "x")
+                    print(f"currently at {module_name} and {display_name} and {shortcut} and {manifest_data.get('author')}")
                     
                     # Re-pack synthesized manifest data into an mock module object structure for display
                     class MockBinaryModule:
