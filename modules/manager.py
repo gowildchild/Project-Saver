@@ -23,7 +23,8 @@ MODULE_MANIFEST = {
     },
     "autostart": False,            # Loaded manually via hotkey actions
     "defaults": {
-        "target_repository": "gowildchild/Project-Saver"
+        "target_repository": "gowildchild/Project-Saver",
+        "target_branch": "modules-distribution" 
     }
 }
 
@@ -36,8 +37,8 @@ def install_module_from_cloud(module_name, github_repo):
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
     # Force save location inside the sibling modules directory context
     target_path = os.path.join(script_base_dir, "modules", f"{module_name.lower()}.py")
-    
-    raw_url = f"https://githubusercontent.com/{github_repo}/modules-distribution/{module_name.lower()}.py"
+    target_branch = project_saver_config.SYSTEM_CONFIG.get("manager_target_branch", "main")
+    raw_url = f"https://githubusercontent.com/{github_repo}/{target_branch}/{module_name.lower()}.py"
     print(f"\n[*] Connecting to distribution repository: {raw_url}")
     
     try:
