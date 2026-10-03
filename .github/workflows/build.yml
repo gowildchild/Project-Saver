@@ -199,7 +199,6 @@ jobs:
         )
         EOF
 
-        # 2. Force compile your production application using your watertight spec manifest
         pyinstaller --clean unified_build.spec --distpath ../dist --workpath ../build
 
     - name: Rename Portable Windows Binary
@@ -226,7 +225,6 @@ jobs:
         path: |
           dist/project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe
           dist/project_saver_setup.exe
-          dist_debug/debug_sandbox.exe
           dist/win_portable.hash
           dist/win_setup.hash
           
@@ -350,13 +348,17 @@ jobs:
     - name: Generate Release manifest.txt
       run: |
         cd release_files
+        
+        # [FIXED] Extraction sequences mapped safely before flat folder shifting executes
         WIN_PORTABLE_HASH=$(cat windows-assets/win_portable.hash)
         WIN_SETUP_HASH=$(cat windows-assets/win_setup.hash)
         LINUX_HASH=$(cat linux-assets/linux_binary.hash)
+        
         mv windows-assets/* .
         mv linux-assets/* .
         rm -rf windows-assets linux-assets
         rm win_portable.hash win_setup.hash linux_binary.hash
+        
         echo "==================================================" > manifest.txt
         echo "   PROJECT SAVER GLOBAL DEPLOYMENT MANIFEST       " >> manifest.txt
         echo "==================================================" >> manifest.txt
@@ -376,7 +378,6 @@ jobs:
         
         echo "[+] Created manifest.txt successfully."
 
-
     - name: Create Official GitHub Release
       uses: ncipollo/release-action@v1
       with:
@@ -391,3 +392,4 @@ jobs:
           Please inspect the `manifest.txt` to verify your matching SHA-256 integrity hash keys.
         artifacts: "release_files/*"
         token: ${{ secrets.GITHUB_TOKEN }}
+
