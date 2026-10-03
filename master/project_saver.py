@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.77-sierra"
+VERSION = "v0.0.77-tango"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -480,6 +480,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 			
 
 if __name__ == "__main__":
+	print("\n[*] Project Saver: Starting up, Please wait for system to be ready...")
     if os.name == 'nt':
         import ctypes
         ctypes.windll.kernel32.SetConsoleMode(ctypes.windll.kernel32.GetStdHandle(-11), 7)
@@ -566,6 +567,7 @@ if __name__ == "__main__":
 
     # Initialize the authentication token validation sequence using the verified config filename
     resolve_or_create_security_token(active_cfg_profile)
+    check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
 
     run_server()
 
