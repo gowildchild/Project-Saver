@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-kilo"
+VERSION = "v0.0.78-nike"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -210,11 +210,12 @@ def refresh_dashboard_view(cli_dict):
     """
     import os
     import sys
-    
+
+	global LATEST_AVAILABLE_VERSION    
     # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    if LATEST_AVAILABLE_VERSION and LATEST_AVAILABLE_VERSION != VERSION:
+    if LATEST_AVAILABLE_VERSION and str(LATEST_AVAILABLE_VERSION).strip() != str(VERSION).strip():
         update_menu_string = f"💡 [U]pdate Available:  Verify integrity hash and update to {LATEST_AVAILABLE_VERSION}."
     else:
         update_menu_string = f"   [U]pdate:            Verify integrity hash and update application (1x=check, 2x=update)."
@@ -294,16 +295,16 @@ def save_config_file(filepath, args_namespace):
             args_dict = vars(args_namespace)
             
             # Pure dash-only configuration lookup and output
-            if args_dict.get('export-folder'):
-                f.write(f"export-folder={args_dict['export-folder']}\n")
-            if args_dict.get('export-format'):
-                f.write(f"export-format={args_dict['export-format']}\n")
-            if args_dict.get('export-type'):
-                f.write(f"export-type={args_dict['export-type']}\n")
-            if args_dict.get('remote-address'):
-                f.write(f"remote-address={args_dict['remote-address']}\n")
-            if args_dict.get('chosen-editor'):
-                f.write(f"chosen-editor={args_dict['chosen-editor']}\n")
+            if args_dict.get('export_folder'):
+                f.write(f"export-folder={args_dict['export_folder']}\n")
+            if args_dict.get('export_format'):
+                f.write(f"export-format={args_dict['export_format']}\n")
+            if args_dict.get('export_type'):
+                f.write(f"export-type={args_dict['export_type']}\n")
+            if args_dict.get('remote_address'):
+                f.write(f"remote-address={args_dict['remote_address']}\n")
+            if args_dict.get('chosen_editor'):
+                f.write(f"chosen-editor={args_dict['chosen_editor']}\n")
             if args_dict.get('auto') is not None:
                 f.write(f"auto={args_dict['auto']}\n")
                 
@@ -566,7 +567,8 @@ if __name__ == "__main__":
 
     resolve_or_create_security_token(active_cfg_profile)
     LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16)
-    if os.environ.get("GITHUB_ACTIONS") == "true":
+    #if os.environ.get("GITHUB_ACTIONS") == "true":
+    if not LATEST_AVAILABLE_VERSION:
         LATEST_AVAILABLE_VERSION = "v0.0.76-gunther"
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
     run_server()
