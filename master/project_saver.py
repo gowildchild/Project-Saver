@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.77-papa"
+VERSION = "v0.0.77-quebec"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -197,6 +197,31 @@ class RestApiHandler(BaseHTTPRequestHandler):
             app_version=VERSION
         )
 
+def refresh_dashboard_view(cli_dict):
+    """
+    Clears the screen and renders the standard startup box with the most up-to-date active settings.
+    """
+    import os
+    import sys
+    
+    # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
+    os.system('cls' if os.name == 'nt' else 'clear')
+    
+    startup_log = [
+        f"Server Listening:   http://localhost:{PORT}",
+        f"Security Token:     {EXPECTED_TOKEN}",
+        "---",
+        f"📂 [E]xport Folder:   {os.path.abspath(cli_dict.get('export-folder'))}",
+        f"⚙️ [P]rofile Mode:    {str(cli_dict.get('export-type')).upper()}",
+        f"🗒️ [F]ormats Enabled: {str(cli_dict.get('export-format')).upper()}",
+        "---",
+        f"💡 [I]mport Config:    Open folder containing singlefile-project-saver-config.json configuration.",
+        f"   [R]enew Token:      Regenerate randomized API access authorization key.",
+        f"   [U]pdate:           Verify integrity hash and update application (1x=check, 2x=update).",
+        f"   [Q]uit Application: Requires 3 consecutive taps with the shoes to escape Kansas."
+    ]
+
+    render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=60)
 
 
 
@@ -536,25 +561,9 @@ def run_server():
     #server_thread.start()	
 
     cli_dict = vars(CLI_ARGS)
-    startup_log = [
-        f"Server Listening:   http://localhost:{PORT}",
-        f"Security Token:     {EXPECTED_TOKEN}",
-        "---",
-        f"📂 [E]xport Folder:   {os.path.abspath(cli_dict.get('export-folder'))}",
-        f"⚙️ [P]rofile Mode:    {str(cli_dict.get('export-type')).upper()}",
-        f"🗒️ [F]ormats Enabled: {str(cli_dict.get('export-format')).upper()}",
-        "---",
-        f"💡 [I]mport Config:    Open folder containing singlefile-project-saver-config.json configuration.",
-        f"   [R]enew Token:      Regenerate randomized API access authorization key.",
-        f"   [U]pdate:           Verify integrity hash and update application (1x=check, 2x=update).",
-        f"   [Q]uit Application: Requires 3 consecutive taps with the shoes to escape Kansas."
-		
-    ]
-
-    render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=60)
-        
+    refresh_dashboard_view(cli_dict)
     execute_interactive_dashboard_monitor(httpd)
-
+	
 
 def execute_interactive_dashboard_monitor(httpd_server_reference):
     """Processes server traffic and terminal hotkeys sequentially without high-speed loop cascades."""
@@ -590,9 +599,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     # * [UPDATED] Dynamically render temporary state status bar live
                     #   Instead of a static text line, this now prints your active session values.
                     # ─────────────────────────────────────────────────────────────────────────────
-                    active_prof = str(cli_dict.get('export-type')).upper()
-                    active_fmt = str(cli_dict.get('export-format')).upper()
-                    sys.stdout.write(f"\x1b[2K\r[Mode: {active_prof} | Format: {active_fmt}] Ready for hotkey: ")
+                    sys.stdout.write("\x1b[2K\r[?] Ready for hotkey: ")
                 sys.stdout.flush()
                 prompt_visible = True
 
@@ -654,7 +661,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 next_idx = (current_idx + 1) % len(formats_lower)
                 
                 cli_dict['export-format'] = formats_lower[next_idx]
-                print(f"\n[F] Format override changed to: {cli_dict['export-format'].upper()}")
+                refresh_dashboard_view(cli_dict)
 
             elif user_triggered_key == 'p':
                 # ─────────────────────────────────────────────────────────────────────────────
@@ -671,7 +678,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 next_idx = (current_idx + 1) % len(profiles_lower)
                 
                 cli_dict['export-type'] = profiles_lower[next_idx]
-                print(f"\n[P] Profile Mode override changed to: {cli_dict['export-type'].upper()}")
+                refresh_dashboard_view(cli_dict)
 
 
             elif user_triggered_key == 'u':
