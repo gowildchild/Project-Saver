@@ -125,7 +125,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     current_fmt = "markdown"
                 current_idx = formats_lower.index(current_fmt)
                 next_idx = (current_idx + 1) % len(formats_lower)
-				cli_dict['export_format'] = formats_lower[next_idx]
+                cli_dict['export_format'] = formats_lower[next_idx]
 				
                 if project_saver_config.SYSTEM_CONFIG.get("save_export_format_autosave") == "yes":
                     project_saver_config.save_config_file("project_saver.cfg", CLI_ARGS, VERSION, LATEST_AVAILABLE_VERSION)
