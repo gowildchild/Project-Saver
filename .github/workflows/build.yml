@@ -155,9 +155,9 @@ jobs:
         iscc master/installer_blueprint.iss
 
     - name: Pre-Calculate Windows SHA-256 Hashes
+      working-directory: ./dist
       shell: bash
       run: |
-        cd dist
         certutil -hashfile "project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]' > win_portable.hash
         certutil -hashfile "project_saver_setup.exe" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]' > win_setup.hash
 
