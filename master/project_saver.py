@@ -24,7 +24,7 @@ import project_saver_config
 import project_saver_ui
 import project_saver_daemon
 
-VERSION = "v0.0.78-zoeloe"
+VERSION = "v0.0.79-alpha"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
