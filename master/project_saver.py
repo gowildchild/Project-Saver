@@ -507,7 +507,7 @@ if __name__ == "__main__":
     else:
         default_export_dir = os.path.join(os.path.expanduser("~"), "Documents", "Project-Saver", "export")
 
-	parser.add_argument("--export-folder", default=default_export_dir, help=f"Target base folder path where files will be written. (Default: {default_export_dir})")
+    parser.add_argument("--export-folder", default=default_export_dir, help=f"Target base folder path where files will be written. (Default: {default_export_dir})")
     parser.add_argument("--export-format", default="markdown", help="Comma-separated dumping targets: markdown, html, pdf. (Default: markdown)")
     parser.add_argument("--export-type", default="auto", choices=["auto", "code", "web"], help="Parsing layout configuration profile strategy. (Default: auto)")
     parser.add_argument("--remote-address", default="", help="Turns runtime engine into proxy router. (Default: None)")
