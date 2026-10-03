@@ -4,6 +4,7 @@
 # ==========================================================================
 import os
 import sys
+import json
 import time
 import importlib.util
 
@@ -180,7 +181,7 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
     if action == "info":
         print("\n" + "=" * 50)
         print(f"{action}")
-        print("📦 PLUGGABLE EXTENSION REGISTRY INVENTORY OVERVIEW")
+        print("PLUGGABLE MODULES OVERVIEW")
         print("=" * 50)
         if not ACTIVE_MODULES:
             print("   No active or enabled module scripts discovered locally.")
