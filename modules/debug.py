@@ -12,7 +12,7 @@ MODULE_MANIFEST = {
     "name": "debug",
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.2",
+        "version": "v0.0.7",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
