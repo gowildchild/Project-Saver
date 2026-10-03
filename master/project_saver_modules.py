@@ -134,10 +134,13 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
             print("🔴 ERROR: Missing required target module name parameter string string.")
             return
         target_name = module_args_list[1].lower()
-        # Imports your manager function dynamically over the wire
-        import modules.manager
-        target_repo = project_saver_config.SYSTEM_CONFIG.get("manager_target_repository", "gowildchild/Project-Saver")
-        modules.manager.install_module_from_cloud(target_name, target_repo)
+        try:
+            import modules.manager
+            target_repo = project_saver_config.SYSTEM_CONFIG.get("manager_target_repository", "gowildchild/Project-Saver")
+            modules.manager.install_module_from_cloud(target_name, target_repo)
+        except ModuleNotFoundError:
+            print("🔴 ERROR: The core framework cloud 'manager.py' engine module is missing from your local directory.")
+            print("          Please manually drop 'manager.py' inside your modules/ folder context to boot updates.")
 
     elif action == "uninstall":
         if len(module_args_list) < 2:
