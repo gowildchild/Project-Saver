@@ -41,7 +41,7 @@ def install_module_from_cloud(module_name, github_repo):
     
     target_branch = project_saver_config.SYSTEM_CONFIG.get("manager_target_branch", "modules")
     
-    raw_url = f"https://githubusercontent.com/{github_repo}/{target_branch}/modules/{module_name.lower()}.py"
+    raw_url = f"https://raw.githubusercontent.com/{github_repo}/{target_branch}/modules/{module_name.lower()}.py"
     print(f"\n[*] Connecting to distribution repository: {raw_url}")
     
     try:
@@ -81,14 +81,15 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         installed_extensions = []
         if os.path.exists(modules_dir):
             for file_entry in os.listdir(modules_dir):
+                # * [FIXED] ENFORCE SECURE BOUNDARY CHECK FOR COMPLETE DOUBLE UNDERLINE DUNDER FILES
                 if file_entry.endswith(".py") and file_entry != "__init__.py":
-                    installed_extensions.append(file_entry[:-3])
+                    installed_extensions.append(file_entry[:-3].lower())
 
         # 4. Build terminal manager control panel box UI display list
         manager_panel = [
-            f"   Active Module Name:  {MODULE_MANIFEST['display_name']}",
-            f"   Target Repository :  https://github.com/{target_repo}",
-            f"   Distribution Branch:  {target_branch.upper()}",
+            f" Active Module Name:  {MODULE_MANIFEST['display_name']}",
+            f" Target Repository :  https://github.com/{target_repo}",
+            f" Distribution Branch:  {target_branch.upper()}",
             "---",
             "📦 INSTALLED EXTENSION ASSETS FOUND LOCALLY:",
             f"   {', '.join(sorted(installed_extensions)) if installed_extensions else '(No external extensions found)'}",
@@ -98,20 +99,20 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             "   [U] Uninstall  - Erase a module extension file and unload its variables.",
             "   [C] Configure  - Modify operational parameter values inside project_saver.cfg.",
             "---",
-            f"   Status Indicator:    {status_message}",
+            f" Status Indicator:    {status_message}",
             "---",
-            "   [-] Press [Minus Key] to drop back out to Main Menu..."
+            " [-] Press [Minus Key] to drop back out to Main Menu..."
         ]
 
         # 5. Render via your native box utility layout engine
         project_saver_ui.render_better_box(
-            manager_panel, 
-            title_str="Project Saver Package Extension Registry Manager", 
+            manager_panel,
+            title_str="Project Saver Package Extension Registry Manager",
             box_width_override=74
         )
 
         # 6. Non-blocking keyboard state monitoring
-        sys.stdout.write("\x1b[2K\r[📦 Manager] Ready for key: ")
+        sys.stdout.write("\x1b[2K\r[ Manager] Ready for key: ")
         sys.stdout.flush()
 
         user_input = ""
@@ -132,15 +133,15 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         if user_input == "":
             time.sleep(0.05)
             continue
-        
-        # Reset structural configuration tracking strings on loop turn
-        if user_input != "":
-            status_message = "Awaiting input command option..."
 
-        # ─── HOTKEY MATRIX ACTIONS ───
+        # Reset structural configuration tracking strings on loop turn
+        status_message = "Awaiting input command option..."
+
+        # HOTKEY MATRIX ACTIONS
         if user_input == '-':
+            print("\n[*] Exiting Package Manager. Returning to Master Dashboard...")
             break
-            
+
         elif user_input == 'i':
             print("\n")
             target_name = input("[*] Enter name of the target module to pull from GitHub: ").strip().lower()
@@ -148,8 +149,9 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 status_message = f"[*] Stream-fetching module '{target_name}'..."
                 if install_module_from_cloud(target_name, target_repo):
                     status_message = f"🟢 SUCCESS: Module '{target_name}' hot-loaded into local directory registry safely!"
-                    if 'project_saver_modules' in sys.modules:
-                        sys.modules['project_saver_modules'].bootstrap_and_discover_modules(cli_dict, app_version, port_num)
+                    main_module_ref = sys.modules.get('main')
+                    if main_module_ref and hasattr(main_module_ref, 'project_saver_modules'):
+                        main_module_ref.project_saver_modules.bootstrap_and_discover_modules(cli_dict, app_version, port_num)
                 else:
                     status_message = f"🔴 FAILED: Could not pull module '{target_name}' over the wire."
             else:
@@ -163,19 +165,19 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 try:
                     os.remove(target_file_path)
                     status_message = f"🟢 SUCCESS: Pluggable file '{target_name}.py' erased from disk storage context."
-                    if 'project_saver_modules' in sys.modules:
-                        sys.modules['project_saver_modules'].bootstrap_and_discover_modules(cli_dict, app_version, port_num)
+                    main_module_ref = sys.modules.get('main')
+                    if main_module_ref and hasattr(main_module_ref, 'project_saver_modules'):
+                        main_module_ref.project_saver_modules.bootstrap_and_discover_modules(cli_dict, app_version, port_num)
                 except Exception as err:
                     status_message = f"🔴 ERROR: Failed to sweep target off disk -> {err}"
             else:
                 status_message = "🔴 ERROR: Target module does not exist, or is locked by system core configurations."
 
         elif user_input == 'c':
-            # Localised parameter configuration editor loop
             print("\n")
             target_name = input("[*] Enter module name section header to configure: ").strip().lower()
             if target_name in installed_extensions or target_name == "manager":
-                print(f"\n⚙️ Active configuration keys for [{target_name}]:")
+                print(f"\n[+] Active configuration keys for [{target_name}]:")
                 prefix = f"{target_name}_"
                 matching_keys = [k for k in project_saver_config.SYSTEM_CONFIG.keys() if k.startswith(prefix)]
                 
@@ -187,19 +189,19 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                     
                     target_key = input("\nEnter specific parameter key row name to change: ").strip().lower()
                     full_lookup_key = f"{prefix}{target_key}"
+                    
                     if full_lookup_key in project_saver_config.SYSTEM_CONFIG:
                         new_val = input(f"Enter new value for [{target_key}]: ").strip()
                         if new_val:
                             project_saver_config.SYSTEM_CONFIG[full_lookup_key] = new_val
                             status_message = f"🟢 SUCCESS: Parameter variable [{target_key}] updated in memory arrays."
-                            # Commits memory modifications back down onto the hard disk profile natively
                             project_saver_config.save_config_file("project_saver.cfg", cli_dict, app_version)
                         else:
                             status_message = "⚠️ WARNING: Configuration change skipped. Input parameter empty."
                     else:
                         status_message = "🔴 ERROR: Specified variable target parameter row name key invalid."
                 else:
-                    status_message = f"(No active defaults initialized for section block [{target_name}].)"
+                    status_message = f"⚠️ WARNING: No active defaults initialized for section block [{target_name}]."
             else:
                 status_message = "🔴 ERROR: Target module selection not verified inside active local libraries."
 
