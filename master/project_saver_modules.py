@@ -42,7 +42,7 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
         is_script = file_entry.endswith(".py") and file_entry != "__init__.py"
         is_binary = file_entry.endswith(".exe") or (os.name != 'nt' and '.' not in file_entry and file_entry != "__init__.py")
         if is_script or is_binary:
-            module_name = file_entry[:-3] if is_script or file_entry.endswith(".exe") else file_entry
+            module_name, _ = os.path.splitext(file_entry)
             module_path = os.path.join(modules_dir, file_entry)
             #module_name = file_entry[:-3]
             try:
