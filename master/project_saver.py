@@ -491,7 +491,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 			
 
 if __name__ == "__main__":
-	global LATEST_AVAILABLE_VERSION
+    global LATEST_AVAILABLE_VERSION
     print(f"\n[*] Project Saver {VERSION} Starting up, Please wait for system to be ready...")
     if os.name == 'nt':
         os.system('mode con: cols=105 lines=30')
@@ -507,8 +507,6 @@ if __name__ == "__main__":
         default_export_dir = os.path.join(os.environ["USERPROFILE"], "Documents", "Project-Saver", "export")
     else:
         default_export_dir = os.path.join(os.path.expanduser("~"), "Documents", "Project-Saver", "export")
-
-    LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16)
 		
     parser.add_argument("--export-folder", default=argparse.SUPPRESS, help=f"Target base folder path where files will be written. (Default: {default_export_dir})")
     parser.add_argument("--export-format", default=argparse.SUPPRESS, help="Comma-separated dumping targets: markdown, html, pdf. (Default: markdown)")
@@ -580,8 +578,9 @@ if __name__ == "__main__":
         save_config_file(cli_dict["config-save"], CLI_ARGS)
         sys.exit(0)
 
-    # Initialize the authentication token validation sequence using the verified config filename
     resolve_or_create_security_token(active_cfg_profile)
+    # Initialize the authentication token validation sequence using the verified config filename
+	LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16)
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
 
     run_server()
