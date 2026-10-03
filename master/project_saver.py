@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-hotel"
+VERSION = "v0.0.78-india"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -506,18 +506,17 @@ if __name__ == "__main__":
         default_export_dir = os.path.join(os.environ["USERPROFILE"], "Documents", "Project-Saver", "export")
     else:
         default_export_dir = os.path.join(os.path.expanduser("~"), "Documents", "Project-Saver", "export")
-		
-    parser.add_argument("--export-folder", default=argparse.SUPPRESS, help=f"Target base folder path where files will be written. (Default: {default_export_dir})")
-    parser.add_argument("--export-format", default=argparse.SUPPRESS, help="Comma-separated dumping targets: markdown, html, pdf. (Default: markdown)")
-    parser.add_argument("--export-type", default=argparse.SUPPRESS, choices=["auto", "code", "web"], help="Parsing layout configuration profile strategy. (Default: auto)")
-    parser.add_argument("--remote-address", default=argparse.SUPPRESS, help="Turns runtime engine into proxy router. (Default: None)")
+
+	parser.add_argument("--export-folder", default=default_export_dir, help=f"Target base folder path where files will be written. (Default: {default_export_dir})")
+    parser.add_argument("--export-format", default="markdown", help="Comma-separated dumping targets: markdown, html, pdf. (Default: markdown)")
+    parser.add_argument("--export-type", default="auto", choices=["auto", "code", "web"], help="Parsing layout configuration profile strategy. (Default: auto)")
+    parser.add_argument("--remote-address", default="", help="Turns runtime engine into proxy router. (Default: None)")
     parser.add_argument("--auto", type=int, nargs='?', const=5, default=None, help="Enables automated execution timeout duration.")
     parser.add_argument("--config", default="", help="Load options from a custom configuration text file.")
     parser.add_argument("--config-save", default="", help="Save setup flags into configuration profile text file.")
     parser.add_argument("--about", action="store_true", help="Displays developer credits and exit.")
     parser.add_argument("--update", action="store_true", help="Queries GitHub downloads update binary and exit.")
-    parser.add_argument("--chosen-editor", default=argparse.SUPPRESS, choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool. (Default: system_default)")
-
+    parser.add_argument("--chosen-editor", default="system_default", choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool. (Default: system_default)")
     temp_args = sys.argv[1:]
     
     # ─── 2. DYNAMICALLY ISOLATE THE ACTIVE CONFIGURATION FILENAME ───
@@ -536,22 +535,6 @@ if __name__ == "__main__":
     combined_args = loaded_file_args + temp_args
     CLI_ARGS = parser.parse_args(combined_args)
     cli_dict = vars(CLI_ARGS)
-
-    # ─── 4. APPLY DEFAULT FALLBACKS TO PURE DASH KEYS ───
-    if "export-folder" not in cli_dict or not cli_dict["export-folder"]:
-        cli_dict["export-folder"] = default_export_dir
-        
-    if "export-format" not in cli_dict or not cli_dict["export-format"]: 
-        cli_dict["export-format"] = "markdown"
-        
-    if "export-type" not in cli_dict or not cli_dict["export-type"]: 
-        cli_dict["export-type"] = "auto"
-        
-    if "chosen-editor" not in cli_dict or not cli_dict["chosen-editor"]: 
-        cli_dict["chosen-editor"] = "system_default"
-        
-    if "remote-address" not in cli_dict or cli_dict["remote-address"] is None: 
-        cli_dict["remote-address"] = ""
 
     # ─── 5. EXECUTE OPERATIONAL TASKS USING SAFE DIRECTORY LOOKUPS ───
     if cli_dict.get("about"):
@@ -580,7 +563,7 @@ if __name__ == "__main__":
     resolve_or_create_security_token(active_cfg_profile)
     LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16)
     if os.environ.get("GITHUB_ACTIONS") == "true":
-        LATEST_AVAILABLE_VERSION = "v0.0.76-gunther"     
+        LATEST_AVAILABLE_VERSION = "v0.0.76-gunther"
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
     cli_dict = vars(CLI_ARGS)
     refresh_dashboard_view(cli_dict)
