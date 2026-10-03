@@ -156,8 +156,6 @@ jobs:
     - name: Compile Standalone Executable
       working-directory: ./master
       shell: bash
-      env:
-        PYTHONPATH: ${{ github.workspace }}
       run: |
         echo "========================================================================="
         echo "🚀 WINDOWS COMPILATION ENVIRONMENT DIAGNOSTICS"
@@ -169,7 +167,8 @@ jobs:
         ls -la .
         echo "-------------------------------------------------------------------------"
         echo "[*] Auditing files present up in the repository root directory:"
-        ls -la ${{ github.workspace }}
+        # FIXED: Replaced backslash variable path with a clean relative reference to stop Bash escaping bugs
+        ls -la ..
         echo "========================================================================="       
         
         # Execute production PyInstaller build layer using clean local sibling collection
