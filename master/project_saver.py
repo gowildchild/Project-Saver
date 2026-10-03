@@ -24,7 +24,7 @@ import project_saver_config
 import project_saver_ui
 import project_saver_daemon
 
-VERSION = "v0.0.79-hotel"
+VERSION = "v0.0.79-julliet"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -40,6 +40,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
     import os
     import subprocess
     import time
+
+    global VERSION, LATEST_AVAILABLE_VERSION, REPO_OWNER, REPO_NAME, CLI_ARGS
 
     quit_press_counter = 0
     update_press_counter = 0
@@ -118,7 +120,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key == 'f':
-                # * [FIXED] Changed lookup and dictionary writing targets to use underscore notation keys
                 current_fmt = cli_dict.get('export_format', 'markdown').lower()
                 formats_lower = [f.lower() for f in ALLOWED_FORMATS]
                 if current_fmt not in formats_lower:
@@ -126,13 +127,12 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 current_idx = formats_lower.index(current_fmt)
                 next_idx = (current_idx + 1) % len(formats_lower)
                 cli_dict['export_format'] = formats_lower[next_idx]
-				
+
                 if project_saver_config.SYSTEM_CONFIG.get("save_export_format_autosave") == "yes":
                     project_saver_config.save_config_file("project_saver.cfg", CLI_ARGS, VERSION, LATEST_AVAILABLE_VERSION)
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key == 'p':
-                # * [FIXED] Changed lookup and dictionary writing targets to use underscore notation keys
                 current_prof = cli_dict.get('export_type', 'auto').lower()
                 profiles_lower = [p.lower() for p in ALLOWED_PROFILES]
                 if current_prof not in profiles_lower:
@@ -170,7 +170,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 continue
 
             elif user_triggered_key == 's':
-                # * [ADDED] MANUAL PROFILE STATE EXPORT WRITER
                 print("\n[S] Manual Save: Writing current dashboard settings out to profile file...")
                 project_saver_config.save_config_file("project_saver.cfg", CLI_ARGS, VERSION, LATEST_AVAILABLE_VERSION)
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
@@ -279,4 +278,4 @@ if __name__ == "__main__":
     project_saver_daemon.CLI_ARGS = CLI_ARGS
     project_saver_daemon.LATEST_AVAILABLE_VERSION = LATEST_AVAILABLE_VERSION
     project_saver_daemon.execute_interactive_dashboard_monitor = execute_interactive_dashboard_monitor
-    project_saver_daemon.run_server()    
+    project_saver_daemon.run_server()
