@@ -33,7 +33,7 @@ jobs:
     - name: Run Automated Compilation and Hash Ledger Routine
       shell: bash
       run: |
-        python3 -c '
+        python3 << 'EOF'
         import os
         import sys
         import json
@@ -122,7 +122,7 @@ jobs:
         with open(os.path.join(dist_dir, "manifest.json"), "w", encoding="utf-8") as json_file:
             json.dump(global_manifest, json_file, indent=2)
         print("[+] Manifest tracking ledger compiled successfully.")
-        '
+        EOF
 
     - name: Upload Pluggable Module Assets to Release Memory
       uses: actions/upload-artifact@v4
