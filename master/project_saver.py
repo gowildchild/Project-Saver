@@ -24,7 +24,7 @@ import project_saver_config
 import project_saver_ui
 import project_saver_daemon
 
-VERSION = "v0.0.79-papa"
+VERSION = "v0.0.79-quebec"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -268,7 +268,7 @@ if __name__ == "__main__":
         )
         sys.exit(0)
 
-    project_saver_config.resolve_or_create_security_token(active_cfg_profile)
+    project_saver_config.resolve_or_create_security_token(config_path=active_cfg_profile, port_num=PORT)
     LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=1) or "v0.0.76-gunther"
     project_saver_ui.log_debug(f" -> Current: REPO_OWNER {REPO_OWNER} REPO_NAME {REPO_NAME} VERSION: {VERSION} LATEST_AVAILABLE_VERSION: {LATEST_AVAILABLE_VERSION}")
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
