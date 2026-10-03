@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-quebec"
+VERSION = "v0.0.78-sierra"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -227,8 +227,8 @@ def refresh_dashboard_view(cli_dict):
     startup_log = [
         f"   Server Details:      http://localhost:{PORT} (Token: {EXPECTED_TOKEN})",
         "---",
-        f"⚙️ [P]rofile Mode:      {str(cli_dict.get('export-type')).upper()}",
-        f"🗒️ [F]ormats Enabled:   {str(cli_dict.get('export-format')).upper()}",
+        f"⚙️ [P]rofile Mode:      {str(cli_dict.get('export_type')).upper()}",
+        f"🗒️ [F]ormats Enabled:   {str(cli_dict.get('export_format')).upper()}",
         "---",
         f"📂 [E]xport Folder:     {resolved_display_path}",
 		f"   [I]mport Config:     Open folder containing singlefile-project-saver-config.json configuration.",
