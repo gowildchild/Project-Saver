@@ -91,6 +91,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 continue
             user_input = sys.stdin.readline().strip().lower()
 
+        if user_input == "":
+            time.sleep(0.05)
+            continue        
+        
         # ─── HOTKEY MATRIX ACTIONS ───
         if user_input == '-':
             break
@@ -98,5 +102,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         elif user_input == 'a':
             # Place your custom processing routines right here!
             status_message = f"🟢 SUCCESS: Action triggered at {time.strftime('%H:%M:%S')}!"
-
+            time.sleep(1.0)
+            
         time.sleep(0.05)
