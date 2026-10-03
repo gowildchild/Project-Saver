@@ -221,7 +221,7 @@ if __name__ == "__main__":
     parser.add_argument("--about", action="store_true", help="Displays developer credits and exit.")
     parser.add_argument("--update", action="store_true", help="Queries GitHub downloads update binary and exit.")
     parser.add_argument("--chosen-editor", default="system_default", choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool. (Default: system_default)")
-	parser.add_argument("--module", nargs='+', help="Executes pluggable extension sub-commands layout routing entries.")
+    parser.add_argument("--module", nargs='+', help="Executes pluggable extension sub-commands layout routing entries.")
     temp_args = sys.argv[1:]
     
     # ─── 2. DYNAMICALLY ISOLATE THE ACTIVE CONFIGURATION FILENAME ───
