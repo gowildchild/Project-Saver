@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-india"
+VERSION = "v0.0.78-julliet"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -218,21 +218,24 @@ def refresh_dashboard_view(cli_dict):
         update_menu_string = f"💡 [U]pdate Available:  Verify integrity hash and update to {LATEST_AVAILABLE_VERSION}."
     else:
         update_menu_string = f"   [U]pdate:            Verify integrity hash and update application (1x=check, 2x=update)."
-		
+
+    raw_folder_path = cli_dict.get('export-folder') or ""
+    resolved_display_path = os.path.abspath(raw_folder_path) if raw_folder_path else "Initializing path.."		
+	
     startup_log = [
         f"   Server Details:      http://localhost:{PORT} (Token: {EXPECTED_TOKEN})",
         "---",
         f"⚙️ [P]rofile Mode:      {str(cli_dict.get('export-type')).upper()}",
         f"🗒️ [F]ormats Enabled:   {str(cli_dict.get('export-format')).upper()}",
         "---",
-        f"📂 [E]xport Folder:     {os.path.abspath(cli_dict.get('export-folder'))}",
+        f"📂 [E]xport Folder:     {resolved_display_path}",
 		f"   [I]mport Config:     Open folder containing singlefile-project-saver-config.json configuration.",
         f"   [R]enew Token:       Regenerate randomized API access authorization key.",
         "---",
 		update_menu_string,
         f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
     ]
-
+	
     render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=65)
 
 def check_for_updates_silently():
