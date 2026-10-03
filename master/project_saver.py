@@ -209,10 +209,10 @@ def refresh_dashboard_view(cli_dict):
     # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-	if LATEST_AVAILABLE_VERSION and LATEST_AVAILABLE_VERSION != VERSION:
+    if LATEST_AVAILABLE_VERSION and LATEST_AVAILABLE_VERSION != VERSION:
         update_menu_string = f"   [U]pdate Available: Verify integrity hash and update to {LATEST_AVAILABLE_VERSION}."
     else:
-        update_menu_string = "   [U]pdate:           Verify integrity hash and update application (1x=check, 2x=update)."
+        update_menu_string = f"   [U]pdate:           Verify integrity hash and update application (1x=check, 2x=update)."
 		
     startup_log = [
         f"Server Listening:   http://localhost:{PORT}",
