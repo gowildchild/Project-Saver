@@ -24,7 +24,7 @@ MODULE_MANIFEST = {
     "autostart": False,            # Loaded manually via hotkey actions
     "defaults": {
         "target_repository": "gowildchild/Project-Saver",
-        "target_branch": "modules-distribution" 
+        "target_branch": "modules" 
     }
 }
 
@@ -33,12 +33,16 @@ def register_module_callbacks(server_reference=None):
     pass
 
 def install_module_from_cloud(module_name, github_repo):
-    """Stream-downloads raw code text directly from the target GitHub modules subfolder."""
+    """Stream-downloads raw code text directly from the target GitHub modules subfolder branch."""
+    import project_saver_config
+    
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-    # Force save location inside the sibling modules directory context
     target_path = os.path.join(script_base_dir, "modules", f"{module_name.lower()}.py")
-    target_branch = project_saver_config.SYSTEM_CONFIG.get("manager_target_branch", "main")
-    raw_url = f"https://githubusercontent.com/{github_repo}/{target_branch}/{module_name.lower()}.py"
+    
+    # FIXED: Dynamically retrieves the target branch setting from the active config registry
+    target_branch = project_saver_config.SYSTEM_CONFIG.get("manager_target_branch", "modules")
+    
+    raw_url = f"https://githubusercontent.com{github_repo}/{target_branch}/modules/{module_name.lower()}.py"
     print(f"\n[*] Connecting to distribution repository: {raw_url}")
     
     try:
@@ -72,6 +76,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         # 2. Extract repository configuration parameters safely
         target_repo = project_saver_config.SYSTEM_CONFIG.get("manager_target_repository", "gowildchild/Project-Saver")
+        target_branch = project_saver_config.SYSTEM_CONFIG.get("manager_target_branch", "modules")
 
         # 3. Dynamic Local Directory File Scanning Sweep Loop Pass
         installed_extensions = []
@@ -83,7 +88,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         # 4. Build terminal manager control panel box UI display list
         manager_panel = [
             f"   Active Module Name:  {MODULE_MANIFEST['display_name']}",
-            f"   Target Distribution: ://github.com{target_repo}",
+            f"   Target Repository :  https://github.com/{target_repo}",
+            f"   Distribution Branch:  {target_branch.upper()}",
             "---",
             "📦 INSTALLED EXTENSION ASSETS FOUND LOCALLY:",
             f"   {', '.join(sorted(installed_extensions)) if installed_extensions else '(No external extensions found)'}",
@@ -139,7 +145,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 status_message = f"[*] Stream-fetching module '{target_name}'..."
                 if install_module_from_cloud(target_name, target_repo):
                     status_message = f"🟢 SUCCESS: Module '{target_name}' hot-loaded into local directory registry safely!"
-                    # Fires a core re-indexing bootstrap pass downstream in your main loop context
                     if 'project_saver_modules' in sys.modules:
                         sys.modules['project_saver_modules'].bootstrap_and_discover_modules(cli_dict, app_version, port_num)
                 else:
@@ -184,6 +189,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                         if new_val:
                             project_saver_config.SYSTEM_CONFIG[full_lookup_key] = new_val
                             status_message = f"🟢 SUCCESS: Parameter variable [{target_key}] updated in memory arrays."
+                            # Commits memory modifications back down onto the hard disk profile natively
+                            project_saver_config.save_config_file("project_saver.cfg", cli_dict, app_version)
                         else:
                             status_message = "⚠️ WARNING: Configuration change skipped. Input parameter empty."
                     else:
