@@ -2,11 +2,11 @@ name: Compile Pluggable Module Extensions
 
 on:
   push:
-    branches: [ modules ]
+    branches: [ modules-distribution ]
     paths:
       - 'modules/**'
   pull_request:
-    branches: [ modules ]
+    branches: [ modules-distribution ]
     paths:
       - 'modules/**'
 
@@ -28,7 +28,8 @@ jobs:
     - name: Install Packaging Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller beautifulsoup4 reportlab
+        pip install pyinstaller
+        # pip install pyinstaller beautifulsoup4 reportlab
 
     - name: Run Automated Compilation and Hash Ledger Routine
       shell: bash
@@ -81,7 +82,7 @@ jobs:
                 spec.loader.exec_module(mod)
 
                 if not hasattr(mod, "MODULE_MANIFEST"):
-                    print(f"[-] Skipping {file_entry}: Missing manifest matrix.")
+                    print(f"[-] Skipping {file_entry}: Missing modules manifest.")
                     continue
 
                 manifest = mod.MODULE_MANIFEST
@@ -92,6 +93,8 @@ jobs:
                     "pyinstaller",
                     "--onefile",
                     "--clean",
+                    "--exclude-module=reportlab",
+                    "--exclude-module=bs4",                    
                     f"--distpath={dist_dir}",
                     f"--workpath={build_dir}",
                     f"--name={module_name}",
