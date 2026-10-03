@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-charlie"
+VERSION = "v0.0.78-delta"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -579,7 +579,8 @@ if __name__ == "__main__":
 
     resolve_or_create_security_token(active_cfg_profile)
     LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16)
-    LATEST_AVAILABLE_VERSION = "v0.0.76-gunther"     
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        LATEST_AVAILABLE_VERSION = "v0.0.76-gunther"     
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
     run_server()
 
