@@ -5,8 +5,8 @@ from email.parser import BytesParser
 from bs4 import BeautifulSoup
 
 # Import our shared system modules natively
-import project_saver_config
-import project_saver_ui
+from . import project_saver_ui
+from . import project_saver_config
 from project_saver_archive import process_html_content
 
 # Module-level variables populated during instantiation
