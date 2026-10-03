@@ -167,12 +167,9 @@ jobs:
         ls -la .
         echo "-------------------------------------------------------------------------"
         echo "[*] Auditing files present up in the repository root directory:"
-        # FIXED: Replaced backslash variable path with a clean relative reference to stop Bash escaping bugs
         ls -la ..
         echo "========================================================================="       
-        
-        # Execute production PyInstaller build layer using clean local sibling collection
-        pyinstaller project_saver.py --onefile --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt
+        pyinstaller project_saver.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt
 
     - name: Rename Portable Windows Binary
       working-directory: ./dist
@@ -223,9 +220,6 @@ jobs:
       env:
         PYTHONPATH: ${{ github.workspace }}
       run: |
-    - name: Compile Linux Binary
-      working-directory: ./master
-      run: |
         # =========================================================================
         # 🔍 LINUX BUILD WORKSPACE PATH INTEGRITY DEBUG ROUTINE
         # =========================================================================
@@ -241,7 +235,7 @@ jobs:
         echo "[*] Auditing files present up in the repository root directory:"
         ls -la ${{ github.workspace }}
         echo "========================================================================="      
-        pyinstaller project_saver.py --onefile --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build
+        pyinstaller project_saver.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build
 
     - name: Rename and Pre-Calculate Linux SHA-256 Hash
       working-directory: ./dist
