@@ -4,7 +4,7 @@ import sys
 import re
 import time
 import subprocess
-from . import project_saver_config
+import project_saver_config
 
 def set_terminal_title(title_text, run_version, run_text):
     if os.name == 'nt':
@@ -52,7 +52,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     """
     import os
     import sys
-    from . import project_saver_config
+    import project_saver_config
 
     # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
     os.system('cls' if os.name == 'nt' else 'clear')
