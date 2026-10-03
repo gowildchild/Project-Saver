@@ -78,7 +78,14 @@ def render_pdf_fallback(file_path, page_title, source_origin, blocks):
             leading=11,          # Tighter line spacing for smaller font
             textColor=colors.HexColor('#222222')
         )
-        
+        custom_code_style = ParagraphStyle(
+            'CustomCode',
+            parent=styles['Normal'],
+            fontName='Courier',
+            fontSize=7.5,
+            leading=10,
+            textColor=colors.HexColor('#006600')
+        )        
         safe_title = html.escape(page_title)
         safe_origin = html.escape(source_origin)
         
@@ -91,7 +98,8 @@ def render_pdf_fallback(file_path, page_title, source_origin, blocks):
         for b in blocks:
             if not b: continue
             if "```" in b:
-                story.append(Preformatted(re.sub(r'```[a-zA-Z]*', '', b).strip(), styles['Code']))
+                # story.append(Preformatted(re.sub(r'```[a-zA-Z]*', '', b).strip(), styles['Code']))
+                story.append(Preformatted(re.sub(r'```[a-zA-Z]*', '', b).strip(), custom_code_style))
             else:
                 safe_text = html.escape(b.replace("#", "").strip())
                 # Use the new optimized smaller font style for all conversational text elements
