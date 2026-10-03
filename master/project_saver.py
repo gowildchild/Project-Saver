@@ -324,7 +324,7 @@ def save_config_file(filepath, args_namespace):
             f.write(f"version_current={VERSION}\n")
             if LATEST_AVAILABLE_VERSION:
                 f.write(f"version_newest={LATEST_AVAILABLE_VERSION}\n")
-		print(f"[+] Active configuration written to profile: {filepath}")
+        print(f"[+] Active configuration written to profile: {filepath}")
     except Exception as e:
         print(f"[-] Could not export configuration profile: {e}")
 
