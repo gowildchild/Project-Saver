@@ -1,7 +1,7 @@
 # ==========================================================================
 # Project Saver: Modular System to (currently) archive sites and (AI) code.
 # Copyright (c) 2002-2026 by Gunther Voet (GoWildchild) All Rights Reserved. 
-# Released under strict Non-Commercial Open-Source License terms.   (beta)
+# Released under strict Non-Commercial Open-Source License terms.   (beta1)
 # ==========================================================================
 import os
 import re
