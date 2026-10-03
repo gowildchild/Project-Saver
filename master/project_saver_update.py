@@ -33,46 +33,20 @@ def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callb
             
             if latest_version_tag and latest_version_tag == version:
                 print(f"[+] Running the latest version {version}.")
-                print("[*] Advancing straight to active daemon mode...\n")
+                print("[*] Startup complete. Advancing straight to active daemon mode...\n")
                 return
                 
             # Intercept block: A newer release exists on the cloud
-            print(f"\n📢 UPDATE AVAILABLE: A newer release [{latest_version_tag}] is ready!")
-            countdown = 30
-            print(f"[?] Press [Y] within {countdown} seconds to execute the automated upgrade sequence.")
-            print("[*] Press [N] or do nothing to bypass and advance straight to daemon mode.")
+            print(f"\n📢 UPDATE NOTIFICATION: A newer release [{latest_version_tag}] is available on GitHub!")
+            print("[*] Auto-update is disabled for safety until private key signatures are implemented.")
+            print("[*] Use the [U] hotkey inside the active monitor dashboard if you wish to upgrade manually.")
             print("--------------------------------------------------")
-            
-            start_time = time.time()
-            user_triggered = False
-            
-            while time.time() - start_time < countdown:
-                elapsed = int(time.time() - start_time)
-                remaining = countdown - elapsed
-                sys.stdout.write(f"\r    -> Advancing to daemon execution mode in: [{remaining:02d}s] (Press Y to intercept) ")
-                sys.stdout.flush()
-                
-                if msvcrt.kbhit():
-                    key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-                    if key == 'y':
-                        user_triggered = True
-                        break
-                    elif key == 'n':
-                        print("\n\n[*] Update scan bypassed by user selection.")
-                        break
-                time.sleep(0.1)
-                
-            if user_triggered:
-                print("\n\n[*] Intercept triggered! Invoking secure manifest update sequence...")
-                # Note: Modified to pass local variables cleanly through the callback reference
-                check_callback(version, repo_owner, repo_name, mode_override=4)
-            else:
-                print("\n\n[+] Countdown finalized. Launching background listening socket loops...")
+            time.sleep(3.0)
+            print("[+] Advancing straight to background listening loops...")
                 
     except Exception:
-        # Fails completely silently to prevent crash spikes if network links are dead on boot/offline nodes
         print("[-] Network Status: Could not ping GitHub API. Proceeding in offline execution mode.")
-        print("[+] Launching background listening socket loops...\n")
+        print("[+] Startup complete. Launching background listening socket loops...\n")
 
 
 def check_and_perform_update(version, repo_owner, repo_name, mode_override: int = 0, resolve_token_callback=None):
