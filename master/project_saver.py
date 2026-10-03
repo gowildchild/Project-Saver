@@ -227,8 +227,8 @@ def refresh_dashboard_view(cli_dict):
     startup_log = [
         f"   Server Details:      http://localhost:{PORT} (Token: {EXPECTED_TOKEN})",
         "---",
-        f"⚙️ [P]rofile Mode:      {str(cli_dict.get('export_type')).upper()}",
-        f"🗒️ [F]ormats Enabled:   {str(cli_dict.get('export_format')).upper()}",
+        f"⚙️ [P]rofile Mode:      {str(cli_dict.get('export_type') or 'AUTO').upper()}",
+        f"🗒️ [F]ormats Enabled:   {str(cli_dict.get('export_format') or 'MARKDOWN').upper()}",
         "---",
         f"📂 [E]xport Folder:     {resolved_display_path}",
 		f"   [I]mport Config:     Open folder containing singlefile-project-saver-config.json configuration.",
@@ -416,6 +416,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
             # ─── HOTKEY MATRIX ACTIONS ───
             if user_triggered_key == 'e':
+                # * [FIXED] Converted to underscore lookup to read configuration folder path
                 export_path = os.path.abspath(cli_dict.get('export_folder') or "")
                 print(f"\n[E] Export folder opened: {export_path}")
                 if not os.path.exists(export_path):
@@ -432,50 +433,47 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
             elif user_triggered_key == 'r':
                 check_and_perform_update(
+                    VERSION, REPO_OWNER, REPO_NAME,
                     mode_override=8, 
-                    version=VERSION, 
-                    repo_owner=REPO_OWNER, 
-                    repo_name=REPO_NAME, 
                     resolve_token_callback=resolve_or_create_security_token
                 )
+                
             elif user_triggered_key == 'f':
-                current_fmt = cli_dict.get('export-format', 'markdown').lower()
+                # * [FIXED] Changed lookup and dictionary writing targets to use underscore notation keys
+                current_fmt = cli_dict.get('export_format', 'markdown').lower()
                 formats_lower = [f.lower() for f in ALLOWED_FORMATS]
                 if current_fmt not in formats_lower:
                     current_fmt = "markdown"
                 current_idx = formats_lower.index(current_fmt)
                 next_idx = (current_idx + 1) % len(formats_lower)
-                cli_dict['export-format'] = formats_lower[next_idx]
+                cli_dict['export_format'] = formats_lower[next_idx]
                 refresh_dashboard_view(cli_dict)
 
             elif user_triggered_key == 'p':
-                current_prof = cli_dict.get('export-type', 'auto').lower()
+                # * [FIXED] Changed lookup and dictionary writing targets to use underscore notation keys
+                current_prof = cli_dict.get('export_type', 'auto').lower()
                 profiles_lower = [p.lower() for p in ALLOWED_PROFILES]
                 if current_prof not in profiles_lower:
                     current_prof = "auto"
                 current_idx = profiles_lower.index(current_prof)
                 next_idx = (current_idx + 1) % len(profiles_lower)
-                cli_dict['export-type'] = profiles_lower[next_idx]
+                cli_dict['export_type'] = profiles_lower[next_idx]
                 refresh_dashboard_view(cli_dict)
 
             elif user_triggered_key == 'u':
                 update_press_counter += 1
                 if update_press_counter == 1:
                     latest_discovered_version = check_and_perform_update(
-                        mode_override=1, 
-                        version=VERSION, 
-                        repo_owner=REPO_OWNER, 
-                        repo_name=REPO_NAME
+                        VERSION, REPO_OWNER, REPO_NAME,
+                        mode_override=1
                     )
                     if not latest_discovered_version or latest_discovered_version == VERSION:
                         update_press_counter = 0
                 elif update_press_counter >= 2:
                     print("\n[*] Update Started: Initializing secure system upgrade sequence...")
                     check_and_perform_update(
-                        mode_override=4, 
-                        version=VERSION, 
-                        repo_owner=REPO_OWNER, 
-                        repo_name=REPO_NAME
+                        VERSION, REPO_OWNER, REPO_NAME,
+                        mode_override=4
                     )
                     os._exit(0)
                 continue
@@ -494,6 +492,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
         except KeyboardInterrupt:
             print("\n[-] Shutting down Project Saver API Server Daemon cleanly.")
             os._exit(0)
+
 
 
 
