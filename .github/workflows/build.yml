@@ -89,7 +89,7 @@ jobs:
                 ]
               )
             ]),
-            VarFileInfo([VarStruct("Translation", 1033, 1200)])
+            VarFileInfo([VarStruct("Translation", [1033, 1200])])
           ]
         )"""
         
@@ -102,7 +102,7 @@ jobs:
         AppName=Project Saver
         AppVersion={0}
         AppPublisher=Gunther Voet
-        AppPublisherURL=https://github.com/gowildchild/Project-Saver/
+        AppPublisherURL=https://github.com/gowildchild/Project-Saver
         DefaultDirName={{localappdata}}\\ProjectSaver
         DefaultGroupName=Project Saver
         DisableProgramGroupPage=yes
