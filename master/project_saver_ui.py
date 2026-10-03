@@ -57,10 +57,11 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    # Reads the update version string out of the section dictionary context safely
+    def clean_ver(v_str):
+        return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', str(v_str).lower())]	
+	
     latest_available_version = project_saver_config.SYSTEM_CONFIG.get("update_version_newest") or "" 
-    
-    if latest_available_version and str(latest_available_version).strip() != str(app_version).strip():
+    if latest_available_version and clean_ver(latest_available_version) > clean_ver(app_version):
         update_menu_string = f"💡 [U]pdate Available:  Verify integrity hash and update to {latest_available_version}."
     else:
         update_menu_string = f"   [U]pdate:            Verify integrity hash and update application (1x=check, 2x=update)."
