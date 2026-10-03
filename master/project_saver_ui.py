@@ -79,7 +79,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
         f"   [I]mport Config:     Open folder containing singlefile-project-saver-config.json configuration.",
         f"   [R]enew Token:       Regenerate randomized API access authorization key.",
         "---",
-		f"   [M]odules Panel:     Open dynamic pluggable extension and package manager dashboard.",
+        f"   [M]odules Panel:     Open dynamic pluggable extension and package manager dashboard.",
         update_menu_string,
         f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
     ]
