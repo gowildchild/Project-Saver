@@ -580,7 +580,7 @@ if __name__ == "__main__":
 
     resolve_or_create_security_token(active_cfg_profile)
     # Initialize the authentication token validation sequence using the verified config filename
-	LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16)
+    LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16)
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
 
     run_server()
