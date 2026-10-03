@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-julliet"
+VERSION = "v0.0.78-kilo"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -344,8 +344,9 @@ def run_server():
     httpd = HTTPServer(server_address, RestApiHandler)
 
     #server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-    #server_thread.start()	
-
+    #server_thread.start()
+    global CLI_ARGS
+    active_cli_dictionary = vars(CLI_ARGS)
     cli_dict = vars(CLI_ARGS)
     refresh_dashboard_view(cli_dict)
     execute_interactive_dashboard_monitor(httpd)
@@ -568,7 +569,5 @@ if __name__ == "__main__":
     if os.environ.get("GITHUB_ACTIONS") == "true":
         LATEST_AVAILABLE_VERSION = "v0.0.76-gunther"
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
-    cli_dict = vars(CLI_ARGS)
-    refresh_dashboard_view(cli_dict)
     run_server()
 
