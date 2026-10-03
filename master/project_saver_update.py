@@ -19,7 +19,7 @@ def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callb
     # Import native Windows tracking library without external dependencies
     import msvcrt
 
-    api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
+    api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
     print("==================================================")
     print("⏰ PROJECT SAVER INITIALIZATION")
     print("==================================================")
@@ -31,8 +31,8 @@ def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callb
             data = json.loads(response.read().decode('utf-8'))
             latest_version_tag = data.get("tag_name", "").strip()
             
-            if latest_version_tag and latest_version_tag == VERSION:
-                print(f"[+] Running the latest version {VERSION}.")
+            if latest_version_tag and latest_version_tag == version:
+                print(f"[+] Running the latest version {version}.")
                 print("[*] Advancing straight to active daemon mode...\n")
                 return
                 
@@ -64,7 +64,8 @@ def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callb
                 
             if user_triggered:
                 print("\n\n[*] Intercept triggered! Invoking secure manifest update sequence...")
-                check_and_perform_update()
+                # Note: Modified to pass local variables cleanly through the callback reference
+                check_callback(version, repo_owner, repo_name, mode_override=4)
             else:
                 print("\n\n[+] Countdown finalized. Launching background listening socket loops...")
                 
@@ -74,7 +75,7 @@ def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callb
         print("[+] Launching background listening socket loops...\n")
 
 
-def check_and_perform_update(mode_override: int = 0, version, repo_owner, repo_name, resolve_token_callback=None):
+def check_and_perform_update(version, repo_owner, repo_name, mode_override: int = 0, resolve_token_callback=None):
     """
     Performs manual force upgrade downloads via --update with full SHA-256 manifest validation
     Bitmask stacking flags (0-15): 1 = Check Version, 2 = SHA-256 Integrity Check, 4 = Update (Hot-Swap), 8 = New Token and renew singlefile JSON config profile
@@ -83,17 +84,20 @@ def check_and_perform_update(mode_override: int = 0, version, repo_owner, repo_n
     is_windows = platform.system().lower() == "windows" 
     expected_version = ""
     expected_hash = None
-    api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
+    api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
     
-    # ─── 1. EVALUATE BITMASK: TOKEN AND CONFIGURATION GENERATION (Bit 8) ───
     if mode_override & 8:
         script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
         cfg_file_path = os.path.join(script_base_dir, "project_saver.cfg")
         if os.path.exists(cfg_file_path):
             try: os.remove(cfg_file_path)
             except: pass
-        resolve_or_create_security_token("project_saver.cfg")
-        print(f"\r[+] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
+            
+        if resolve_token_callback:
+            resolve_token_callback("project_saver.cfg")
+            print(f"\r[+] SUCCESS: Token successfully regenerated!")
+        else:
+            print(f"\r[+] Configuration file reset completed.")
         print("💡 Tip: Re-import your fresh singlefile configuration profile into your browser extension.")
         if mode_override == 8:
             return
@@ -114,17 +118,17 @@ def check_and_perform_update(mode_override: int = 0, version, repo_owner, repo_n
             latest = data.get("tag_name", "").strip()
             
             # If triggered manually via CLI but already matching, exit early safely
-            if latest == VERSION and "--update" in sys.argv:
-                print(f"[+] Already running the latest version {VERSION}.")
+            if latest == version and "--update" in sys.argv:
+                print(f"[+] Already running the latest version {version}.")
                 return
             
             # ─── 2. EVALUATE BITMASK: CHECK VERSION ONLY (Bit 1) ───
             # Only intercept and return early if bit 1 is set EXCLUSIVELY without update execution triggers
             if (mode_override & 1) and not (mode_override & 4):
-                if latest == VERSION:
-                    print(f"[+] You are running the latest release ({VERSION}).")
+                if latest == version:
+                    print(f"[+] You are running the latest release ({version}).")
                 else:
-                    print(f"[U] UPDATE FOUND: Latest version is [{latest}]. Local version is [{VERSION}].")
+                    print(f"[U] UPDATE FOUND: Latest version is [{latest}]. Local version is [{version}].")
                 if mode_override == 1:
                     return latest
 
