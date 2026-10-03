@@ -48,7 +48,7 @@ def load_config_file(filepath):
     return args_list
 
 
-def save_config_file(filepath, args_namespace, current_version="v0.0.79", latest_version=None):
+def save_config_file(filepath, args_namespace, current_version="v0.0.76", latest_version=None):
     try:
         config = configparser.ConfigParser()
         if os.path.exists(filepath):
