@@ -211,7 +211,7 @@ def refresh_dashboard_view(cli_dict):
     import os
     import sys
 
-	global LATEST_AVAILABLE_VERSION    
+    global LATEST_AVAILABLE_VERSION    
     # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -347,7 +347,6 @@ def run_server():
     #server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     #server_thread.start()
     global CLI_ARGS
-    active_cli_dictionary = vars(CLI_ARGS)
     cli_dict = vars(CLI_ARGS)
     refresh_dashboard_view(cli_dict)
     execute_interactive_dashboard_monitor(httpd)
