@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-alpha"
+VERSION = "v0.0.78-bravo"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -215,9 +215,9 @@ def refresh_dashboard_view(cli_dict):
     os.system('cls' if os.name == 'nt' else 'clear')
 
     if LATEST_AVAILABLE_VERSION and LATEST_AVAILABLE_VERSION != VERSION:
-        update_menu_string = f"    [U]pdate Available: Verify integrity hash and update to {LATEST_AVAILABLE_VERSION}."
+        update_menu_string = f"💡 [U]pdate Available:  Verify integrity hash and update to {LATEST_AVAILABLE_VERSION}."
     else:
-        update_menu_string = f"💡  [U]pdate:           Verify integrity hash and update application (1x=check, 2x=update)."
+        update_menu_string = f"   [U]pdate:            Verify integrity hash and update application (1x=check, 2x=update)."
 		
     startup_log = [
         f"⚙️ Server Details:      http://localhost:{PORT} (Token: {EXPECTED_TOKEN})",
