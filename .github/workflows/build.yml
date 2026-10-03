@@ -142,7 +142,7 @@ jobs:
     - name: Compile Standalone Executable
       working-directory: ./master
       run: |
-        pyinstaller --onefile --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt project_saver.py
+        pyinstaller --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt project_saver.py
 
     - name: Rename Portable Windows Binary
       working-directory: ./dist
@@ -191,7 +191,7 @@ jobs:
     - name: Compile Linux Binary
       working-directory: ./master
       run: |
-        pyinstaller --onefile --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build project_saver.py
+        pyinstaller --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build project_saver.py
 
     - name: Rename and Pre-Calculate Linux SHA-256 Hash
       working-directory: ./dist
