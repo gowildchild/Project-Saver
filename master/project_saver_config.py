@@ -24,7 +24,11 @@ def load_config_file(filepath):
         for section in config.sections():
             section_lower = section.strip().lower()
             for key, val in config.items(section):
-                SYSTEM_CONFIG[f"{section_lower}_{key.strip().lower()}"] = val.strip()
+                if section_lower not in ['global', 'update', 'save', 'singlefile']:
+                    sanitized_key = f"{section_lower}_{key.strip().lower()}".replace("-", "_").replace(" ", "_")
+                    SYSTEM_CONFIG[sanitized_key] = val.strip()
+                else:
+                    SYSTEM_CONFIG[f"{section_lower}_{key.strip().lower()}"] = val.strip()
 
         # 2. Extract Token dynamically out of the modular singlefile block mapping context
         if config.has_option("singlefile", "token"):
