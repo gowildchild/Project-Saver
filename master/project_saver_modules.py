@@ -79,24 +79,29 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                     if os.path.exists(ledger_path):
                         try:
                             with open(ledger_path, "r", encoding="utf-8") as lf:
-                                manifest_data = json.load(lf).get("modules", {}).get(module_name, {})
+                                manifest_data = json.load(lf).get("modules", {}).get(module_name.lower(), {})
                         except: pass
                     
                     # * [MODIFIED] PROVIDE SECURE METADATA ACCELERATION FALLBACKS FOR LOCAL DEV STATIONS
-                    display_name = manifest_data.get("display_name") or f"{module_name.capitalize()} Binary Extension"
-                    shortcut = manifest_data.get("menu_shortcut") or (module_name[0].lower() if module_name else "x")
                     print(f"{modules_dir} / {ledger_path} / {script_base_dir} / currently at {module_name} and {display_name} and {shortcut} of {manifest_data.get('author')} to {manifest_data}")
+                    # * [FIXED] READ METADATA DIRECTLY FROM THE FLAT JSON DATA MATRIX STRUCTER
+                    display_name = manifest_data.get("display_name") or f"{module_name.capitalize()} Binary Extension"
+                    shortcut = manifest_data.get("menu_shortcut") or (module_name.lower() if module_name else "x")
+                    author_val = manifest_data.get("author") or "Compiled Binary Pack"
+                    version_val = manifest_data.get("version") or "v0.0.1"
+                    autostart_val = manifest_data.get("autostart", False)
+                    print(f"{modules_dir} / {ledger_path} / {script_base_dir} / currently at {module_name} and {display_name} and {shortcut} of {author_val} to {manifest_data}")
                     
-                    # Re-pack synthesized manifest data into an mock module object structure for display
+                    # Re-pack synthesized manifest data into a mock module object nested layout matching your script layout
                     class MockBinaryModule:
                         MODULE_MANIFEST = {
-                            "name": module_name,
+                            "name": module_name.lower(),
                             "display_name": display_name,
                             "menu_shortcut": shortcut,
-                            "autostart": manifest_data.get("autostart", False),
+                            "autostart": autostart_val,
                             "meta": {
-                                "author": manifest_data.get("author") or "Compiled Binary Pack",
-                                "version": manifest_data.get("version") or "v0.0.1",
+                                "author": author_val,
+                                "version": version_val,
                                 "enabled": True
                             }
                         }
@@ -164,6 +169,7 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
 
     if action == "info":
         print("\n" + "=" * 50)
+        print(f"{action}")
         print("📦 PLUGGABLE EXTENSION REGISTRY INVENTORY OVERVIEW")
         print("=" * 50)
         if not ACTIVE_MODULES:
