@@ -80,10 +80,27 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                                 manifest_data = json.load(lf).get("modules", {}).get(module_name, {})
                         except: pass
                     
-                    # Synthesize structural parameters block tracking arrays
-                    shortcut = manifest_data.get("menu_shortcut", module_name[0]).lower()
-                    ACTIVE_MODULES[module_name] = {"type": "binary", "path": module_path}
-                    SHORTCUT_MAP[shortcut] = module_name
+                    # * [MODIFIED] PROVIDE SECURE METADATA ACCELERATION FALLBACKS FOR LOCAL DEV STATIONS
+                    display_name = manifest_data.get("display_name") or f"{module_name.capitalize()} Binary Extension"
+                    shortcut = manifest_data.get("menu_shortcut") or (module_name[0].lower() if module_name else "x")
+                    
+                    # Re-pack synthesized manifest data into an mock module object structure for display
+                    class MockBinaryModule:
+                        MODULE_MANIFEST = {
+                            "name": module_name,
+                            "display_name": display_name,
+                            "menu_shortcut": shortcut,
+                            "autostart": manifest_data.get("autostart", False),
+                            "meta": {
+                                "author": manifest_data.get("author") or "Compiled Binary Pack",
+                                "version": manifest_data.get("version") or "v0.0.1",
+                                "enabled": True
+                            }
+                        }
+                    
+                    # Register into live memory pools context tracking tables
+                    ACTIVE_MODULES[module_name] = MockBinaryModule
+                    SHORTCUT_MAP[shortcut.lower()] = module_name
 
             except Exception as e:
                 print(f"[-] Failed to dynamic index module [{module_name}]: {e}")
