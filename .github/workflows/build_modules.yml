@@ -4,14 +4,13 @@ on:
   push:
     branches:
       - modules-distribution
-      - "mod-*"
-      - "modules-distribution-*"
+      - "modules**"
     paths:
       - 'modules/**'
   pull_request:
+    branches:
       - modules-distribution
-      - "mod-*"
-      - "modules-distribution-*"
+      - "modules**"
     paths:
       - 'modules/**'
 
