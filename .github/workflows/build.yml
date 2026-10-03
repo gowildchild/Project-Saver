@@ -50,19 +50,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller beautifulsoup4 reportlab
 
-    - name: Display Build Script Execution Verification Token
+    - name: Compile Standalone Executable
+      working-directory: ./master
       shell: bash
       run: |
-        # =========================================================================
-        # TARGET SCRIPT INTEGRITY RUN VALIDATION IDENTIFIER:
-        # BUILD ID REFERENCE TOKEN STAMP -> [ RUN_NUMBER: #${{ github.run_number }} ]
-        # =========================================================================
-        echo "========================================================================="
-        echo "🚀 COMPILATION VERIFICATION OVERVIEW"
-        echo "Active Action Runner Build Number : #${{ github.run_number }}"
-        echo "Target Directory Context Workspace: ${{ github.workspace }}"
-        echo "Deploying Hidden Module Structural Layers Securely..."
-        echo "========================================================================="
+        # 1. Compile your main production application binary file layer context
+        pyinstaller project_saver.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt
+
+        # 2. Compile your explicit diagnostic sandbox utility app using identical parameters
+        pyinstaller debug_sandbox.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build
 
     - name: Generate blueprints
       shell: bash
@@ -193,8 +189,10 @@ jobs:
       with:
         name: windows-assets
         path: |
+          
           dist/project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe
           dist/project_saver_setup.exe
+          dist/debug_sandbox.exe
           dist/win_portable.hash
           dist/win_setup.hash
           
