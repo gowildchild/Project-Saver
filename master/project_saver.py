@@ -14,8 +14,9 @@ from email.parser import BytesParser
 from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
+from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.77-quebec"
+VERSION = "v0.0.77-romeo"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -223,8 +224,6 @@ def refresh_dashboard_view(cli_dict):
 
     render_better_box(startup_log, title_str=f"Project Saver {VERSION}", box_width_override=60)
 
-
-
 def check_for_updates_silently():
     """Safety placeholder to resolve historic background loop definitions."""
     pass
@@ -266,234 +265,6 @@ def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", bo
             padding_spaces = " " * (box_width - current_width - 2)
             print(f"│ {clean_line}{padding_spaces} │")
     print("└" + "─" * box_width + "┘")
-
-def check_for_startup_update_and_run():
-    """Pauses startup sequence for 30 seconds allowing an interactive, timed update check before daemon mode."""
-    import platform
-    import time
-    import sys
-    import urllib.request
-    import json
-
-    # We only use interactive keyboard prompts on Windows nodes natively
-    is_windows = platform.system().lower() == "windows"
-    if not is_windows:
-        print("[*] Project Saver daemon initialized on local port 19763...")
-        return
-
-    # Import native Windows tracking library without external dependencies
-    import msvcrt
-
-    api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
-    print("==================================================")
-    print("⏰ PROJECT SAVER INITIALIZATION")
-    print("==================================================")
-    print(f"[*] Querying latest active release definitions from: {api_url}")
-    
-    try:
-        req = urllib.request.Request(api_url, headers={'User-Agent': 'Project-Saver-Startup-Engine'})
-        with urllib.request.urlopen(req, timeout=3) as response:
-            data = json.loads(response.read().decode('utf-8'))
-            latest_version_tag = data.get("tag_name", "").strip()
-            
-            if latest_version_tag and latest_version_tag == VERSION:
-                print(f"[+] Running the latest version {VERSION}.")
-                print("[*] Advancing straight to active daemon mode...\n")
-                return
-                
-            # Intercept block: A newer release exists on the cloud
-            print(f"\n📢 UPDATE AVAILABLE: A newer release [{latest_version_tag}] is ready!")
-            countdown = 30
-            print(f"[?] Press [Y] within {countdown} seconds to execute the automated upgrade sequence.")
-            print("[*] Press [N] or do nothing to bypass and advance straight to daemon mode.")
-            print("--------------------------------------------------")
-            
-            start_time = time.time()
-            user_triggered = False
-            
-            while time.time() - start_time < countdown:
-                elapsed = int(time.time() - start_time)
-                remaining = countdown - elapsed
-                sys.stdout.write(f"\r    -> Advancing to daemon execution mode in: [{remaining:02d}s] (Press Y to intercept) ")
-                sys.stdout.flush()
-                
-                if msvcrt.kbhit():
-                    key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-                    if key == 'y':
-                        user_triggered = True
-                        break
-                    elif key == 'n':
-                        print("\n\n[*] Update scan bypassed by user selection.")
-                        break
-                time.sleep(0.1)
-                
-            if user_triggered:
-                print("\n\n[*] Intercept triggered! Invoking secure manifest update sequence...")
-                check_and_perform_update()
-            else:
-                print("\n\n[+] Countdown finalized. Launching background listening socket loops...")
-                
-    except Exception:
-        # Fails completely silently to prevent crash spikes if network links are dead on boot/offline nodes
-        print("[-] Network Status: Could not ping GitHub API. Proceeding in offline execution mode.")
-        print("[+] Launching background listening socket loops...\n")
-
-
-def check_and_perform_update(mode_override: int = 0):
-    """
-    Performs manual force upgrade downloads via --update with full SHA-256 manifest validation
-    Bitmask stacking flags (0-15): 1 = Check Version, 2 = SHA-256 Integrity Check, 4 = Update (Hot-Swap), 8 = New Token and renew singlefile JSON config profile
-    """
-    import platform
-    import os
-    import sys
-    import urllib.request
-    import json
-    import subprocess
-    import hashlib
-
-    is_windows = platform.system().lower() == "windows" 
-    expected_version = ""
-    expected_hash = None
-    api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
-    
-    # ─── 1. EVALUATE BITMASK: TOKEN AND CONFIGURATION GENERATION (Bit 8) ───
-    if mode_override & 8:
-        script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-        cfg_file_path = os.path.join(script_base_dir, "project_saver.cfg")
-        if os.path.exists(cfg_file_path):
-            try: os.remove(cfg_file_path)
-            except: pass
-        resolve_or_create_security_token("project_saver.cfg")
-        print(f"\r[+] SUCCESS: Token regenerated! New active access key token is: {EXPECTED_TOKEN}")
-        print("💡 Tip: Re-import your fresh singlefile configuration profile into your browser extension.")
-        if mode_override == 8:
-            return
-
-    # Skip network queries if no update or version bits are stacked
-    if not (mode_override & 1 or mode_override & 2 or mode_override & 4):
-        return
-
-    print(f"\n[*] Initializing secure system upgrade check via: {api_url}")
-    
-    try:
-        current_exe_path = os.path.abspath(sys.executable)
-        install_dir = os.path.dirname(current_exe_path)
-        
-        req = urllib.request.Request(api_url, headers={'User-Agent': 'Project-Saver-Secure-Updater'})
-        with urllib.request.urlopen(req) as response:
-            data = json.loads(response.read().decode('utf-8'))
-            latest = data.get("tag_name", "").strip()
-            
-            # If triggered manually via CLI but already matching, exit early safely
-            if latest == VERSION and "--update" in sys.argv:
-                print(f"[+] Already running the latest version {VERSION}.")
-                return
-            
-            # ─── 2. EVALUATE BITMASK: CHECK VERSION ONLY (Bit 1) ───
-            # Only intercept and return early if bit 1 is set EXCLUSIVELY without update execution triggers
-            if (mode_override & 1) and not (mode_override & 4):
-                if latest == VERSION:
-                    print(f"[+] You are running the latest release ({VERSION}).")
-                else:
-                    print(f"[U] UPDATE FOUND: Latest version is [{latest}]. Local version is [{VERSION}].")
-                if mode_override == 1:
-                    return latest
-
-            download_url = None
-            manifest_url = None
-            for asset in data.get("assets", []):
-                name = asset.get("name", "")
-                if (is_windows and name.endswith("-portable.exe")) or (not is_windows and "linux" in name.lower()):
-                    download_url = asset.get("browser_download_url")
-                if name == "manifest.txt":
-                    manifest_url = asset.get("browser_download_url")
-            
-            if not download_url or not manifest_url:
-                print("[-] Error: Missing distribution executable or master manifest.txt in release.")
-                return
-
-            # ─── 3. EVALUATE BITMASK: VERIFY MANIFEST FILES (Bit 2) ───
-            # Download and parse manifest fields if either manifest check (2) or execution update (4) bits are set
-            if mode_override & 2 or mode_override & 4:
-                print(f"[*] Fetching delivery assets for integrity verification...")
-                with urllib.request.urlopen(manifest_url) as stream:
-                    manifest_lines = stream.read().decode('utf-8').splitlines()
-                    for line in manifest_lines:
-                        if "Version Tag" in line:
-                            expected_version = line.split(":")[1].strip().lower()
-                        if "SHA-256 Checksum" in line:
-                            expected_hash = line.split(":")[1].strip().lower()
-                            break
-
-            # ─── 4. EVALUATE BITMASK: EXECUTE DOWNSTREAM UPDATE PROCESS (Bit 4) ───
-            if mode_override & 4:
-                print(f"[*] Pre-Fetching Project Saver for integrity verification...")
-                temp_download_name = "project_saver.new" if is_windows else f"project_saver_{latest}_linux"
-                temp_download_path = os.path.join(install_dir, temp_download_name)
-                
-                # Download binary payload
-                with urllib.request.urlopen(download_url) as stream:
-                    with open(temp_download_path, "wb") as f: 
-                        f.write(stream.read())
-
-                if not expected_hash:
-                    print("[-] Verification Error: Manifest format is malformed or invalid.")
-                    try: os.remove(temp_download_path)
-                    except: pass
-                    return
-
-                # Cryptographic Validation Loop
-                print("[*] Verifying Project Saver integrity SHA-256 hash...")
-                sha256_hash = hashlib.sha256()
-                with open(temp_download_path, "rb") as f:
-                    for byte_block in iter(lambda: f.read(4096), b""):
-                        sha256_hash.update(byte_block)
-                computed_hash = sha256_hash.hexdigest().lower()
-
-                print(f"    -> Expected Hash: {expected_hash}")
-                print(f"    -> Computed Hash: {computed_hash}")
-
-                if computed_hash != expected_hash:
-                    print("\n[!] SECURITY ISSUE: SHA-256 Integrity Hash Mismatch!")
-                    print("    The downloaded upgrade executable failed security checksum validation.")
-                    print("    Upgrade aborted automatically to protect this machine.")
-                    try: os.remove(temp_download_path)
-                    except: pass
-                    return
-
-                verification_status = "[+] SHA-256 Integrity Verification Passed"
-
-                if is_windows:
-                    old_exe_path = os.path.join(install_dir, "project_saver.old")
-                    if os.path.exists(old_exe_path):
-                        try: os.remove(old_exe_path)
-                        except Exception: pass
-
-                    verification_status += ", Performing safe hot-swap update..."
-                    print(f"{verification_status}")
-                    os.rename(current_exe_path, old_exe_path)
-                    os.rename(temp_download_path, current_exe_path)
-                    
-                    cleanup_cmd = f"timeout /t 2 >nul && del \"{old_exe_path}\""
-                    subprocess.Popen(cleanup_cmd, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                else:
-                    final_linux_path = os.path.join(install_dir, "project_saver")
-                    if os.path.exists(final_linux_path):
-                        os.remove(final_linux_path)
-                    os.rename(temp_download_path, final_linux_path)
-                    os.chmod(final_linux_path, 0o755)
-
-                print("[+] SUCCESS: Secure upgrade to latest version completed...")
-                print(f"[+] Please restart Project Saver to run {expected_version if expected_version else latest}!")
-                sys.exit(0)
-                
-            return latest
-            
-    except Exception as e:
-        print(f"[-] Secure upgrade failed: {e}")
-        return None
-
 
 def save_config_file(filepath, args_namespace):
     try:
@@ -595,10 +366,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
                     sys.stdout.write(f"\x1b[2K\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
                 else:
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # * [UPDATED] Dynamically render temporary state status bar live
-                    #   Instead of a static text line, this now prints your active session values.
-                    # ─────────────────────────────────────────────────────────────────────────────
                     sys.stdout.write("\x1b[2K\r[?] Ready for hotkey: ")
                 sys.stdout.flush()
                 prompt_visible = True
@@ -643,53 +410,52 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 else: subprocess.Popen(['xdg-open', script_base_dir])
 
             elif user_triggered_key == 'r':
-                print("\n[R] Re-creating secure token...")
-                check_and_perform_update(mode_override=8)
-
+                check_and_perform_update(
+                    mode_override=8, 
+                    version=VERSION, 
+                    repo_owner=REPO_OWNER, 
+                    repo_name=REPO_NAME, 
+                    resolve_token_callback=resolve_or_create_security_token
+                )
             elif user_triggered_key == 'f':
-                # ─────────────────────────────────────────────────────────────────────────────
-                # * [ADDED] TEMPORARY SESSION OVERRIDE FOR FORMATS
-                #   Cycles through ALLOWED_FORMATS in memory. Does not write to config files.
-                # ─────────────────────────────────────────────────────────────────────────────
                 current_fmt = cli_dict.get('export-format', 'markdown').lower()
-                
                 formats_lower = [f.lower() for f in ALLOWED_FORMATS]
                 if current_fmt not in formats_lower:
                     current_fmt = "markdown"
-                    
                 current_idx = formats_lower.index(current_fmt)
                 next_idx = (current_idx + 1) % len(formats_lower)
-                
                 cli_dict['export-format'] = formats_lower[next_idx]
                 refresh_dashboard_view(cli_dict)
 
             elif user_triggered_key == 'p':
-                # ─────────────────────────────────────────────────────────────────────────────
-                # * [ADDED] TEMPORARY SESSION OVERRIDE FOR PROFILE MODES
-                #   Cycles through ALLOWED_PROFILES in memory. Does not write to config files.
-                # ─────────────────────────────────────────────────────────────────────────────
                 current_prof = cli_dict.get('export-type', 'auto').lower()
-                
                 profiles_lower = [p.lower() for p in ALLOWED_PROFILES]
                 if current_prof not in profiles_lower:
                     current_prof = "auto"
-                    
                 current_idx = profiles_lower.index(current_prof)
                 next_idx = (current_idx + 1) % len(profiles_lower)
-                
                 cli_dict['export-type'] = profiles_lower[next_idx]
                 refresh_dashboard_view(cli_dict)
-
 
             elif user_triggered_key == 'u':
                 update_press_counter += 1
                 if update_press_counter == 1:
-                    latest_discovered_version = check_and_perform_update(mode_override=1)
+                    latest_discovered_version = check_and_perform_update(
+                        mode_override=1, 
+                        version=VERSION, 
+                        repo_owner=REPO_OWNER, 
+                        repo_name=REPO_NAME
+                    )
                     if not latest_discovered_version or latest_discovered_version == VERSION:
                         update_press_counter = 0
                 elif update_press_counter >= 2:
                     print("\n[*] Update Started: Initializing secure system upgrade sequence...")
-                    check_and_perform_update(mode_override=4)
+                    check_and_perform_update(
+                        mode_override=4, 
+                        version=VERSION, 
+                        repo_owner=REPO_OWNER, 
+                        repo_name=REPO_NAME
+                    )
                     os._exit(0)
                 continue
 
