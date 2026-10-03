@@ -111,7 +111,7 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
     # 1. Attempt to check if a token already exists inside an active config file
     if SYSTEM_CONFIG.get("singlefile_token"):
         token_key = SYSTEM_CONFIG["singlefile_token"].strip()
-	elif os.path.exists(resolved_config_path):
+    elif os.path.exists(resolved_config_path):
         with open(resolved_config_path, "r", encoding="utf-8") as f:
             for line in f:
                 if line.strip().startswith("token="):
