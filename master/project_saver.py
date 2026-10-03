@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.77-victor"
+VERSION = "v0.0.77-whiskey"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -488,6 +488,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 if __name__ == "__main__":
     print(f"\n[*] Project Saver {VERSION} Starting up, Please wait for system to be ready...")
     if os.name == 'nt':
+		os.system('mode con: cols=105 lines=30')
         import ctypes
         ctypes.windll.kernel32.SetConsoleMode(ctypes.windll.kernel32.GetStdHandle(-11), 7)
 
