@@ -171,7 +171,7 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
         print(f"🟢 SUCCESS: Config state mapped -> {full_lookup_key} = {new_val}")
         
         # Commits memory modifications back down onto the hard disk profile natively
-        project_saver_config.save_config_file("project_saver.cfg", cli_dict, app_version)
+        project_saver_config.save_config_file("project_saver.cfg", cli_dict, current_version=app_version)
 
     elif action == "update":
         print("[*] Re-indexing framework update sequence arrays...")
