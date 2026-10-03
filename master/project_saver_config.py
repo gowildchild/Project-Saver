@@ -134,7 +134,7 @@ def resolve_or_create_security_token(config_path="project_saver.cfg"):
     EXPECTED_TOKEN = token_key
 
     # 4. AUTOMATIC SINGLEFILE CONFIG GENERATOR
-	sf_filename = SYSTEM_CONFIG.get("singlefile_config_filename") or "singlefile-project-saver-config.json"
+    sf_filename = SYSTEM_CONFIG.get("singlefile_config_filename") or "singlefile-project-saver-config.json"
     
     singlefile_json_path = os.path.join(script_base_dir, sf_filename)
     singlefile_config_payload = {
