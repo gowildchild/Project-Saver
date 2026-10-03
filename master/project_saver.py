@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from project_saver_archive import process_html_content
 from project_saver_update import check_for_startup_update_and_run, check_and_perform_update
 
-VERSION = "v0.0.78-tango"
+VERSION = "v0.0.78-uniform"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -30,6 +30,19 @@ REPO_NAME = "Project-Saver"
 ALLOWED_PROFILES = ["Auto","code_dev","web_article"]
 ALLOWED_FORMATS = ["Markdown","HTML","PDF"]
 LATEST_AVAILABLE_VERSION = None
+
+def log_debug(msg):
+    """Prints immediately to the terminal screen AND appends to debug.log natively."""
+    import time
+    try:
+        # 1. Brute-force write to the text file
+        with open("debug.log", "a", encoding="utf-8") as f:
+            f.write(f"[{time.strftime('%H:%M:%S')}] {str(msg)}\n")
+        
+        # 2. Force injection straight onto the console monitor window line
+        print(f"\n\033[95m[DEBUG]\033[0m {str(msg)}")
+    except:
+        pass
 
 def resolve_or_create_security_token(config_path="project_saver.cfg"):
     """
@@ -308,8 +321,10 @@ def save_config_file(filepath, args_namespace):
                 f.write(f"chosen-editor={args_dict['chosen_editor']}\n")
             if args_dict.get('auto') is not None:
                 f.write(f"auto={args_dict['auto']}\n")
-                
-        print(f"[+] Active configuration written to profile: {filepath}")
+            f.write(f"version_current={VERSION}\n")
+            if LATEST_AVAILABLE_VERSION:
+                f.write(f"version_newest={LATEST_AVAILABLE_VERSION}\n")
+		print(f"[+] Active configuration written to profile: {filepath}")
     except Exception as e:
         print(f"[-] Could not export configuration profile: {e}")
 
@@ -327,8 +342,7 @@ def load_config_file(filepath):
                 key, val = line.split("=", 1)
                 key, val = key.strip().lower(), val.strip()
                 if val:
-                    # Skip internal variables like token so argparse doesn't break
-                    if key == "token":
+                    if key in ["token", "version_current", "version_newest"]:
                         continue
                     # Appends exactly what is written in the file (e.g., --export-folder)
                     args_list.append(f"--{key}")
@@ -494,7 +508,18 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             os._exit(0)
 
 
-
+def log_debug(msg):
+    """Prints immediately to the terminal screen AND appends to debug.log natively."""
+    import time
+    try:
+        # 1. Brute-force write to the text file
+        with open("debug.log", "a", encoding="utf-8") as f:
+            f.write(f"[{time.strftime('%H:%M:%S')}] {str(msg)}\n")
+        
+        # 2. Force injection straight onto the console monitor window line
+        print(f"\n\033[95m[DEBUG]\033[0m {str(msg)}")
+    except:
+        pass
 
 			
 
@@ -570,6 +595,8 @@ if __name__ == "__main__":
 
     resolve_or_create_security_token(active_cfg_profile)
     LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=16) or "v0.0.76-gunther"
+    log_debug(f" -> Current: REPO_OWNER {REPO_OWNER} REPO_NAME {REPO_NAME} VERSION: {VERSION} LATEST_AVAILABLE_VERSION: {LATEST_AVAILABLE_VERSION}")
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
+    log_debug(f" => Current: REPO_OWNER {REPO_OWNER} REPO_NAME {REPO_NAME} VERSION: {VERSION} LATEST_AVAILABLE_VERSION: {LATEST_AVAILABLE_VERSION}")
     run_server()
 
