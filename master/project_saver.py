@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.79-whiskey"
+VERSION = "v0.0.79-xray"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -185,6 +185,22 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     cli_dict['export_type'] = project_saver_config.SYSTEM_CONFIG["global_export-type"]
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)			
 
+			elif user_triggered_key == 'm':
+                manager_mod = project_saver_modules.ACTIVE_MODULES.get("manager")
+                if manager_mod and hasattr(manager_mod, "execute_interactive_menu"):
+                    print("\n[*] Initializing Pluggable Package Manager sub-workspace panel...")
+                    time.sleep(0.3)
+                    try:
+                        manager_mod.execute_interactive_menu(cli_dict, VERSION, PORT)
+                    except Exception as err:
+                        print(f"\n[-] Execution failed inside package manager framework: {err}")
+                        time.sleep(2)
+                else:
+                    print("\n⚠️ WARNING: Manager module extension asset not found or disabled.")
+                    time.sleep(1.5)
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
+
+			
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
                 update_press_counter = 0
