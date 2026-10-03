@@ -274,7 +274,7 @@ if __name__ == "__main__":
     project_saver_ui.log_debug(f" -> Current: REPO_OWNER {REPO_OWNER} REPO_NAME {REPO_NAME} VERSION: {VERSION} LATEST_AVAILABLE_VERSION: {LATEST_AVAILABLE_VERSION}")
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
 
-	project_saver_daemon.PORT = PORT
+    project_saver_daemon.PORT = PORT
     project_saver_daemon.VERSION = VERSION
     project_saver_daemon.CLI_ARGS = CLI_ARGS
     project_saver_daemon.LATEST_AVAILABLE_VERSION = LATEST_AVAILABLE_VERSION
