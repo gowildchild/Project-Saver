@@ -390,7 +390,7 @@ def process_html_content(html_string, page_title, source_origin="Natively Captur
                         continue
                     final_markdown_blocks.append(f"\n{text_clean}\n")
 
-    target_formats = [f.strip().lower() for f in export_format.split(',')]
+    target_formats = [f.strip().lower() for f in (export_format or "markdown").split(',')]
     if 'html' in target_formats:
         with open(exporter.output_html, "w", encoding="utf-8") as f: 
             f.write(html_string)
