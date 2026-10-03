@@ -52,13 +52,10 @@ jobs:
 
     - name: Generate blueprints
       shell: bash
-      env:
-        TARGET_VERSION: ${{ needs.build-and-release.outputs.app_version }}
       run: |
         python3 -c '
-        import os
         import re
-        ver = os.environ.get("TARGET_VERSION", "0.0.1")
+        ver = "${{ needs.build-and-release.outputs.app_version }}"
         clean_ver = re.sub(r"[vV]", "", ver)
         pure_digits = re.sub(r"[^0-9.]", "", clean_ver)
         parts = pure_digits.split(".")
@@ -92,7 +89,7 @@ jobs:
                 ]
               )
             ]),
-            VarFileInfo([VarStruct(\x27Translation\x27,)])
+            VarFileInfo([VarStruct(\\x27Translation\\x27, 1033, 1200)])
           ]
         )"""
         
@@ -105,7 +102,7 @@ jobs:
         AppName=Project Saver
         AppVersion={0}
         AppPublisher=Gunther Voet
-        AppPublisherURL=https://github.com/gowildchild/Project-Saver
+        AppPublisherURL=https://github.com
         DefaultDirName={{localappdata}}\\ProjectSaver
         DefaultGroupName=Project Saver
         DisableProgramGroupPage=yes
