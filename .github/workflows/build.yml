@@ -50,6 +50,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller beautifulsoup4 reportlab
 
+    - name: Display Build Script Execution Verification Token
+      shell: bash
+      run: |
+        # =========================================================================
+        # TARGET SCRIPT INTEGRITY RUN VALIDATION IDENTIFIER:
+        # BUILD ID REFERENCE TOKEN STAMP -> [ RUN_NUMBER: #${{ github.run_number }} ]
+        # =========================================================================
+        echo "========================================================================="
+        echo "🚀 COMPILATION VERIFICATION OVERVIEW"
+        echo "Active Action Runner Build Number : #${{ github.run_number }}"
+        echo "Target Directory Context Workspace: ${{ github.workspace }}"
+        echo "Deploying Hidden Module Structural Layers Securely..."
+        echo "========================================================================="
+
     - name: Generate blueprints
       shell: bash
       env:
@@ -141,6 +155,9 @@ jobs:
 
     - name: Compile Standalone Executable
       working-directory: ./master
+      shell: bash
+      env:
+        PYTHONPATH: ${{ github.workspace }}
       run: |
         pyinstaller project_saver.py --onefile --paths="${{ github.workspace }}" --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt
 
@@ -190,7 +207,22 @@ jobs:
 
     - name: Compile Linux Binary
       working-directory: ./master
+      env:
+        PYTHONPATH: ${{ github.workspace }}
       run: |
+        echo "========================================================================="
+        echo "🚀 LINUX COMPILATION ENVIRONMENT DIAGNOSTICS"
+        echo "Active Action Runner Build Number : #${{ github.run_number }}"
+        echo "Current Working Directory Context : $(pwd)"
+        echo "Absolute Workspace Root Context   : ${{ github.workspace }}"
+        echo "Active Python Module Environment  : $PYTHONPATH"
+        echo "-------------------------------------------------------------------------"
+        echo "[*] Auditing files present inside the master directory:"
+        ls -la .
+        echo "-------------------------------------------------------------------------"
+        echo "[*] Auditing files present up in the repository root directory:"
+        ls -la ${{ github.workspace }}
+        echo "========================================================================="      
         pyinstaller project_saver.py --onefile --paths="${{ github.workspace }}" --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build
 
     - name: Rename and Pre-Calculate Linux SHA-256 Hash
