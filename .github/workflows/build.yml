@@ -89,7 +89,7 @@ jobs:
                 ]
               )
             ]),
-            VarFileInfo([VarStruct(\\x27Translation\\x27, 1033, 1200)])
+            VarFileInfo([VarStruct('\x27Translation\x27, 1033, 1200)])
           ]
         )"""
         
