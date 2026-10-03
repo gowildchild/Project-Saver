@@ -16,7 +16,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.1",
+        "version": "v0.0.2",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -39,10 +39,9 @@ def install_module_from_cloud(module_name, github_repo):
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
     target_path = os.path.join(script_base_dir, "modules", f"{module_name.lower()}.py")
     
-    # FIXED: Dynamically retrieves the target branch setting from the active config registry
     target_branch = project_saver_config.SYSTEM_CONFIG.get("manager_target_branch", "modules")
     
-    raw_url = f"https://githubusercontent.com{github_repo}/{target_branch}/modules/{module_name.lower()}.py"
+    raw_url = f"https://githubusercontent.com/{github_repo}/{target_branch}/modules/{module_name.lower()}.py"
     print(f"\n[*] Connecting to distribution repository: {raw_url}")
     
     try:
@@ -130,6 +129,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 continue
             user_input = sys.stdin.readline().strip().lower()
 
+        if user_input == "":
+            time.sleep(0.05)
+            continue
+        
         # Reset structural configuration tracking strings on loop turn
         if user_input != "":
             status_message = "Awaiting input command option..."
