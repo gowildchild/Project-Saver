@@ -337,19 +337,18 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: windows-assets
-        path: release_files
+        path: release_files/windows-assets
 
     - name: Download Compiled Linux Assets
       uses: actions/download-artifact@v4
       with:
         name: linux-assets
-        path: release_files
+        path: release_files/linux-assets
 
     - name: Generate Release manifest.txt
       run: |
         cd release_files
         
-        # [FIXED] Extraction sequences mapped safely before flat folder shifting executes
         WIN_PORTABLE_HASH=$(cat windows-assets/win_portable.hash)
         WIN_SETUP_HASH=$(cat windows-assets/win_setup.hash)
         LINUX_HASH=$(cat linux-assets/linux_binary.hash)
