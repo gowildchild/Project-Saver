@@ -23,8 +23,9 @@ from project_saver_update import check_for_startup_update_and_run, check_and_per
 import project_saver_config
 import project_saver_ui
 import project_saver_daemon
+import project_saver_modules
 
-VERSION = "v0.0.79-victor"
+VERSION = "v0.0.79-whiskey"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -182,7 +183,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     cli_dict['export_format'] = project_saver_config.SYSTEM_CONFIG["global_export-format"]
                 if project_saver_config.SYSTEM_CONFIG.get("global_export-type"):
                     cli_dict['export_type'] = project_saver_config.SYSTEM_CONFIG["global_export-type"]
-                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)		
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)			
 
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
@@ -220,6 +221,7 @@ if __name__ == "__main__":
     parser.add_argument("--about", action="store_true", help="Displays developer credits and exit.")
     parser.add_argument("--update", action="store_true", help="Queries GitHub downloads update binary and exit.")
     parser.add_argument("--chosen-editor", default="system_default", choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool. (Default: system_default)")
+	parser.add_argument("--module", nargs='+', help="Executes pluggable extension sub-commands layout routing entries.")
     temp_args = sys.argv[1:]
     
     # ─── 2. DYNAMICALLY ISOLATE THE ACTIVE CONFIGURATION FILENAME ───
@@ -238,6 +240,12 @@ if __name__ == "__main__":
     combined_args = loaded_file_args + temp_args
     CLI_ARGS = parser.parse_args(combined_args)
     cli_dict = vars(CLI_ARGS)
+
+    # ─── 4. Add Modules ───
+    project_saver_modules.bootstrap_and_discover_modules(cli_dict, VERSION, PORT)
+    if cli_dict.get("module"):
+        project_saver_modules.handle_module_cli_commands(cli_dict["module"], cli_dict, VERSION, PORT)
+        sys.exit(0)
 
     # ─── 5. EXECUTE OPERATIONAL TASKS USING SAFE DIRECTORY LOOKUPS ───
     if cli_dict.get("about"):
