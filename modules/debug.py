@@ -12,7 +12,7 @@ MODULE_MANIFEST = {
     "name": "debug",
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.1",
+        "version": "v0.0.2",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -101,10 +101,16 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 continue
             user_input = sys.stdin.readline().strip().lower()
 
+        if user_input == "":
+            time.sleep(0.05)
+            continue
+        
         # Check for break condition back to parent daemon frame loop execution
         if user_input == '-':
             print("\n[*] Exiting Debug workspace. Returning to Master Dashboard...")
             break
-        
+        else:
+            time.sleep(0.2)
+            
         # Throttles execution frames slightly to protect processor cores from looping
         time.sleep(0.05)
