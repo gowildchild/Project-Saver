@@ -248,7 +248,7 @@ def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", bo
             else: width += 1
         return width
 
-	print() 
+    print() 
     filtered_lines = [line for line in raw_lines_list if str(line).strip() != "---"]
     max_len = max((get_visual_width(line) for line in filtered_lines), default=len(title_str))
     target_width = box_width_override if box_width_override > 0 else 76
