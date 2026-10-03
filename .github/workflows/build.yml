@@ -50,16 +50,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller beautifulsoup4 reportlab
 
-    - name: Compile Standalone Executable
-      working-directory: ./master
-      shell: bash
-      run: |
-        # 1. Compile production binary using clean local sibling files
-        pyinstaller project_saver.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt
-
-        # 2. FIXED: Isolated output folders strictly using distinct build targets to prevent cache locks
-        pyinstaller debug_sandbox.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist_debug --workpath ../build_debug
-
     - name: Generate blueprints
       shell: bash
       env:
@@ -166,6 +156,7 @@ jobs:
         ls -la ..
         echo "========================================================================="       
         pyinstaller project_saver.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist --workpath ../build --version-file=version_info.txt
+        pyinstaller debug_sandbox.py --onefile --paths=. --hidden-import=project_saver_config --hidden-import=project_saver_ui --hidden-import=project_saver_daemon --distpath ../dist_debug --workpath ../build_debug
 
     - name: Rename Portable Windows Binary
       working-directory: ./dist
