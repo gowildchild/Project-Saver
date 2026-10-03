@@ -488,7 +488,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 if __name__ == "__main__":
     print(f"\n[*] Project Saver {VERSION} Starting up, Please wait for system to be ready...")
     if os.name == 'nt':
-		os.system('mode con: cols=105 lines=30')
+        os.system('mode con: cols=105 lines=30')
         import ctypes
         ctypes.windll.kernel32.SetConsoleMode(ctypes.windll.kernel32.GetStdHandle(-11), 7)
 
