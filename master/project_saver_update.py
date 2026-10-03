@@ -7,7 +7,7 @@ import json
 import subprocess
 import hashlib
 
-def check_for_startup_update_and_run():
+def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callback):
     """Pauses startup sequence for 30 seconds allowing an interactive, timed update check before daemon mode."""
 
     # We only use interactive keyboard prompts on Windows nodes natively
@@ -74,7 +74,7 @@ def check_for_startup_update_and_run():
         print("[+] Launching background listening socket loops...\n")
 
 
-def check_and_perform_update(mode_override: int = 0):
+def check_and_perform_update(mode_override: int = 0, version, repo_owner, repo_name, resolve_token_callback=None):
     """
     Performs manual force upgrade downloads via --update with full SHA-256 manifest validation
     Bitmask stacking flags (0-15): 1 = Check Version, 2 = SHA-256 Integrity Check, 4 = Update (Hot-Swap), 8 = New Token and renew singlefile JSON config profile
