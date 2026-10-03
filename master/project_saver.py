@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from project_saver_archive import process_html_content
 
-VERSION = "v0.0.77-oskar"
+VERSION = "v0.0.77-papa"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -586,7 +586,13 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
                     sys.stdout.write(f"\x1b[2K\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
                 else:
-                    sys.stdout.write("\x1b[2K\r[?] Ready for hotkey: ")
+                    # ─────────────────────────────────────────────────────────────────────────────
+                    # * [UPDATED] Dynamically render temporary state status bar live
+                    #   Instead of a static text line, this now prints your active session values.
+                    # ─────────────────────────────────────────────────────────────────────────────
+                    active_prof = str(cli_dict.get('export-type')).upper()
+                    active_fmt = str(cli_dict.get('export-format')).upper()
+                    sys.stdout.write(f"\x1b[2K\r[Mode: {active_prof} | Format: {active_fmt}] Ready for hotkey: ")
                 sys.stdout.flush()
                 prompt_visible = True
 
@@ -634,10 +640,39 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 check_and_perform_update(mode_override=8)
 
             elif user_triggered_key == 'f':
-                print(f"\n[F] Formats active profile values: {str(cli_dict.get('export-format')).upper()}")
+                # ─────────────────────────────────────────────────────────────────────────────
+                # * [ADDED] TEMPORARY SESSION OVERRIDE FOR FORMATS
+                #   Cycles through ALLOWED_FORMATS in memory. Does not write to config files.
+                # ─────────────────────────────────────────────────────────────────────────────
+                current_fmt = cli_dict.get('export-format', 'markdown').lower()
+                
+                formats_lower = [f.lower() for f in ALLOWED_FORMATS]
+                if current_fmt not in formats_lower:
+                    current_fmt = "markdown"
+                    
+                current_idx = formats_lower.index(current_fmt)
+                next_idx = (current_idx + 1) % len(formats_lower)
+                
+                cli_dict['export-format'] = formats_lower[next_idx]
+                print(f"\n[F] Format override changed to: {cli_dict['export-format'].upper()}")
 
             elif user_triggered_key == 'p':
-                print(f"\n[P] Parsing profile strategy layout mode: {str(cli_dict.get('export-type')).upper()}")
+                # ─────────────────────────────────────────────────────────────────────────────
+                # * [ADDED] TEMPORARY SESSION OVERRIDE FOR PROFILE MODES
+                #   Cycles through ALLOWED_PROFILES in memory. Does not write to config files.
+                # ─────────────────────────────────────────────────────────────────────────────
+                current_prof = cli_dict.get('export-type', 'auto').lower()
+                
+                profiles_lower = [p.lower() for p in ALLOWED_PROFILES]
+                if current_prof not in profiles_lower:
+                    current_prof = "auto"
+                    
+                current_idx = profiles_lower.index(current_prof)
+                next_idx = (current_idx + 1) % len(profiles_lower)
+                
+                cli_dict['export-type'] = profiles_lower[next_idx]
+                print(f"\n[P] Profile Mode override changed to: {cli_dict['export-type'].upper()}")
+
 
             elif user_triggered_key == 'u':
                 update_press_counter += 1
