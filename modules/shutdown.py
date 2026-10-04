@@ -15,7 +15,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.3",
+        "version": "v0.0.7",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -63,8 +63,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             f"   Active Module Name:  {MODULE_MANIFEST['display_name']}",
             f"   Module Author:       {MODULE_MANIFEST['meta']['author']} ({MODULE_MANIFEST['meta']['version']})",
             "---",
-            f"   [C] Cancel Switch:   Aborts any currently active scheduled countdowns.",
-            f"   [T] Timed Target:    Schedules machine shutdown sequence in {timer_minutes} minutes.",
+            f"   [C] Cancel:          Aborts any currently active scheduled countdowns.",
+            f"   [T] Timed:           Schedules machine shutdown sequence in {timer_minutes} minutes.",
             f"   [S] Shutdown Now:    Triggers instant system power-down routine.",
             f"                        (Requires {safety_max} presses. Current progress: [{safety_counter}/{safety_max}])",
             "---",
@@ -76,12 +76,12 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         # 4. Render via your native box utility layout engine
         project_saver_ui.render_better_box(
             shutdown_panel, 
-            title_str="System Power Control Module", 
+            title_str="Shutdown Controller", 
             box_width_override=72
         )
 
         # 5. Non-blocking keyboard state capture
-        sys.stdout.write("\x1b[2K\r[🔌 Power] Ready for key: ")
+        sys.stdout.write("\x1b[2K\r[Power] Ready for key: ")
         sys.stdout.flush()
 
         user_input = ""
@@ -135,7 +135,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         elif user_input == 's':
             safety_counter += 1
-            if safety_counter > safety_max:
+            # * [FIXED] SHIFT CONDITION MATRIX TO EXECUTE POWER DOWN ON THE EXACT TARGET COUNT VALUE MATCH
+            if safety_counter >= safety_max:
                 status_message = "🔥 CRITICAL: Safety limit cleared! Booting power-down loop..."
                 os.system('cls' if is_windows else 'clear')
                 print("\n[!] Initializing forced machine power-down sequence now...")
