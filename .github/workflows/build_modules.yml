@@ -173,7 +173,7 @@ jobs:
         DefaultDirName={{localappdata}}\\ProjectSaver\\modules
         DisableDirPage=yes
         DisableProgramGroupPage=yes
-        OutputDir=..\\modules
+        OutputDir=modules
         OutputBaseFilename=modules_setup
         Compression=lzma
         SolidCompression=yes
@@ -181,8 +181,8 @@ jobs:
         CloseApplications=yes
 
         [Files]
-        Source: "..\\modules\\*.exe"; DestDir: "{{app}}"; Flags: ignoreversion nocompression
-        Source: "..\\modules\\manifest_windows.json"; DestDir: "{{app}}"; DestName: "manifest.json"; Flags: ignoreversion
+        Source: "modules\\*.exe"; DestDir: "{{app}}"; Flags: ignoreversion nocompression
+        Source: "modules\\manifest_windows.json"; DestDir: "{{app}}"; DestName: "manifest.json"; Flags: ignoreversion
         """
         
         formatted_blueprint = template_inno.format(clean_version)
