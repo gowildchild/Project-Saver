@@ -167,7 +167,7 @@ jobs:
         core_version = os.environ.get("CORE_VERSION", "1.0.0")
         clean_version = re.sub(r"[vV]", "", core_version)
         template_inno = """[Setup]
-        AppName=Project Saver Pluggable Modules Pack
+        AppName=Project Saver Pluggable Extensions Pack
         AppVersion={0}
         AppPublisher=Gunther Voet
         DefaultDirName={{localappdata}}\\ProjectSaver\\modules
