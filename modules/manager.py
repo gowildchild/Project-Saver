@@ -148,7 +148,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             print("\n[*] Exiting Package Manager. Returning to Master Dashboard...")
             break
 
-       elif user_input == 'i':
+        elif user_input == 'i':
             print("\n")
             target_name = input("[*] Enter name of the target module to pull from GitHub: ").strip().lower()
             if target_name:
