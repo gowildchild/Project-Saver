@@ -5,6 +5,7 @@
 import os
 import sys
 import time
+import json
 import urllib.request
 import importlib.util
 
@@ -16,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.2",
+        "version": "v0.0.5",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -81,9 +82,14 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         installed_extensions = []
         if os.path.exists(modules_dir):
             for file_entry in os.listdir(modules_dir):
-                # * [FIXED] ENFORCE SECURE BOUNDARY CHECK FOR COMPLETE DOUBLE UNDERLINE DUNDER FILES
-                if file_entry.endswith(".py") and file_entry != "__init__.py":
-                    installed_extensions.append(file_entry[:-3].lower())
+                # * [FIXED] EXPAND DISCOVERY PATTERNS TO CAPTURE SCRIPTS AND COMPILED BINARIES NATIVELY
+                is_script = file_entry.endswith(".py") and file_entry != "__init__.py"
+                is_binary = file_entry.endswith(".exe") or (os.name != 'nt' and '.' not in file_entry and file_entry != "__init__.py")
+                
+                if is_script or is_binary:
+                    mod_name, _ = os.path.splitext(file_entry)
+                    if mod_name.lower() not in installed_extensions:
+                        installed_extensions.append(mod_name.lower())
 
         # 4. Build terminal manager control panel box UI display list
         manager_panel = [
@@ -142,14 +148,15 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             print("\n[*] Exiting Package Manager. Returning to Master Dashboard...")
             break
 
-        elif user_input == 'i':
+       elif user_input == 'i':
             print("\n")
             target_name = input("[*] Enter name of the target module to pull from GitHub: ").strip().lower()
             if target_name:
                 status_message = f"[*] Stream-fetching module '{target_name}'..."
                 if install_module_from_cloud(target_name, target_repo):
                     status_message = f"🟢 SUCCESS: Module '{target_name}' hot-loaded into local directory registry safely!"
-                    main_module_ref = sys.modules.get('main')
+                    # * [FIXED] ROUTE TO CORRECT RUNTIME ENGINE REGISTRY IDENTIFIER FOR DYNAMIC HOT LOADING
+                    main_module_ref = sys.modules.get('__main__')
                     if main_module_ref and hasattr(main_module_ref, 'project_saver_modules'):
                         main_module_ref.project_saver_modules.bootstrap_and_discover_modules(cli_dict, app_version, port_num)
                 else:
@@ -160,18 +167,23 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         elif user_input == 'u':
             print("\n")
             target_name = input("[*] Enter name of local module script to physically erase: ").strip().lower()
-            target_file_path = os.path.join(modules_dir, f"{target_name}.py")
-            if os.path.exists(target_file_path) and target_name != "manager":
+            target_file_py = os.path.join(modules_dir, f"{target_name}.py")
+            target_file_exe = os.path.join(modules_dir, f"{target_name}.exe")
+            
+            if (os.path.exists(target_file_py) or os.path.exists(target_file_exe)) and target_name != "manager":
                 try:
-                    os.remove(target_file_path)
-                    status_message = f"🟢 SUCCESS: Pluggable file '{target_name}.py' erased from disk storage context."
-                    main_module_ref = sys.modules.get('main')
+                    if os.path.exists(target_file_py): os.remove(target_file_py)
+                    if os.path.exists(target_file_exe): os.remove(target_file_exe)
+                    status_message = f"🟢 SUCCESS: Pluggable file '{target_name}' erased from disk storage context."
+                    # * [FIXED] ROUTE TO CORRECT RUNTIME ENGINE REGISTRY IDENTIFIER FOR DYNAMIC SWEEP ALIGNMENTS
+                    main_module_ref = sys.modules.get('__main__')
                     if main_module_ref and hasattr(main_module_ref, 'project_saver_modules'):
                         main_module_ref.project_saver_modules.bootstrap_and_discover_modules(cli_dict, app_version, port_num)
                 except Exception as err:
                     status_message = f"🔴 ERROR: Failed to sweep target off disk -> {err}"
             else:
                 status_message = "🔴 ERROR: Target module does not exist, or is locked by system core configurations."
+
 
         elif user_input == 'c':
             print("\n")
@@ -195,7 +207,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                         if new_val:
                             project_saver_config.SYSTEM_CONFIG[full_lookup_key] = new_val
                             status_message = f"🟢 SUCCESS: Parameter variable [{target_key}] updated in memory arrays."
-                            project_saver_config.save_config_file("project_saver.cfg", cli_dict, app_version)
+                            # * [FIXED] PASSED VALID MASTER NAMESPACE OBJECT REFERENCES TO PREVENT ATTRIBUTE LOOKUP ERRS
+                            main_module_ref = sys.modules.get('__main__')
+                            parent_args = getattr(main_module_ref, 'CLI_ARGS', cli_dict)
+                            project_saver_config.save_config_file("project_saver.cfg", parent_args, app_version)
                         else:
                             status_message = "⚠️ WARNING: Configuration change skipped. Input parameter empty."
                     else:
