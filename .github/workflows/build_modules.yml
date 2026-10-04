@@ -3,14 +3,14 @@ name: Compile Pluggable Module Extensions
 on:
   push:
     branches:
+      - modules
       - modules-distribution
-      - "modules**"
     paths:
       - 'modules/**'
   pull_request:
     branches:
+      - modules
       - modules-distribution
-      - "modules**"
     paths:
       - 'modules/**'
 
