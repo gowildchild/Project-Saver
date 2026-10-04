@@ -188,18 +188,21 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
 
     elif action == "install":
         if len(module_args_list) < 2:
-            print("🔴 ERROR: Missing required target module name parameter string string.")
+            print("🔴 ERROR: Missing required target module name parameter string.")
             return
         target_name = module_args_list[1].lower()
+        
+        # * [FIXED] INTERCEPT IF MANAGER IS LOADED AS A COMPILED EXTENSION AND OFFLOAD VIA SUBPROCESS
         manager_entry = ACTIVE_MODULES.get("manager")
         if isinstance(manager_entry, dict) and manager_entry.get("type") == "binary":
             import subprocess
             try:
-                # Forward installation arguments straight down into the compiled manager.exe execution container
+                # Forward installation flags straight down into your compiled manager binary container
                 subprocess.run([manager_entry["path"], "--install", target_name], check=True)
             except Exception as e:
-                print(f"🔴 ERROR: Standalone installation routine failed: {e}")
+                print(f"🔴 ERROR: Standalone binary installation routine failed: {e}")
         else:
+            # Fallback path for developers utilizing raw Python source codes
             try:
                 import modules.manager
                 target_repo = project_saver_config.SYSTEM_CONFIG.get("manager_target_repository", "gowildchild/Project-Saver")
