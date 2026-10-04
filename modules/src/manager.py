@@ -13,11 +13,11 @@ import importlib.util
 MODULE_MANIFEST = {
     "name": "manager",
     "display_name": "Module Manager",
-    "display_menu": "[M]odules Package Manager",
+    "display_menu": "[M]odules Manager",
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.7",
+        "version": "v0.0.76",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -97,7 +97,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             f" Target Repository :  https://github.com/{target_repo}",
             f" Distribution Branch:  {target_branch.upper()}",
             "---",
-            "📦 INSTALLED EXTENSION ASSETS FOUND LOCALLY:",
+            "📦 INSTALLED LOCAL MODULES:",
             f"   {', '.join(sorted(installed_extensions)) if installed_extensions else '(No external extensions found)'}",
             "---",
             "🛠️ OPERATIONS HANDLERS:",
@@ -113,7 +113,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         # 5. Render via your native box utility layout engine
         project_saver_ui.render_better_box(
             manager_panel,
-            title_str="Project Saver Package Extension Registry Manager",
+            title_str="Module Manager",
             box_width_override=74
         )
 
@@ -145,7 +145,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         # HOTKEY MATRIX ACTIONS
         if user_input == '-':
-            print("\n[*] Exiting Package Manager. Returning to Master Dashboard...")
+            print("\n[*] Exiting Module Manager. Returning to  Dashboard...")
             break
 
         elif user_input == 'i':
