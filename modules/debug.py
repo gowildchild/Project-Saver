@@ -12,7 +12,7 @@ MODULE_MANIFEST = {
     "name": "debug",
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.10",
+        "version": "v0.0.1",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -63,21 +63,17 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             f"   Core Daemon Server Port     : {port_num}",
             f"   Security Token Credentials  : {project_saver_config.EXPECTED_TOKEN}",
             "---",
-            "GLOBAL SYSTEM_CONFIG DICTIONARY EXTRACTS:"
+            "⚙️ GLOBAL SYSTEM_CONFIG DICTIONARY EXTRACTS:"
         ]
 
         # 4. Safely iterate and print every runtime variable key packed in the registry
-        config_items = sorted(project_saver_config.SYSTEM_CONFIG.items())
-        for idx, (key, val) in enumerate(config_items[:12]):
+        for idx, (key, val) in enumerate(sorted(project_saver_config.SYSTEM_CONFIG.items())):
+            # Formats long entries cleanly so they don't wrap and break frame boundaries
             truncated_val = str(val)[:45] + "..." if len(str(val)) > 45 else str(val)
             debug_tree.append(f"   [{idx:02d}] {key} = {truncated_val}")
-            
-        if len(config_items) > 12:
-            debug_tree.append(f"   [+] ... and {len(config_items) - 12} other configuration records hidden.")
 
         debug_tree.append("---")
         debug_tree.append("   [-] Press [Minus Key] to drop back out to Main Menu...")
-
 
         # 5. Render the sandboxed overview via your native layout engine
         project_saver_ui.render_better_box(
@@ -87,7 +83,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         )
 
         # 6. Non-blocking keyboard state monitoring
-        sys.stdout.write("\x1b[2K\r[Debug] Ready for key: ")
+        sys.stdout.write("\x1b[2K\r[🔍 Debug] Ready for key: ")
         sys.stdout.flush()
 
         user_input = ""
@@ -105,14 +101,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 continue
             user_input = sys.stdin.readline().strip().lower()
 
-        if user_input == "":
-            time.sleep(0.05)
-            continue
-        
         # Check for break condition back to parent daemon frame loop execution
         if user_input == '-':
             print("\n[*] Exiting Debug workspace. Returning to Master Dashboard...")
             break
-            
+        
         # Throttles execution frames slightly to protect processor cores from looping
         time.sleep(0.05)

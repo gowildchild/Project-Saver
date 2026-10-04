@@ -9,13 +9,13 @@ import time
 # ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
     "name": "custom",
-    "display_name": "User Custom Module",
-    "display_menu": "[C]ustom Module",
+    "display_name": "User Defined Extension",
+    "display_menu": "[C]ustom Extension",
     "menu_shortcut": "c",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.10",
-        "requires": "v0.0.76",     # Minimal version required of the core engine
+        "version": "v0.0.1",
+        "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
     },
@@ -61,19 +61,19 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             "---",
             f"   Status Indicator:    {status_message}",
             "---",
-            "   [A] Action Trigger:  Execute your custom script.",
-            "   [-] Press [Minus Key] for Main Menu..."
+            "   [A] Action Trigger:  Execute your custom script payload loop.",
+            "   [-] Press [Minus Key] to drop back out to Main Menu..."
         ]
 
         # 4. Render via your native box utility layout engine
         project_saver_ui.render_better_box(
             custom_panel, 
-            title_str="Custom Module", 
+            title_str="User Custom Extension Workspace", 
             box_width_override=72
         )
 
         # 5. Non-blocking keyboard state monitoring
-        sys.stdout.write("\x1b[2K\r[Custom] Ready for key: ")
+        sys.stdout.write("\x1b[2K\r[🛠️ Custom] Ready for key: ")
         sys.stdout.flush()
 
         user_input = ""
@@ -91,18 +91,12 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 continue
             user_input = sys.stdin.readline().strip().lower()
 
-        if user_input == "":
-            time.sleep(0.05)
-            continue        
-        
         # ─── HOTKEY MATRIX ACTIONS ───
         if user_input == '-':
             break
             
         elif user_input == 'a':
+            # Place your custom processing routines right here!
             status_message = f"🟢 SUCCESS: Action triggered at {time.strftime('%H:%M:%S')}!"
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print(f"\n[+] Executing custom module pipeline...")
-            time.sleep(1.2)
-            
+
         time.sleep(0.05)

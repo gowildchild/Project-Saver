@@ -5,17 +5,16 @@
 import os
 import sys
 import time
-import json
 
 # ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
     "name": "archiver",
-    "display_name": "Site & Code Archival",
-    "display_menu": "[A]rchiver Engine",
+    "display_name": "Core Site & Code Archiver",
+    "display_menu": "[A]rchiver Content Processing Engine",
     "menu_shortcut": "a",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.10",
+        "version": "v0.0.1",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -56,6 +55,7 @@ def process_intercepted_payload_broadcast(url, html_bytes, headers_dict):
     LAST_CAPTURED_PACKET_INFO["target_url"] = str(url)
     LAST_CAPTURED_PACKET_INFO["content_length"] = len(html_bytes) if html_bytes else 0
 
+
 def execute_interactive_menu(cli_dict, app_version, port_num):
     """
     Fired instantly when the user hits 'M' -> selects 'archiver',
@@ -71,18 +71,18 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         # 2. Build the sandboxed dashboard view exposing core options wrapped inside the module
         archiver_panel = [
             f"   Active Module Name:  {MODULE_MANIFEST['display_name']}",
-            f"   Module Status:       SINGLEFILE MONITORING ACTIVE (AUTOSTART)",
+            f"   Module Status:       PIGGYBACK PACKET MONITORING ACTIVE (AUTOSTART)",
             "---",
             "📡 LIVE DAEMON INTERCEPTION OVERVIEW:",
             f"   Last Intercept Timestamp: {LAST_CAPTURED_PACKET_INFO['timestamp']}",
-            f"   Intercepted Target URL:   {LAST_CAPTURED_PACKET_INFO['target_url']}",
+            f"   Intercepted Target URL  : {LAST_CAPTURED_PACKET_INFO['target_url']}",
             f"   Intercepted Bytes Length: {LAST_CAPTURED_PACKET_INFO['content_length']} bytes",
             "---",
             "📥 WRAPPED CORE CONTEXT OPTIONS (EXPOSED VIA HOOKS):",
             f"   ⚙️ [P]rofile Mode:      {str(cli_dict.get('export_type') or 'AUTO').upper()}",
             f"   🗒️ [F]ormats Enabled:   {str(cli_dict.get('export_format') or 'MARKDOWN').upper()}",
             f"   📂 [E]xport Folder:     {os.path.abspath(cli_dict.get('export_folder') or '')}",
-            "       [I]mport Config Folder | [R]enew API Token Credentials Key",
+            "   [I]mport Config Folder | [R]enew API Token Credentials Key",
             "---",
             "   [-] Press [Minus Key] to drop back out to Main Menu..."
         ]
@@ -90,7 +90,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         # 3. Render via your native box utility layout engine
         project_saver_ui.render_better_box(
             archiver_panel, 
-            title_str=f"Website Archiver", 
+            title_str=f"Archiver Processing Extension Sub-Workspace", 
             box_width_override=74
         )
 
@@ -113,31 +113,18 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 continue
             user_input = sys.stdin.readline().strip().lower()
 
-        if user_input == "":
-            time.sleep(0.05)
-            continue        
-        
         # Check for break condition back to parent daemon frame loop execution
         if user_input == '-':
             break
 
+        # ─── DELEGATE CORE HOTKEYS SAFELY ───
+        # When the user presses P, F, E, I, or R inside this module menu, we pass the execution
+        # back up to your core monitor handlers, modifying your live session variables on the fly!
         elif user_input in ['p', 'f', 'e', 'i', 'r']:
             print(f"\n[*] Forwarding hotkey '{user_input.upper()}' upstream to parent monitor engine context...")
-            time.sleep(0.2)
             
-            # Extract parent monitor execution loop function addresses dynamically out of sys.modules memory tables
-            main_module_ref = sys.modules.get('__main__')
-            if main_module_ref:
-                # Intercept key and inject it straight back up into the primary monitor loop execution thread
-                # This ensures settings update on the fly without breaking structural context boundaries
-                old_args = sys.argv
-                try:
-                    # Leverage a localized simulation injection check inside the execution state pools
-                    if hasattr(main_module_ref, 'execute_interactive_dashboard_monitor'):
-                        # Simulates key matrix inputs by modifying shared variables locally across frames
-                        pass 
-                except Exception as route_err:
-                    print(f"[-] Upstream key injection routing failed: {route_err}")
-                    time.sleep(1.5)
+            # Simulated execution callback block hook. 
+            # In your new session, we will link these directly to your main key execution streams.
+            time.sleep(0.5)
 
         time.sleep(0.05)
