@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.80-lima"
+VERSION = "v0.0.80-mama"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -211,7 +211,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 else:
                     print("\n⚠️ WARNING: Manager module extension asset not found or disabled.")
                     time.sleep(1.5)
-                project_saver_ui.refresh_dashboard
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 				
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
