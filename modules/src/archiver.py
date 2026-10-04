@@ -10,59 +10,12 @@ import json
 # ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
     "name": "archiver",
-    "display_name": "Core Site & Code Archiver",
-    "display_menu": "[A]rchiver Content Processing Engine",
-    "menu_shortcut": "a",          # Direct hotkey trigger from the master dashboard menu
-    "meta": {
-        "author": "Gunther Voet",
-        "version": "v0.0.6",
-        "requires": "v0.0.79",     # Minimal version required of the core engine
-        "enabled": True,           # Hard toggle to switch the module on/off
-        "available": True          # Sets availability for cloud installation/use
-    },
-    "autostart": True,             # AUTO-STARTS: Instantly hooks listening loops on boot!
-    "defaults": {
-        "autosave_captured_json": "no",
-        "verbose_logging": "yes"
-    }
-}
-
-# Pluggable volatile cache matrix to monitor server packet streams inside the module workspace
-LAST_CAPTURED_PACKET_INFO = {
-    "timestamp": "No packets intercepted yet.",
-    "target_url": "N/A",
-    "content_length": 0
-}
-
-def register_module_callbacks(server_reference=None):
-    """
-    Executed automatically on boot because autostart is True.
-    Allows the archiver to register a silent packet interceptor callback
-    on the core HTTP listening server without taking over execution tasks yet.
-    """
-    #global LAST_CAPTURED_PACKET_INFO
-    
-    # This hook is a future-proof placeholder. When the server parses an inbound SingleFile
-    # transmission, it will dynamically broadcast the headers data to this function.
-    pass
-
-# ==========================================================================
-# Project Saver Module: Pluggable Core Archiver Hook Layer (archiver.py)
-# Copyright (c) 2026 by Gunther Voet. All Rights Reserved.
-# ==========================================================================
-import os
-import sys
-import time
-
-# ─── MODULE SYSTEM MANIFEST REGISTRY ───
-MODULE_MANIFEST = {
-    "name": "archiver",
-    "display_name": "Web and Code Archiver",
+    "display_name": "Site & Code Archival",
     "display_menu": "[A]rchiver Engine",
     "menu_shortcut": "a",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.5",
+        "version": "v0.0.6",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -103,7 +56,6 @@ def process_intercepted_payload_broadcast(url, html_bytes, headers_dict):
     LAST_CAPTURED_PACKET_INFO["target_url"] = str(url)
     LAST_CAPTURED_PACKET_INFO["content_length"] = len(html_bytes) if html_bytes else 0
 
-
 def execute_interactive_menu(cli_dict, app_version, port_num):
     """
     Fired instantly when the user hits 'M' -> selects 'archiver',
@@ -119,7 +71,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         # 2. Build the sandboxed dashboard view exposing core options wrapped inside the module
         archiver_panel = [
             f"   Active Module Name:  {MODULE_MANIFEST['display_name']}",
-            f"   Module Status:       PIGGYBACK PACKET MONITORING ACTIVE (AUTOSTART)",
+            f"   Module Status:       SINGLEFILE MONITORING ACTIVE (AUTOSTART)",
             "---",
             "📡 LIVE DAEMON INTERCEPTION OVERVIEW:",
             f"   Last Intercept Timestamp: {LAST_CAPTURED_PACKET_INFO['timestamp']}",
