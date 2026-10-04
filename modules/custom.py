@@ -14,7 +14,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "c",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.5",
+        "version": "v0.0.8",
         "requires": "v0.0.78",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -73,7 +73,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         )
 
         # 5. Non-blocking keyboard state monitoring
-        sys.stdout.write("\x1b[2K\r[🛠️ Custom] Ready for key: ")
+        sys.stdout.write("\x1b[2K\r[Custom] Ready for key: ")
         sys.stdout.flush()
 
         user_input = ""
@@ -100,8 +100,9 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             break
             
         elif user_input == 'a':
-            # Place your custom processing routines right here!
             status_message = f"🟢 SUCCESS: Action triggered at {time.strftime('%H:%M:%S')}!"
-            time.sleep(1.0)
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print(f"\n[+] Executing custom module task pipeline action matrix...")
+            time.sleep(1.2)
             
         time.sleep(0.05)
