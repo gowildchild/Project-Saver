@@ -8,7 +8,7 @@ import subprocess
 import hashlib
 
 def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callback):
-    """Pauses startup sequence for 30 seconds allowing an interactive, timed update check before daemon mode."""
+    """Pauses startup sequence for 30 seconds allowing an interactive, timed update check before daemon mode. """
 
     # We only use interactive keyboard prompts on Windows nodes natively
     is_windows = platform.system().lower() == "windows"
