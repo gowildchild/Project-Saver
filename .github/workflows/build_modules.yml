@@ -1,4 +1,4 @@
-name: Compile Pluggable Module Extensions
+name: Compile Module Binaries
 
 on:
   push:
@@ -18,11 +18,31 @@ permissions:
   contents: write
 
 jobs:
-  compile-matrix-modules:
+  build-modules-release:
+    runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.get_version.outputs.CORE_VERSION }}
+    steps:
+    - name: Checkout Source Repository Code
+      uses: actions/checkout@v4
+
+    - name: Extract Version from Core
+      id: get_version
+      run: |
+        git show origin/main:master/project_saver.py > master_project_saver_tmp.py
+        CORE_VER=$(python3 -c "import re; f=open('master_project_saver_tmp.py'); m=re.search(r'VERSION\s*=\s*[\"\']([^\"\']+)[\"\']', f.read()); print(m.group(1)) if m else print('1.0.0')")
+        rm master_project_saver_tmp.py
+        echo "CORE_VERSION=$CORE_VER" >> $GITHUB_OUTPUT
+        echo "[+] Successfully captured version string to outputs: $CORE_VER"
+
+  compile-windows:
+    needs: build-modules-release
     runs-on: windows-latest
     steps:
     - name: Checkout Source Repository Code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup Python Environment Runtime
       uses: actions/setup-python@v5
@@ -33,8 +53,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller 
-       
-    - name: Run Automated Compilation and Hash Ledger Routine
+
+    - name: Generating Pyinstaller Windows Compilation
       shell: bash
       run: |
         python3 << 'EOF'
@@ -53,31 +73,33 @@ jobs:
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest().lower()
 
-        modules_dir = "modules"
-        dist_dir = "dist_modules"
-        build_dir = "build_modules"
+        source_dir = os.path.join("modules", "src")
+        output_dir = "modules"
+        scratch_dir = "scratch_compile_win"
+        build_dir = "build_modules_win"
 
-        os.makedirs(dist_dir, exist_ok=True)
+        os.makedirs(scratch_dir, exist_ok=True)
         os.makedirs(build_dir, exist_ok=True)
 
-        if modules_dir not in sys.path:
-            sys.path.insert(0, modules_dir)
+        if source_dir not in sys.path:
+            sys.path.insert(0, source_dir)
 
         global_manifest = {
             "build_timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            "platform": "windows",
             "modules": {}
         }
 
-        if not os.path.exists(modules_dir):
-            print("[-] Error: Modules folder context missing.")
+        if not os.path.exists(source_dir):
+            print(f"[-] Error: Source directory context missing at {source_dir}")
             sys.exit(1)
 
-        module_files = [f for f in os.listdir(modules_dir) if f.endswith(".py") and f != "__init__.py"]
+        module_files = [f for f in os.listdir(source_dir) if f.endswith(".py") and f != "__init__.py"]
         
         for file_entry in module_files:
             module_name = file_entry[:-3]
-            file_path = os.path.join(modules_dir, file_entry)
-            print(f"\n[*] Compiling Pluggable Asset: {module_name.upper()}")
+            file_path = os.path.join(source_dir, file_entry)
+            print(f"\n[*] Compiling Pluggable Windows Module: {module_name.upper()}")
 
             try:
                 spec = importlib.util.spec_from_file_location(module_name, file_path)
@@ -85,12 +107,12 @@ jobs:
                 spec.loader.exec_module(mod)
 
                 if not hasattr(mod, "MODULE_MANIFEST"):
-                    print(f"[-] Skipping {file_entry}: Missing manifest matrix.")
+                    print(f"[-] Skipping {file_entry}: Missing Modules Manifest.")
                     continue
 
                 manifest = mod.MODULE_MANIFEST
                 binary_name = f"{module_name}.exe"
-                compiled_binary_path = os.path.join(dist_dir, binary_name)
+                compiled_binary_path = os.path.join(scratch_dir, binary_name)
 
                 cmd = [
                     "pyinstaller",
@@ -98,7 +120,7 @@ jobs:
                     "--clean",
                     "--exclude-module=reportlab",
                     "--exclude-module=bs4",                    
-                    f"--distpath={dist_dir}",
+                    f"--distpath={scratch_dir}",
                     f"--workpath={build_dir}",
                     f"--name={module_name}",
                     file_path
@@ -125,13 +147,267 @@ jobs:
             except Exception as e:
                 print(f"[-] Code check bypass failed on {file_entry}: {e}")
 
-        with open(os.path.join(dist_dir, "manifest.json"), "w", encoding="utf-8") as json_file:
+        with open(os.path.join(scratch_dir, "manifest_windows.json"), "w", encoding="utf-8") as json_file:
             json.dump(global_manifest, json_file, indent=2)
-        print("[+] Manifest tracking ledger compiled successfully.")
+            
+        import shutil
+        for item in os.listdir(scratch_dir):
+            shutil.copy(os.path.join(scratch_dir, item), os.path.join(output_dir, item))
+        print("[+] Sync complete. Windows binaries moved into modules/")
         EOF
 
-    - name: Upload Pluggable Module Assets to Release Memory
+    - name: Generate blueprints
+      shell: bash
+      env:
+        CORE_VERSION: ${{ needs.build-modules-release.outputs.app_version }}
+      run: |
+        python3 << 'EOF'
+        import os
+        import re
+        core_version = os.environ.get("CORE_VERSION", "1.0.0")
+        clean_version = re.sub(r"[vV]", "", core_version)
+        template_inno = """[Setup]
+        AppName=Project Saver Pluggable Modules Pack
+        AppVersion={0}
+        AppPublisher=Gunther Voet
+        DefaultDirName={{localappdata}}\\ProjectSaver\\modules
+        DisableDirPage=yes
+        DisableProgramGroupPage=yes
+        OutputDir=..\\modules
+        OutputBaseFilename=modules_setup
+        Compression=lzma
+        SolidCompression=yes
+        PrivilegesRequired=lowest
+        CloseApplications=yes
+
+        [Files]
+        Source: "..\\modules\\*.exe"; DestDir: "{{app}}"; Flags: ignoreversion nocompression
+        Source: "..\\modules\\manifest_windows.json"; DestDir: "{{app}}"; DestName: "manifest.json"; Flags: ignoreversion
+        """
+        
+        formatted_blueprint = template_inno.format(clean_version)
+        cleaned_blueprint = "\n".join([line.strip() for line in formatted_blueprint.split("\n") if line.strip()])
+        with open("modules_installer.iss", "w", encoding="utf-8") as f:
+            f.write(cleaned_blueprint)
+        print(f"[+] Dynamic blueprint created for version {clean_version}.")
+        EOF
+
+    - name: Compile Windows Setup Installer
+      run: |
+        iscc modules_installer.iss
+
+    - name: Generate Windows Zip Pack
+      shell: bash
+      run: |
+        powershell Compress-Archive -Path modules/*.exe, modules/manifest_windows.json -DestinationPath modules/windows_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.zip -Force
+        echo "[+] Compressed Windows zip distribution package generated."
+
+    - name: Upload Windows Asset to Release Memory
       uses: actions/upload-artifact@v4
       with:
-        name: pluggable-module-packages
-        path: dist_modules/*
+        name: pluggable-module-packages-windows
+        path: |
+          modules/*.zip
+          modules/modules_setup.exe
+          modules/manifest_windows.json
+
+  compile-linux:
+    needs: build-modules-release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source Repository Code
+      uses: actions/checkout@v4
+
+    - name: Setup Python Environment Runtime
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Packaging Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller 
+
+    - name: Generating Pyinstaller Linux Compilation
+      run: |
+        python3 << 'EOF'
+        import os
+        import sys
+        import json
+        import hashlib
+        import subprocess
+        import importlib.util
+        import time
+
+        def calculate_file_sha256(file_path):
+            sha256_hash = hashlib.sha256()
+            with open(file_path, "rb") as f:
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+            return sha256_hash.hexdigest().lower()
+
+        source_dir = os.path.join("modules", "src")
+        linux_out_dir = "modules_linux_dist"
+        scratch_dir = "scratch_compile_linux"
+        build_dir = "build_modules_linux"
+
+        os.makedirs(linux_out_dir, exist_ok=True)
+        os.makedirs(scratch_dir, exist_ok=True)
+        os.makedirs(build_dir, exist_ok=True)
+
+        if source_dir not in sys.path:
+            sys.path.insert(0, source_dir)
+
+        global_manifest = {
+            "build_timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            "platform": "linux",
+            "modules": {}
+        }
+
+        if not os.path.exists(source_dir):
+            print(f"[-] Error: Source directory context missing at {source_dir}")
+            sys.exit(1)
+
+        module_files = [f for f in os.listdir(source_dir) if f.endswith(".py") and f != "__init__.py"]
+        
+        for file_entry in module_files:
+            module_name = file_entry[:-3]
+            file_path = os.path.join(source_dir, file_entry)
+            print(f"\n[*] Compiling Pluggable Linux Binary: {module_name.upper()}")
+
+            try:
+                spec = importlib.util.spec_from_file_location(module_name, file_path)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+
+                if not hasattr(mod, "MODULE_MANIFEST"):
+                    print(f"[-] Skipping {file_entry}: Missing Modules Manifest.")
+                    continue
+
+                manifest = mod.MODULE_MANIFEST
+                binary_name = module_name
+                compiled_binary_path = os.path.join(scratch_dir, binary_name)
+
+                cmd = [
+                    "pyinstaller",
+                    "--onefile",
+                    "--clean",
+                    "--exclude-module=reportlab",
+                    "--exclude-module=bs4",                    
+                    f"--distpath={scratch_dir}",
+                    f"--workpath={build_dir}",
+                    f"--name={module_name}",
+                    file_path
+                ]
+                
+                result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                if result.returncode != 0:
+                    print(f"[-] PyInstaller Linux compilation failed for {module_name}")
+                    continue
+
+                if os.path.exists(compiled_binary_path):
+                    binary_hash = calculate_file_sha256(compiled_binary_path)
+                    print(f"[+] Computed Checksum FOOTPRINT: {binary_hash}")
+
+                    global_manifest["modules"][module_name] = {
+                        "display_name": manifest.get("display_name"),
+                        "menu_shortcut": manifest.get("menu_shortcut"),
+                        "version": manifest.get("meta", {}).get("version", "v0.0.1"),
+                        "requires_core": manifest.get("meta", {}).get("requires", "v0.0.79"),
+                        "autostart": manifest.get("autostart", False),
+                        "binary_filename": binary_name,
+                        "sha256": binary_hash
+                    }
+            except Exception as e:
+                print(f"[-] Code check bypass failed on {file_entry}: {e}")
+
+        with open(os.path.join(scratch_dir, "manifest_linux.json"), "w", encoding="utf-8") as json_file:
+            json.dump(global_manifest, json_file, indent=2)
+            
+        import shutil
+        for item in os.listdir(scratch_dir):
+            shutil.copy(os.path.join(scratch_dir, item), os.path.join(linux_out_dir, item))
+        print("[+] Sync complete. Linux binaries moved into modules_linux_dist/")
+        EOF
+
+    - name: Generate Linux Tarball Archive
+      run: |
+        tar -czf linux_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.tar.gz -C modules_linux_dist .
+        mv linux_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.tar.gz modules_linux_dist/
+        echo "[+] Compressed Linux tarball distribution package generated."
+
+    - name: Upload Linux Asset to Release Memory
+      uses: actions/upload-artifact@v4
+      with:
+        name: pluggable-module-packages-linux
+        path: |
+          modules_linux_dist/*.tar.gz
+          modules_linux_dist/manifest_linux.json
+
+  publish-github-release:
+    needs: [build-modules-release, compile-windows, compile-linux]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Compiled Windows Assets
+      uses: actions/download-artifact@v4
+      with:
+        name: pluggable-module-packages-windows
+        path: release_files
+
+    - name: Download Compiled Linux Assets
+      uses: actions/download-artifact@v4
+      with:
+        name: pluggable-module-packages-linux
+        path: release_files
+
+    - name: Consolidating Multi-Platform Fingerprints
+      run: |
+        cd release_files
+        python3 << 'EOF'
+        import json
+        import os
+
+        # Initialize global unified structural file registry map
+        fused_manifest = {"build_timestamp": "", "platforms": {}}
+        
+        if os.path.exists("manifest_windows.json"):
+            with open("manifest_windows.json", "r") as f:
+                win_data = json.load(f)
+                fused_manifest["build_timestamp"] = win_data.get("build_timestamp")
+                fused_manifest["platforms"]["windows"] = win_data.get("modules", {})
+                
+        if os.path.exists("manifest_linux.json"):
+            with open("manifest_linux.json", "r") as f:
+                lin_data = json.load(f)
+                fused_manifest["platforms"]["linux"] = lin_data.get("modules", {})
+
+        with open("manifest.json", "w", encoding="utf-8") as f:
+            json.dump(fused_manifest, f, indent=2)
+            
+        for garbage in ["manifest_windows.json", "manifest_linux.json"]:
+            if os.path.exists(garbage): os.remove(garbage)
+        print("[+] SUCCESS: Unified modules manifest.json created.")
+        EOF
+
+    - name: Create Official GitHub Release
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        tag: ${{ needs.build-modules-release.outputs.app_version }}
+        name: Release ${{ needs.build-modules-release.outputs.app_version }}
+        body: |
+          ## Automated Module Build Success!
+          Multi-platform pluggable modules compiled successfully.
+          
+          ### 💻 Windows Delivery Nodes
+          - **All-in-One Setup Installer Wizard**: `modules_setup.exe`
+          - **Individual Extensions Standalone ZIP Bundle**: `windows_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.zip`
+          
+          ### 🐧 Linux Server Nodes
+          - **Execution-Preserved Compressed Native Package Archive**: `linux_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.tar.gz`
+          
+          ### 🛡️ SHA-256 fingerprints
+          Please parse the tracking parameters embedded inside the unified `manifest.json` file schema to verify your cryptographic SHA-256 binary integrity footprints for security.
+        artifacts: "release_files/*"
+        token: ${{ secrets.GITHUB_TOKEN }}
