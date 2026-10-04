@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.81-alpha"
+VERSION = "v0.0.81-beta"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -191,10 +191,15 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 # ─── CASE A: COMPILED STANDALONE BINARY MANAGER OFFLOAD ───
                 if isinstance(manager_mod, dict) and manager_mod.get("type") == "binary":
                     import subprocess
+                    # * [ADDED] WIN32 BUFFER PURGE LOOP TO PREVENT KEYBOARD ECHO LEAKS
+                    if os.name == 'nt':
+                        import msvcrt
+                        while msvcrt.kbhit():
+                            try: msvcrt.getch()
+                            except: pass
                     try:
                         os.system('cls' if os.name == 'nt' else 'clear')
                         print(f"[*] Sub-process offload: Executing standalone binary -> MANAGER")
-                        # Launch binary cleanly and block parent thread execution until sub-process exits cleanly
                         subprocess.run([manager_mod["path"]], check=True)
                     except Exception as bin_err:
                         print(f"\n[-] Standalone extension binary engine execution crashed: {bin_err}")
@@ -213,7 +218,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     print("\n⚠️ WARNING: Manager module extension asset not found or disabled.")
                     time.sleep(1.5)
                 
-                # * [FIXED] REALIGNED REDRAW METHOD CALL TO PREVENT ATTRIBUTE LOOKUP CRASHES
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 				
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
