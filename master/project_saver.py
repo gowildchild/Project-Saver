@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.80-kilo"
+VERSION = "v0.0.80-lima"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -187,7 +187,20 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
             elif user_triggered_key == 'm':
                 manager_mod = project_saver_modules.ACTIVE_MODULES.get("manager")
-                if manager_mod and hasattr(manager_mod, "execute_interactive_menu"):
+                
+                # ─── CASE A: COMPILED STANDALONE BINARY MANAGER OFFLOAD ───
+                if isinstance(manager_mod, dict) and manager_mod.get("type") == "binary":
+                    import subprocess
+                    try:
+                        os.system('cls' if os.name == 'nt' else 'clear')
+                        print(f"[*] Sub-process offload: Executing standalone binary -> MANAGER")
+                        subprocess.run([manager_mod["path"]], check=True)
+                    except Exception as bin_err:
+                        print(f"\n[-] Standalone extension binary engine execution crashed: {bin_err}")
+                        time.sleep(2)
+                
+                # ─── CASE B: FALLBACK FOR RAW PYTHON SCRIPT HANDLERS ───
+                elif manager_mod and hasattr(manager_mod, "execute_interactive_menu"):
                     print("\n[*] Initializing Pluggable Package Manager sub-workspace panel...")
                     time.sleep(0.3)
                     try:
@@ -198,8 +211,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 else:
                     print("\n⚠️ WARNING: Manager module extension asset not found or disabled.")
                     time.sleep(1.5)
-                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
-
+                project_saver_ui.refresh_dashboard
+				
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
                 update_press_counter = 0
@@ -287,7 +300,7 @@ if __name__ == "__main__":
             cli_dict["config_save"], 
             CLI_ARGS, 
             VERSION, 
-            LATEST_AVAILABLE_VERSION
+            latest_version=None
         )
         sys.exit(0)
 
