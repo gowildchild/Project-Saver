@@ -9,13 +9,13 @@ import time
 # ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
     "name": "custom",
-    "display_name": "User Defined Extension",
-    "display_menu": "[C]ustom Extension",
+    "display_name": "User Custom Module",
+    "display_menu": "[C]ustom Module",
     "menu_shortcut": "c",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.8",
-        "requires": "v0.0.78",     # Minimal version required of the core engine
+        "version": "v0.0.7",
+        "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
     },
@@ -61,14 +61,14 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             "---",
             f"   Status Indicator:    {status_message}",
             "---",
-            "   [A] Action Trigger:  Execute your custom script payload loop.",
-            "   [-] Press [Minus Key] to drop back out to Main Menu..."
+            "   [A] Action Trigger:  Execute your custom script.",
+            "   [-] Press [Minus Key] for Main Menu..."
         ]
 
         # 4. Render via your native box utility layout engine
         project_saver_ui.render_better_box(
             custom_panel, 
-            title_str="User Custom Extension Workspace", 
+            title_str="Custom Module", 
             box_width_override=72
         )
 
@@ -102,7 +102,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         elif user_input == 'a':
             status_message = f"🟢 SUCCESS: Action triggered at {time.strftime('%H:%M:%S')}!"
             os.system('cls' if os.name == 'nt' else 'clear')
-            print(f"\n[+] Executing custom module task pipeline action matrix...")
+            print(f"\n[+] Executing custom module pipeline...")
             time.sleep(1.2)
             
         time.sleep(0.05)
