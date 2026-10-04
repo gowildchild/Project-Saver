@@ -148,6 +148,7 @@ def route_interactive_shortcut(hotkey_char, cli_dict, app_version, port_num):
             except Exception as e:
                 print(f"\n[-] Execution blew up inside module [{target_module_name}]: {e}")
                 time.sleep(2)
+                return True
     return False
     
 
@@ -172,7 +173,6 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
 
     if action == "info":
         print("\n" + "=" * 50)
-        print(f"{action}")
         print("PLUGGABLE MODULES OVERVIEW")
         print("=" * 50)
         if not ACTIVE_MODULES:
@@ -191,13 +191,22 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
             print("🔴 ERROR: Missing required target module name parameter string string.")
             return
         target_name = module_args_list[1].lower()
-        try:
-            import modules.manager
-            target_repo = project_saver_config.SYSTEM_CONFIG.get("manager_target_repository", "gowildchild/Project-Saver")
-            modules.manager.install_module_from_cloud(target_name, target_repo)
-        except ModuleNotFoundError:
-            print("🔴 ERROR: The core framework cloud 'manager.py' engine module is missing from your local directory.")
-            print("          Please manually drop 'manager.py' inside your modules/ folder context to boot updates.")
+        manager_entry = ACTIVE_MODULES.get("manager")
+        if isinstance(manager_entry, dict) and manager_entry.get("type") == "binary":
+            import subprocess
+            try:
+                # Forward installation arguments straight down into the compiled manager.exe execution container
+                subprocess.run([manager_entry["path"], "--install", target_name], check=True)
+            except Exception as e:
+                print(f"🔴 ERROR: Standalone installation routine failed: {e}")
+        else:
+            try:
+                import modules.manager
+                target_repo = project_saver_config.SYSTEM_CONFIG.get("manager_target_repository", "gowildchild/Project-Saver")
+                modules.manager.install_module_from_cloud(target_name, target_repo)
+            except ModuleNotFoundError:
+                print("🔴 ERROR: The core framework cloud 'manager.py' engine module is missing from your local directory.")
+                print("          Please manually drop 'manager.py' inside your modules/ folder context to boot updates.")
 
     elif action == "uninstall":
         if len(module_args_list) < 2:
@@ -205,16 +214,24 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
             return
         target_name = module_args_list[1].lower()
         script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-        target_path = os.path.join(script_base_dir, "modules", f"{target_name}.py")
         
-        if os.path.exists(target_path) and target_name != "manager":
+        # * [FIXED] ACCELERATE SCAN TO MAP BOTH RAW TEXT SCRIPTS AND COMPILED EXECUTABLES ON DISK
+        target_py = os.path.join(script_base_dir, "modules", f"{target_name}.py")
+        target_exe = os.path.join(script_base_dir, "modules", f"{target_name}.exe")
+        
+        if (os.path.exists(target_py) or os.path.exists(target_exe)) and target_name != "manager":
             try:
-                os.remove(target_path)
-                print(f"🟢 SUCCESS: Module extension file '{target_name}.py' erased from local disk storage.")
+                if os.path.exists(target_py):
+                    os.remove(target_py)
+                    print(f"🟢 SUCCESS: Module extension file '{target_name}.py' erased from local disk storage.")
+                if os.path.exists(target_exe):
+                    os.remove(target_exe)
+                    print(f"🟢 SUCCESS: Module extension binary '{target_name}.exe' erased from local disk storage.")
             except Exception as e:
                 print(f"🔴 ERROR: Failed to clear module off storage device: {e}")
         else:
             print("🔴 ERROR: Target module does not exist locally or is restricted.")
+
 
     elif action == "config":
         # Expects: --module config module_name key value
@@ -230,8 +247,9 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
         project_saver_config.SYSTEM_CONFIG[full_lookup_key] = str(new_val)
         print(f"🟢 SUCCESS: Config state mapped -> {full_lookup_key} = {new_val}")
         
-        # Commits memory modifications back down onto the hard disk profile natively
-        project_saver_config.save_config_file("project_saver.cfg", cli_dict, current_version=app_version)
+        # * [FIXED] PASSED RAW NAMESPACE OBJECT AND CORRECTED THE INTERNAL VERSION KEYWORD STRINGS
+        # * Note: Ensure your parent file calls this with CLI_ARGS matching your master project_saver.py variable scope
+        project_saver_config.save_config_file("project_saver.cfg", CLI_ARGS, current_version=app_version)
 
     elif action == "update":
         print("[*] Re-indexing framework update sequence arrays...")
@@ -259,8 +277,11 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
             # ─── FALLBACK MATRIX FOR RAW SCRIPT FILE OBJECT INTERACTION LOOPS ───
             elif hasattr(module_object, "execute_interactive_menu"):
                 print(f"[*] Booting module target parameter block matrix: {target_name.upper()}")
+                # * [ADDED] EXECUTE RUNTIME MENU LOOP ON INTERMEDIARY SCRIPT PLUGINS NATIVELY
+                module_object.execute_interactive_menu(cli_dict, app_version, port_num)
         else:
             print(f"🔴 ERROR: Execution failed. Module '{target_name}' is not currently installed or enabled.")
+
 
     else:
         print(f"🔴 ERROR: Unrecognized module CLI command option action keyword string: '{action}'")
