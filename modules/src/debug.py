@@ -139,8 +139,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             continue
         
         # Check for break condition back to parent daemon frame loop execution
-        if user_input == '-':
-            print("\n[*] Exiting Debug workspace. Returning to Master Dashboard...")
+        if user_input in ['-','Q','\n']:
+            print("\n[*] Exiting Debug workspace...")
             break
             
         # Throttles execution frames slightly to protect processor cores from looping
