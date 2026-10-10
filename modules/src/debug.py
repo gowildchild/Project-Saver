@@ -11,7 +11,7 @@ MODULE_MANIFEST = {
     "name": "debug",
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.21",
+        "version": "v0.0.26",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -45,12 +45,12 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     
     while True:
         # 1. Clear terminal screen platform-natively
-        os.system('cls' if os.name == 'nt' else 'clear')
+        module_library.clear_screen_with_trace(MODULE_MANIFEST, __file__)
 
         # 2. Extract configuration parameter elements out of the section block properties
-        log_enabled = project_saver_config.SYSTEM_CONFIG.get("debug_log_to_file", "yes")
-        verbose_mode = project_saver_config.SYSTEM_CONFIG.get("debug_verbose_output", "no")
-        token_mode = project_saver_config.SYSTEM_CONFIG.get("debug_token", "shared")
+        log_enabled = module_library.get_setting("debug", "log_to_file", "yes")
+        verbose_mode = module_library.get_setting("debug", "verbose_output", "no")
+        token_mode = module_library.get_setting("debug", "token", "shared")
 
         # 3. Build diagnostic layout text matrix array
         debug_tree = [
@@ -107,5 +107,19 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
 if __name__ == "__main__":
     import sys
-    print(f"\n[+] Project Saver Extension.")
+    print("\n[+] Project Saver Extension.")
+    
+    try:
+        import project_saver_config
+        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        cfg_profile = os.path.join(base_path, "project_saver.cfg")
+        if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
+            cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
+            
+        if os.path.exists(cfg_profile):
+            project_saver_config.load_config_file(cfg_profile)
+    except:
+        pass
+
+    execute_interactive_menu(cli_dict={}, app_version="v0.0.21", port_num=19763)
     sys.exit(0)
