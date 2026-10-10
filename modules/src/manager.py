@@ -8,6 +8,7 @@ import time
 import json
 import urllib.request
 import importlib.util
+import module_library
 
 # ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
@@ -17,7 +18,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.18",
+        "version": "v0.0.21",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -67,22 +68,24 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     import project_saver_ui
 
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-    if getattr(sys, 'frozen', False) and len(sys.argv) > 3:
-        try:
-            cli_dict = json.loads(sys.argv[1])
-            app_version = sys.argv[2]
-            port_num = int(sys.argv[3])
-        except:
-            pass
-
+    cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
+    
     if getattr(sys, 'frozen', False) or script_base_dir.lower().endswith("modules"):
         modules_dir = script_base_dir
     else:
         modules_dir = os.path.join(script_base_dir, "modules")
+
+    main_module_ref = sys.modules.get('__main__')
+    modules_framework = sys.modules.get('project_saver_modules')
+    active_registry = getattr(modules_framework, 'ACTIVE_MODULES', {}) if modules_framework else {}
+    using_manifest_fallback = False
+    if not active_registry:
+        active_registry = module_library.load_disk_registry(modules_dir)
+        if active_registry:
+            using_manifest_fallback = True
     status_message = "Module Manager Loaded, ready for commands."
 
     while True:
-        # 1. Clear terminal screen platform-natively
         os.system('cls' if os.name == 'nt' else 'clear')
         target_repo = project_saver_config.SYSTEM_CONFIG.get("manager_target_repository", "gowildchild/Project-Saver")
         target_branch = project_saver_config.SYSTEM_CONFIG.get("manager_target_branch", "modules")
@@ -96,21 +99,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                     mod_name, _ = os.path.splitext(file_entry)
                     if mod_name.lower() not in installed_extensions:
                         installed_extensions.append(mod_name.lower())
-
-        main_module_ref = sys.modules.get('__main__')
-        modules_framework = sys.modules.get('project_saver_modules')
-        active_registry = getattr(modules_framework, 'ACTIVE_MODULES', {}) if modules_framework else {}
-        using_manifest_fallback = False
-        if not active_registry:
-            ledger_path = os.path.join(modules_dir, "manifest.json")
-            if os.path.exists(ledger_path):
-                try:
-                    with open(ledger_path, "r", encoding="utf-8") as lf:
-                        raw_json = json.load(lf)
-                        active_registry = raw_json.get("modules", {}) if "modules" in raw_json else raw_json.get("platforms", {}).get("windows", {})
-                        using_manifest_fallback = True
-                except:
-                    pass
 
         memory_breakdown_lines = []
         total_allocated_bytes = 0
@@ -168,17 +156,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         sys.stdout.write("\x1b[2K\r[Manager] Ready for key: ")
         sys.stdout.flush()
 
-        user_input = ""
-        if os.name == 'nt':
-            import msvcrt
-            user_input = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-        else:
-            import select
-            ready, _, _ = select.select([sys.stdin], [], [], 0.1)
-            if not ready:
-                continue
-            user_input = sys.stdin.readline().strip().lower()
-
+        user_input = module_library.get_keystroke()
         if user_input == "":
             time.sleep(0.05)
             continue
@@ -258,3 +236,19 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 status_message = "🔴 ERROR: Target module selection not verified inside active local libraries."
 
         time.sleep(0.05)
+
+if __name__ == "__main__":
+    import project_saver_config
+    import project_saver_modules
+    base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+    cfg_profile = os.path.join(base_path, "project_saver.cfg")
+    if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
+        cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
+        
+    if os.path.exists(cfg_profile):
+        project_saver_config.load_config_file(cfg_profile)
+
+    fallback_cli = {} 
+    run_version = MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
+    project_saver_modules.bootstrap_and_discover_modules(fallback_cli, run_version, 19763)
+    execute_interactive_menu(fallback_cli, run_version, 19763)
