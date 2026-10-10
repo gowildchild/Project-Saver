@@ -106,20 +106,4 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         time.sleep(0.05)
 
 if __name__ == "__main__":
-    import sys
-    print("\n[+] Project Saver Extension.")
-    
-    try:
-        import project_saver_config
-        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-        cfg_profile = os.path.join(base_path, "project_saver.cfg")
-        if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
-            cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
-            
-        if os.path.exists(cfg_profile):
-            project_saver_config.load_config_file(cfg_profile)
-    except:
-        pass
-
-    execute_interactive_menu(cli_dict={}, app_version="v0.0.21", port_num=19763)
-    sys.exit(0)
+    module_library.run_standalone_safely(MODULE_MANIFEST, execute_interactive_menu)
