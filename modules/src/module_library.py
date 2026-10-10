@@ -76,3 +76,54 @@ def get_setting(module_name, key, default_value=""):
         return project_saver_config.SYSTEM_CONFIG.get(lookup_key, default_value)
     except:
         return default_value
+
+def run_standalone_safely(manifest, menu_callback):
+    """
+    Natively parses terminal input vectors for custom configuration profile paths,
+    bootstraps target profile states, and drops control straight into the module loop.
+    """
+    import os
+    import sys
+    
+    print("\n[+] Module started.")
+    
+    try:
+        import project_saver_config
+        
+        # 1. Parse command-line input vector slices for custom config paths
+        temp_args = sys.argv[1:]
+        active_cfg_profile = "project_saver.cfg"
+        
+        if "--config" in temp_args:
+            try:
+                c_idx = temp_args.index("--config")
+                if c_idx + 1 < len(temp_args):
+                    active_cfg_profile = temp_args[c_idx + 1]
+            except:
+                pass
+                
+        # 2. Reconstruct absolute path layers if input profile matches absolute or relative targets
+        if not os.path.isabs(active_cfg_profile):
+            base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+            cfg_path = os.path.join(base_path, active_cfg_profile)
+            
+            # Safe boundary tracking check fallback if binary file is nested in subfolders
+            if not os.path.exists(cfg_path) and base_path.lower().endswith("modules"):
+                cfg_path = os.path.join(os.path.dirname(base_path), active_cfg_profile)
+        else:
+            cfg_path = active_cfg_profile
+            
+        # 3. Secure and mount the verified configuration tables straight into runtime memory
+        if os.path.exists(cfg_path):
+            project_saver_config.load_config_file(cfg_path)
+    except:
+        pass
+
+    # 4. Map dictionary fallbacks exactly matching module layout boundaries
+    fallback_cli = {}
+    if manifest.get("name") == "archiver":
+        fallback_cli = {"export_folder": "", "export_format": "markdown", "export_type": "auto"}
+        
+    run_version = manifest.get("meta", {}).get("version", "v0.0.1")
+    menu_callback(cli_dict=fallback_cli, app_version=run_version, port_num=19763)
+    sys.exit(0)
