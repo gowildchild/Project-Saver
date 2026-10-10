@@ -349,6 +349,13 @@ jobs:
     needs: [build-modules-release, compile-windows, compile-linux]
     runs-on: ubuntu-latest
     steps:
+
+    - name: Checkout Modules Repository Context
+      uses: actions/checkout@v4
+      with:
+        ref: modules
+        fetch-depth: 0
+    
     - name: Download Compiled Windows Assets
       uses: actions/download-artifact@v4
       with:
