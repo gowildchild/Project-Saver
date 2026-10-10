@@ -237,6 +237,162 @@ def render_bitmask_box(
         sys.stdout.write("\x1b[u")
         sys.stdout.flush()
 
+def compile_unified_canvas(
+    canvas_commands_blueprint: list, 
+    format_target: str = "ansi", 
+    box_style_mask: int = 1028,
+    active_selection_idx: int = -1  # Passing an index here dynamically renders the moving bar!
+) -> str:
+    """
+    Universal Canvas Compiler Engine with Moving Selection Bar Support.
+    Parses structural blueprint arrays, applying high-visibility ANSI Inverse highlights
+    on active indexes natively, while mirroring the identical layout state cleanly to HTML.
+    """
+    import sys
+    import os
+
+    # 1. Geometry Calculations: Establish strict boundary columns width limits
+    target_width = 40 if (box_style_mask & 1024) else 76
+    max_len = 0
+    
+    # Pre-scan the abstract metadata matrix to prevent frame clipping errors
+    for cmd in canvas_commands_blueprint:
+        cmd_type = cmd.get("cmd_bits", 1)
+        if cmd_type == 1:  # Standard Menu Text Item Row
+            text_len = len(str(cmd.get("text", "")))
+            if text_len > max_len: max_len = text_len
+        elif cmd_type == 4:  # Header Title Band
+            text_len = len(str(cmd.get("left", ""))) + len(str(cmd.get("right", ""))) + 6
+            if text_len > max_len: max_len = text_len
+
+    box_width = max(target_width, max_len + 4)
+    raw_lines_accumulator = []
+    
+    title_l, title_r = "Project Saver", ""
+    foot_l, foot_m, foot_r = "", "", ""
+    fg_col, bg_col = "", ""
+
+    # 2. Compile Data Tokens Layer Slices
+    text_item_counter = 0
+    for cmd in canvas_commands_blueprint:
+        cmd_type = cmd.get("cmd_bits", 1)
+        
+        if cmd_type == 4:
+            title_l = cmd.get("left", title_l)
+            title_r = cmd.get("right", title_r)
+            fg_col = cmd.get("fg", fg_col)
+            bg_col = cmd.get("bg", bg_col)
+        elif cmd_type == 2:
+            style = cmd.get("style", "single")
+            raw_lines_accumulator.append("===" if style == "double" else "---")
+        elif cmd_type == 1:
+            raw_text = str(cmd.get("text", ""))
+            # If this specific line matches our active selector bar, apply Inverse video tags
+            if text_item_counter == active_selection_idx:
+                # \x1b[7m turns on reverse video background blocks, \x1b[0m clears it safely
+                padded_text = f"{raw_text:<{box_width - 4}}"
+                raw_lines_accumulator.append(f"\x1b[7m{padded_text}\x1b[0m")
+            else:
+                raw_lines_accumulator.append(raw_text)
+            text_item_counter += 1
+        elif cmd_type == 8:
+            foot_l = cmd.get("left", foot_l)
+            foot_m = cmd.get("middle", foot_m)
+            foot_r = cmd.get("right", foot_r)
+
+    # 3. Output Translation Selection Matrix (BBS Terminal, Web, or ASCII Logs)
+    if format_target.lower() == "html":
+        ansi_output = compile_unified_canvas(canvas_commands_blueprint, format_target="ansi", box_style_mask=box_style_mask, active_selection_idx=active_selection_idx)
+        return convert_ansi_to_html(ansi_output.splitlines())
+
+    elif format_target.lower() == "ascii":
+        import re
+        ansi_raw = compile_unified_canvas(canvas_commands_blueprint, format_target="ansi", box_style_mask=box_style_mask, active_selection_idx=active_selection_idx)
+        return re.sub(r'\033\[[0-9;]*m', '', ansi_raw)
+
+    else:
+        # Default Pass: High-Performance 24-bit True Colour ANSI Terminal Stream
+        from io import StringIO
+        old_stdout = sys.stdout
+        sys.stdout = mystream = StringIO()
+        
+        try:
+            render_bitmask_box(
+                raw_lines_accumulator,
+                title_left=title_l, title_right=title_r,
+                foot_left=foot_l, foot_middle=foot_m, foot_right=foot_r,
+                box_style_mask=box_style_mask,
+                box_width_override=box_width,
+                fg_color=fg_col, bg_color=bg_col,
+                align_mask=0  # Inline default rendering context loop path
+            )
+        finally:
+            sys.stdout = old_stdout
+            
+        return mystream.getvalue()
+
+def draw_abstract_selection_menu(blueprint_commands: list, box_style_mask: int = 1028) -> int:
+    """
+    Decoupled Interactive Selection Keyboard Controller.
+    Takes your abstract blueprint command list, calculates selectable text rows on the fly, 
+    tracks arrow key inputs, and updates the canvas compiler view.
+    """
+    import os
+    import sys
+    import time
+    import module_library
+
+    # Count how many selectable text rows (cmd_bits == 1) actually exist in your blueprint
+    total_selectable_items = sum(1 for cmd in blueprint_commands if cmd.get("cmd_bits", 1) == 1)
+    if total_selectable_items == 0:
+        return -1
+
+    current_selection = 0
+    # Mute the physical hardware blinking cursor to keep the selection highlight bar completely solid
+    manage_cursor(visible=False)
+
+    while True:
+        # 1. Clear terminal natively using your standard shared workspace tracing tool
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+        # 2. Compile the view state with the active selection bar highlighted inside the container
+        screen_frame = compile_unified_canvas(
+            blueprint_commands, 
+            format_target="ansi", 
+            box_style_mask=box_style_mask, 
+            active_selection_idx=current_selection
+        )
+        sys.stdout.write(screen_frame)
+        sys.stdout.flush()
+
+        # 3. Capture keystrokes natively across cross-platform environment boundaries
+        user_key = module_library.get_keystroke()
+        if user_key == "":
+            time.sleep(0.02)
+            continue
+
+        # Map Windows virtual key escape paths or standard characters
+        if user_key in ('-', 'q', '\x1b'):  # Exit or Escape drops back out cleanly
+            current_selection = -1
+            break
+        elif user_key in ('\r', '\n', 'enter'):  # Selection confirmed on Enter hit
+            break
+        
+        # Simple up/down configuration shortcuts to scroll your moving bar
+        # (Arrow key translations pass character arrays or direct key strings via get_keystroke)
+        if user_key in ('w', '8', 'u'):  # Up movement map (BBS style or numpad layouts)
+            current_selection = (current_selection - 1) % total_selectable_items
+        elif user_key in ('s', '2', 'd'):  # Down movement map
+            current_selection = (current_selection + 1) % total_selectable_items
+
+        time.sleep(0.02)
+
+    # Re-enable standard hardware cursor focus before passing thread control back out
+    manage_cursor(visible=True)
+    
+    # Return the exact index position of the text row selected
+    return current_selection
+
 def render_better_box(raw_lines_list, title_str="Project Saver", box_width_override=0):
     # Forward pass to the unified engine with explicit defaults
     render_bitmask_box(raw_lines_list, title_left=title_str, box_width_override=box_width_override)
