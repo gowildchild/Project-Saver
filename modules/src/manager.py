@@ -237,22 +237,5 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         time.sleep(0.05)
 
-    if "project_saver_config" in sys.modules or os.path.exists("project_saver.cfg"):
-        import project_saver_config
-        import project_saver_modules
-        
-        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-        cfg_profile = os.path.join(base_path, "project_saver.cfg")
-        if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
-            cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
-            
-        if os.path.exists(cfg_profile):
-            project_saver_config.load_config_file(cfg_profile)
-            
-        fallback_cli = {}
-        run_version = MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
-        
-        project_saver_modules.bootstrap_and_discover_modules(fallback_cli, run_version, 19763)
-        execute_interactive_menu(fallback_cli, run_version, 19763)
-    else:
-        print("\n[!] Module called from Project Saver...")
+if __name__ == "__main__":
+    module_library.run_standalone_safely(MODULE_MANIFEST, execute_interactive_menu)
