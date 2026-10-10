@@ -27,7 +27,7 @@ def print_startup_banner(version_str):
     print("\n" + "═" * 94)
     for line in banner:
         print(line)
-    print(f"\nProject Saver {version_str}")
+    print(" " & 40 + f"\nProject Saver {version_str}")
     print("═" * 94 + "\n")
 
 def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
@@ -139,7 +139,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
                 description_content = f"{display_d} -> ({live_val})"
             else:
                 description_content = display_d
-
+                
             if show_title and show_desc:
                 panel_content.append(f"   {display_m:<24}{description_content}")
             elif show_title:
