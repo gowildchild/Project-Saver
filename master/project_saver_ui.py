@@ -17,7 +17,7 @@ def set_terminal_title(title_text, run_version, run_text):
 
 def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
     """
-    🎈 [CHANGED]: Transparently forwards visual raw line list packets directly 
+    Transparently forwards visual raw line list packets directly 
     down into your cross-platform unified project_saver_x library file.
     """
     import project_saver_x
@@ -88,7 +88,6 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     fallback_val = defaults_dict.get(call_id, "")
                     
                     live_val = ""
-					
                     if show_value_main and isinstance(mod_ref, dict):
                         if mod_ref.get("type") == "script":
                             mod_inst = mod_ref.get("instance")
@@ -98,15 +97,21 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                         elif mod_ref.get("type") == "binary":
                             pass
 
+                    if show_value_main and hasattr(mod_ref, "get_live_display_value"):
+                        try:
+                            live_val = mod_ref.get_live_display_value(call_id, cli_dict)
+                        except:
+                            pass
+
                     if not live_val:
                         live_val = fallback_val
-                    # Compile display layout based on active value presence
-                    if show_value_main and live_val:
+
+					if show_value_main and live_val:
                         parenthesis_part = f" ({fallback_val})" if fallback_val and live_val != fallback_val else ""
                         description_content = f"{live_val}{parenthesis_part}"
                     else:
                         description_content = display_d
-
+					
                     if show_title_main and show_desc_main:
                         startup_log.append(f"   {display_m:<24}{description_content}")
                     elif show_title_main:
@@ -116,6 +121,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                 continue
             
             # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, menu, custom, debug)
+            manifest = getattr(mod_ref, "MODULE_MANIFEST", {})
             meta_menu = int(manifest.get("meta", {}).get("menu", 0))
             if not meta_menu:
                 continue
