@@ -14,7 +14,7 @@ import module_library
 MODULE_MANIFEST = {
     "name": "manager",
     "display_name": "Module Manager",
-    "display_menu": "[M]odules Panel",
+    "display_menu": "[M]odules Manager",
     "display_desc": "Open dynamic modules manager dashboard",
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
