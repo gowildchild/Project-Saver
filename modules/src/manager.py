@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.15",
+        "version": "v0.0.16",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -89,7 +89,17 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         main_module_ref = sys.modules.get('__main__')
         modules_framework = sys.modules.get('project_saver_modules')
         active_registry = getattr(modules_framework, 'ACTIVE_MODULES', {}) if modules_framework else {}
-        
+
+        if not active_registry:
+            ledger_path = os.path.join(modules_dir, "manifest.json")
+            if os.path.exists(ledger_path):
+                try:
+                    with open(ledger_path, "r", encoding="utf-8") as lf:
+                        raw_json = json.load(lf)
+                        active_registry = raw_json.get("modules", {}) if "modules" in raw_json else raw_json.get("platforms", {}).get("windows", {})
+                except:
+                    pass
+
         memory_breakdown_lines = []
         total_allocated_bytes = 0
 
