@@ -146,22 +146,34 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key == 'u':
-                update_press_counter += 1
-                if update_press_counter == 1:
-                    latest_discovered_version = check_and_perform_update(
-                        VERSION, REPO_OWNER, REPO_NAME,
-                        mode_override=1
-                    )
-                    if not latest_discovered_version or latest_discovered_version == VERSION:
-                        update_press_counter = 0
-                elif update_press_counter >= 2:
-                    print("\n[*] Update Started: Initializing secure system upgrade sequence...")
+                config_newest = project_saver_config.SYSTEM_CONFIG.get("update_version_newest")
+                
+                if config_newest and config_newest != VERSION:
+                    print(f"\n[*] Update Triggered: Discovered pending release [{config_newest}] inside config file.")
+                    print("[*] Initializing secure automated binary system upgrade sequence...")
                     check_and_perform_update(
                         VERSION, REPO_OWNER, REPO_NAME,
                         mode_override=4
                     )
                     os._exit(0)
-                continue
+                else:
+                    update_press_counter += 1
+                    if update_press_counter == 1:
+                        latest_discovered_version = check_and_perform_update(
+                            VERSION, REPO_OWNER, REPO_NAME,
+                            mode_override=1
+                        )
+                        if not latest_discovered_version or latest_discovered_version == VERSION:
+                            update_press_counter = 0
+                    elif update_press_counter >= 2:
+                        print("\n[*] Manual Update Started: Initializing secure system upgrade sequence...")
+                        check_and_perform_update(
+                            VERSION, REPO_OWNER, REPO_NAME,
+                            mode_override=4
+                        )
+                        os._exit(0)
+                    continue
+
 
             elif user_triggered_key == 'q':
                 quit_press_counter += 1
@@ -219,7 +231,12 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     time.sleep(1.5)
                 
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
-				
+
+            elif user_triggered_key != "":
+                routed = project_saver_modules.route_interactive_shortcut(user_triggered_key, cli_dict, VERSION, PORT)
+                if not routed:
+                    project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
+			
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
                 update_press_counter = 0
