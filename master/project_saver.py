@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.82-charlie"
+VERSION = "v0.0.82-delta"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -81,24 +81,22 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     user_triggered_key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
                     while msvcrt.kbhit():
                         msvcrt.getch()
-                else:
-                    # Throttles loop execution when completely idle to protect CPU cores
-                    time.sleep(0.05)
-                    continue
             else:
                 import select
                 ready, _, _ = select.select([sys.stdin], [], [], 0.05)
-                if not ready:
-                    continue
-                user_triggered_key = sys.stdin.readline().strip().lower()
+                if ready:
+                    user_triggered_key = sys.stdin.readline().strip().lower()
 
-            # Reset prompt state on any key interaction to allow message repainting
-            if user_triggered_key != "":
-                routed = project_saver_modules.route_interactive_shortcut(user_triggered_key, cli_dict, VERSION, PORT)
-                sys.stdout.flush()
+            if user_triggered_key == "":
+                time.sleep(0.05)
+                continue
+
+            prompt_visible = False
+            routed = project_saver_modules.route_interactive_shortcut(user_triggered_key, cli_dict, VERSION, PORT)
+            if routed:
+                user_triggered_key = ""
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
                 
-            # ─── HOTKEY MATRIX ACTIONS ───
             if user_triggered_key == 'e':
                 # * [FIXED] Converted to underscore lookup to read configuration folder path
                 export_path = os.path.abspath(cli_dict.get('export_folder') or "")
@@ -275,7 +273,7 @@ if __name__ == "__main__":
 	
     import project_saver_x
     project_saver_x.print_startup_banner(VERSION)
-	time.sleep(1.5)
+    time.sleep(3)
 
     parser = argparse.ArgumentParser(
         description="Project Saver Server.",
