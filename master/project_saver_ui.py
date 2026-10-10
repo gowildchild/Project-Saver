@@ -72,7 +72,6 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     if not bool(bits & 8):
                         continue
                         
-                    # Extract active toggles using pure bitwise AND operators
                     show_title_main = bool(bits & 1)
                     show_desc_main  = bool(bits & 2)
                     show_value_main = bool(bits & 4)
@@ -91,16 +90,10 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     if show_value_main and isinstance(mod_ref, dict):
                         if mod_ref.get("type") == "script":
                             mod_inst = mod_ref.get("instance")
-                            if hasattr(mod_inst, "get_live_display_value"):
+                            if mod_inst and hasattr(mod_inst, "get_live_display_value"):
                                 try: live_val = mod_inst.get_live_display_value(call_id, cli_dict)
                                 except: pass
                         elif mod_ref.get("type") == "binary":
-                            pass
-
-                    if show_value_main and hasattr(mod_ref, "get_live_display_value"):
-                        try:
-                            live_val = mod_ref.get_live_display_value(call_id, cli_dict)
-                        except:
                             pass
 
                     if not live_val:
@@ -120,9 +113,13 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                         startup_log.append(f"   {description_content}")
                 continue
             
-            # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, menu, custom, debug)
-            manifest = getattr(mod_ref, "MODULE_MANIFEST", {})
-            meta_menu = int(manifest.get("meta", {}).get("menu", 0))
+            # CASE 2: Process Clean Backward-Compatible Single Menu Structures
+            manifest = mod_ref.get("MODULE_MANIFEST", {}) if isinstance(mod_ref, dict) else {}
+            meta_menu = 0
+            meta_block = manifest.get("meta")
+            if isinstance(meta_block, dict):
+                meta_menu = int(meta_block.get("menu", 0))
+                
             if not meta_menu:
                 continue
                 
