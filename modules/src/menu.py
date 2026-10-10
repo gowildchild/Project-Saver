@@ -5,6 +5,7 @@
 import os
 import sys
 import time
+import module_library
 
 # ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
@@ -14,7 +15,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "x",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.20",
+        "version": "v0.0.21",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -39,21 +40,17 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     import project_saver_ui
     import project_saver_modules
     import json
-    
+
+    cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
+    script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+    if getattr(sys, 'frozen', False) or script_base_dir.lower().endswith("modules"):
+        modules_dir = script_base_dir
+    else:
+        modules_dir = os.path.join(script_base_dir, "modules")
+
     active_registry = getattr(project_saver_modules, 'ACTIVE_MODULES', {})
     if not active_registry:
-        script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-        ledger_path = os.path.join(script_base_dir, "modules", "manifest.json")
-        if not os.path.exists(ledger_path) and (script_base_dir.lower().endswith("modules") or getattr(sys, 'frozen', False)):
-            ledger_path = os.path.join(script_base_dir, "manifest.json")
-        if os.path.exists(ledger_path):
-            try:
-                with open(ledger_path, "r", encoding="utf-8") as lf:
-                    raw_json = json.load(lf)
-                    active_registry = raw_json.get("modules", {}) if "modules" in raw_json else raw_json.get("platforms", {}).get("windows", {})
-            except:
-                pass
-                
+        active_registry = module_library.load_disk_registry(modules_dir)
     detected_modules_pool = {}
     for active_name, entry in active_registry.items():
         if isinstance(entry, dict):
@@ -112,18 +109,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         sys.stdout.write("\x1b[2K\r[Navigator] Ready for key: ")
         sys.stdout.flush()
 
-        user_input = ""
-        if os.name == 'nt':
-            import msvcrt
-            user_input = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-        else:
-            import select
-            ready, _, _ = select.select([sys.stdin], [], [], 0.1)
-            if not ready:
-                continue
-            user_input = sys.stdin.readline().strip().lower()
-
-        # ─── PROCESS LOCALIZED INTERACTIVE INPUTS ───
+        user_input = module_library.get_keystroke()
         if user_input == '-':
             break
         elif user_input == '1':
@@ -166,3 +152,21 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                         time.sleep(2)
 
         time.sleep(0.05)
+
+if __name__ == "__main__":
+    import project_saver_config
+    import project_saver_modules
+    
+    base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+    cfg_profile = os.path.join(base_path, "project_saver.cfg")
+    if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
+        cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
+        
+    if os.path.exists(cfg_profile):
+        project_saver_config.load_config_file(cfg_profile)
+        
+    fallback_cli = {"export_folder": "", "export_format": "markdown", "export_type": "auto"}
+    run_version = MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
+    
+    project_saver_modules.bootstrap_and_discover_modules(fallback_cli, run_version, 19763)
+    execute_interactive_menu(fallback_cli, run_version, 19763)
