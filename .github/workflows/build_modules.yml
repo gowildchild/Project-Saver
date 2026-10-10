@@ -147,7 +147,7 @@ jobs:
                         "sha256": binary_hash
                     }
             except Exception as e:
-                print(f"[-] Code check bypass failed on {file_entry}: {e}")
+                raise e
 
         with open(os.path.join(scratch_dir, "manifest_windows.json"), "w", encoding="utf-8") as json_file:
             json.dump(global_manifest, json_file, indent=2)
@@ -325,7 +325,7 @@ jobs:
                         "sha256": binary_hash
                     }
             except Exception as e:
-                print(f"[-] Code check bypass failed on {file_entry}: {e}")
+                raise e
 
         with open(os.path.join(scratch_dir, "manifest_linux.json"), "w", encoding="utf-8") as json_file:
             json.dump(global_manifest, json_file, indent=2)
