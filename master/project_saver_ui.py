@@ -30,6 +30,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     """
     import os
     import sys
+    import re
     import project_saver_config
     import project_saver_modules
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -59,6 +60,8 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
         "---"
     ]
 
+    modules_added = False
+
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
             if isinstance(mod_ref, dict):
@@ -70,8 +73,8 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
             if not manifest:
                 continue
                 
-            # CASE 1: Process Advanced Multi-Menu Configurations (e.g., archiver.py)
-            if "display_multi" in manifest:
+            # CASE 1: Process Advanced Multi-Layered Tracking Configurations (e.g., archiver.py)
+            if manifest.get("display_multi"):
                 for option in manifest.get("display_multi", []):
                     bits = int(option.get("mask_bits", 0))
                     if not bits or not bool(bits & 8):
@@ -100,36 +103,48 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     else:
                         description_content = display_d
                     if show_title_main and show_desc_main:
-                        startup_log.append(f"  {display_m:<28} {description_content}")
+                        startup_log.append(f"    {display_m:<28} {description_content}")
                     elif show_title_main:
-                        startup_log.append(f"  {display_m}")
+                        startup_log.append(f"    {display_m}")
+                    modules_added = True
             
-            # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, debug, menu, custom)
+            # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, debug, menu, custom, shutdown)
             else:
                 meta_block = manifest.get("meta", {})
                 meta_menu = int(meta_block.get("menu", manifest.get("menu", 3))) if isinstance(meta_block, dict) else int(manifest.get("menu", 3))
                 
-                # Enforce bitmask checking rules consistently for backward compatibility
                 show_title = bool(meta_menu & 1)
                 show_desc = bool(meta_menu & 2)
                 
                 display_m = manifest.get("display_menu", "").strip()
                 display_d = manifest.get("display_desc", "").strip()
                 
+                # Filter away double bracket visual layout duplicates cleanly
+                if display_m.startswith("[") and not display_m.startswith("   ["):
+                    display_m = f"   {display_m}"
+                elif not display_m.startswith("   [") and not display_m.startswith("["):
+                    display_m = f"   [{manifest.get('menu_shortcut', 'X').upper()}] {display_m}"
+
                 if display_m:
                     if show_title and show_desc and display_d:
-                        startup_log.append(f"   {display_m:<25}  {display_d}")
+                        startup_log.append(f" {display_m:<28}  {display_d}")
                     elif show_title:
-                        startup_log.append(f"   {display_m}")
+                        startup_log.append(f" {display_m}")
                     elif show_desc and display_d:
-                        startup_log.append(f"   {display_d}")
+                        startup_log.append(f"    {display_d}")
+                    modules_added = True
 
-        startup_log.extend([
-            update_menu_string,
-            " [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
-        ])
+    if modules_added and "---" not in startup_log[-1]:
+        startup_log.append("---")
+
+    startup_log.extend([
+        update_menu_string,
+        "❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
+    ])
+    
     import project_saver_x
     project_saver_x.render_better_box(startup_log, title_str=f"Project Saver {app_version}", box_width_override=72)
+
 
 def log_debug(msg):
     """Prints immediately to the terminal screen AND appends to debug.log natively."""
