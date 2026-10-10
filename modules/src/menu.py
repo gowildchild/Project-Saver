@@ -15,7 +15,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "x",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.22",
+        "version": "v0.0.23",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -154,19 +154,22 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         time.sleep(0.05)
 
 if __name__ == "__main__":
-    import project_saver_config
-    import project_saver_modules
-    
-    base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-    cfg_profile = os.path.join(base_path, "project_saver.cfg")
-    if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
-        cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
+    if "project_saver_config" in sys.modules or os.path.exists("project_saver.cfg"):
+        import project_saver_config
+        import project_saver_modules
         
-    if os.path.exists(cfg_profile):
-        project_saver_config.load_config_file(cfg_profile)
+        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        cfg_profile = os.path.join(base_path, "project_saver.cfg")
+        if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
+            cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
+            
+        if os.path.exists(cfg_profile):
+            project_saver_config.load_config_file(cfg_profile)
+            
+        fallback_cli = {}
+        run_version = MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
         
-    fallback_cli = {"export_folder": "", "export_format": "markdown", "export_type": "auto"}
-    run_version = MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
-    
-    project_saver_modules.bootstrap_and_discover_modules(fallback_cli, run_version, 19763)
-    execute_interactive_menu(fallback_cli, run_version, 19763)
+        project_saver_modules.bootstrap_and_discover_modules(fallback_cli, run_version, 19763)
+        execute_interactive_menu(fallback_cli, run_version, 19763)
+    else:
+        print("\n[!] Module called from Project Saver...")
