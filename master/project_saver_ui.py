@@ -61,7 +61,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
 
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
-			manifest = mod_ref.get("MODULE_MANIFEST", {}) if isinstance(mod_ref, dict) else {}
+            manifest = mod_ref.get("MODULE_MANIFEST", {}) if isinstance(mod_ref, dict) else {}
             
             if "display_multi" in manifest:
                 for option in manifest.get("display_multi", []):
@@ -82,21 +82,24 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                         
                     display_m = option.get("display_menu", "")
                     display_d = option.get("display_desc", "")
-                    
-                    # Safely look up local module default definitions fallback
+
                     defaults_dict = manifest.get("defaults", {})
                     call_id = option.get("callback_key", "")
                     fallback_val = defaults_dict.get(call_id, "")
                     
                     live_val = ""
-                    if show_value_main and hasattr(mod_obj, "get_live_display_value"):
-                        try:
-                            live_val = mod_obj.get_live_display_value(call_id, cli_dict)
-                        except:
+					
+                    if show_value_main and isinstance(mod_ref, dict):
+                        if mod_ref.get("type") == "script":
+                            mod_inst = mod_ref.get("instance")
+                            if hasattr(mod_inst, "get_live_display_value"):
+                                try: live_val = mod_inst.get_live_display_value(call_id, cli_dict)
+                                except: pass
+                        elif mod_ref.get("type") == "binary":
                             pass
+
                     if not live_val:
                         live_val = fallback_val
-
                     # Compile display layout based on active value presence
                     if show_value_main and live_val:
                         parenthesis_part = f" ({fallback_val})" if fallback_val and live_val != fallback_val else ""
