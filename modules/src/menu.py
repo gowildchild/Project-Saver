@@ -15,7 +15,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "x",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.29",
+        "version": "v0.0.30",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -47,9 +47,11 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     else:
         modules_dir = os.path.join(script_base_dir, "modules")
 
-    active_registry = getattr(project_saver_modules, 'ACTIVE_MODULES', {})
+    main_module_ref = sys.modules.get('__main__')
+    modules_framework = sys.modules.get('project_saver_modules')
+    active_registry = getattr(modules_framework, 'ACTIVE_MODULES', {}) if modules_framework else {}
     if not active_registry:
-        active_registry = module_library.load_disk_registry(modules_dir)
+        active_registry = module_library.load_disk_registry(modules_dir)    
     detected_modules_pool = {}
     for active_name, entry in active_registry.items():
         if isinstance(entry, dict):
@@ -97,9 +99,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         navigator_panel.append("   [-] Press [Minus Key] to drop back out to Main Menu...")
 
         # 4. Render via your native box utility layout engine
-        project_saver_ui.render_better_box(
+        import project_saver_x
+        project_saver_x.render_better_box(
             navigator_panel, 
-            title_str=f"Navigation Grid Controller Engine", 
+            title_str="Navigation Grid Controller Engine", 
             box_width_override=74
         )
 
