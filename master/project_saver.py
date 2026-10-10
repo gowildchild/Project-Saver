@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.81-quebec"
+VERSION = "v0.0.81-romeo"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -216,11 +216,12 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                             manager_version = mock_class_ref.MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
                         print(f"[*] MODULE LOAD: MANAGER {manager_version}")
                         proc_result = subprocess.run(
-                            [manager_mod["path"]], 
+                            [manager_mod["path"], "--config", active_cfg_profile], 
                             stdout=None, 
                             stderr=subprocess.PIPE, 
                             text=True
                         )
+						
                         if proc_result.stderr:
                             os.system('cls' if os.name == 'nt' else 'clear')
                             print("CRITICAL CRASH IN SUBPROCESS")
