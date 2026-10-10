@@ -91,7 +91,6 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     display_m = option.get("display_menu", "")
                     display_d = option.get("display_desc", "")
                     
-                    # Safely look up local module default definitions fallback
                     defaults_dict = manifest.get("defaults", {})
                     call_id = option.get("callback_key", "")
                     fallback_val = defaults_dict.get(call_id, "")
@@ -121,7 +120,11 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                 continue
             
             # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, menu, custom, debug)
-            meta_menu = int(manifest.get("meta", {}).get("menu", 0)) if isinstance(manifest, dict) else 0
+            meta_menu = 0
+            meta_block = manifest.get("meta")
+            if isinstance(meta_block, dict):
+                meta_menu = int(meta_block.get("menu", 0))
+                
             if not meta_menu:
                 continue
                 
