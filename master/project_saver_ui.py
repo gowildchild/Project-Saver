@@ -16,35 +16,13 @@ def set_terminal_title(title_text, run_version, run_text):
         sys.stdout.flush()
 
 def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
-    def get_visual_width(text_line: str) -> int:
-        clean = re.sub(r'\033\[[0-9;]*m', '', str(text_line))
-        width = 0
-        for char in clean:
-            o = ord(char)
-            if o in (0xfe0f, 0x200d): continue
-            if (0x1f300 <= o <= 0x1f9ff) or (0x2600 <= o <= 0x27bf) or (0x2b50 <= o <= 0x2b55): width += 2
-            elif 0x4e00 <= o <= 0x9fff: width += 2
-            else: width += 1
-        return width
+    """
+    🎈 [CHANGED]: Transparently forwards visual raw line list packets directly 
+    down into your cross-platform unified project_saver_x library file.
+    """
+    import project_saver_x
+    project_saver_x.render_better_box(raw_lines_list, title_str, box_width_override)
 
-    print() 
-    filtered_lines = [line for line in raw_lines_list if str(line).strip() != "---"]
-    max_len = max((get_visual_width(line) for line in filtered_lines), default=len(title_str))
-    target_width = box_width_override if box_width_override > 0 else 76
-    box_width = max(target_width, max_len + 4)
-
-    header_left = f"──┤ {title_str} ├"
-    header_dash_fill = max(4, box_width - get_visual_width(header_left))
-    print(f"┌{header_left}{'─' * header_dash_fill}┐")
-    for line in raw_lines_list:
-        clean_line = str(line).rstrip()
-        if clean_line.strip() == "---":
-            print(f"├{'─' * box_width}┤")
-        else:
-            current_width = get_visual_width(clean_line)
-            padding_spaces = " " * (box_width - current_width - 2)
-            print(f"│ {clean_line}{padding_spaces} │")
-    print("└" + "─" * box_width + "┘")
 
 def refresh_dashboard_view(cli_dict, app_version, port_num):
     """
@@ -53,8 +31,8 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     import os
     import sys
     import project_saver_config
+	import project_saver_modules
 
-    # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
     os.system('cls' if os.name == 'nt' else 'clear')
 
     def clean_ver(v_str):
@@ -81,8 +59,6 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
         "---"
     ]
 
-# --- TARGET CODE MODIFICATION BLOCK ---
-    # 🎈 [CHANGED]: Dynamically evaluates both standard single menus and multi-menu bitmask arrays with zero hardcoded core values
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
             mod_obj = mod_ref["mock"] if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" else mod_ref
@@ -95,13 +71,16 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     if not bits:
                         continue
                         
-                    # Main Menu Visibility Constraints Pass: Title flags (1, 8, 32, 128) | Desc flags (2, 16, 64, 256)
-                    show_title_main = bool(bits & 1) or bool(bits & 8) or bool(bits & 32) or bool(bits & 128)
-                    show_desc_main  = bool(bits & 2) or bool(bits & 16) or bool(bits & 64) or bool(bits & 256)
-                    show_value_main = bool(bits & 4) or bool(bits & 4) # Evaluates the live value substitution mask toggle
+                    if not bool(bits & 8):
+                        continue
+                        
+                    # Extract active toggles using pure bitwise AND operators
+                    show_title_main = bool(bits & 1)
+                    show_desc_main  = bool(bits & 2)
+                    show_value_main = bool(bits & 4)
                     
                     if not (show_title_main or show_desc_main):
-                        continue # Skip drawing this specific sub-row completely if no main menu bits are targeted
+                        continue 
                         
                     display_m = option.get("display_menu", "")
                     display_d = option.get("display_desc", "")
@@ -154,16 +133,11 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
             elif show_desc:
                 startup_log.append(f"   {display_d}")
 
-# --- 8 lines of original context code AFTER ---
     startup_log.extend([
         update_menu_string,
         f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
     ])
     render_better_box(startup_log, title_str=f"Project Saver {app_version}", box_width_override=65)
-
-
-
-
 
 def log_debug(msg):
     """Prints immediately to the terminal screen AND appends to debug.log natively."""
