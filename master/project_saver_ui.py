@@ -32,7 +32,6 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     import sys
     import project_saver_config
     import project_saver_modules
-
     os.system('cls' if os.name == 'nt' else 'clear')
     update_menu_string = None
 
@@ -47,7 +46,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
 
     raw_folder_path = cli_dict.get('export_folder') or ""
     resolved_display_path = os.path.abspath(raw_folder_path) if raw_folder_path else "Initializing path.."		
-	
+
     startup_log = [
         f"   Server Details:      http://localhost:{port_num} (Token: {project_saver_config.EXPECTED_TOKEN})",
         "---",
