@@ -166,7 +166,8 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             time.sleep(0.05)
             continue        
         
-        if user_input in ['-', ' ', '\r', '\n', 'enter']:
+        #if user_input in ['-', ' ', '\r', '\n', 'enter']:
+        if user_input in ['-', 'q']:
             if os.name == 'nt':
                 import msvcrt
                 while msvcrt.kbhit():
