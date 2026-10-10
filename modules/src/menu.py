@@ -155,5 +155,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
 if __name__ == "__main__":
     import sys
-    print(f"\n[+] Project Saver Extension.")
+    print("\n[+] Project Saver Extension.")
+    execute_interactive_menu(cli_dict={}, app_version="v0.0.22", port_num=19763)
     sys.exit(0)
