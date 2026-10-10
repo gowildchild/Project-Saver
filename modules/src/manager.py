@@ -89,7 +89,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         main_module_ref = sys.modules.get('__main__')
         modules_framework = sys.modules.get('project_saver_modules')
         active_registry = getattr(modules_framework, 'ACTIVE_MODULES', {}) if modules_framework else {}
-
+        using_manifest_fallback = False
         if not active_registry:
             ledger_path = os.path.join(modules_dir, "manifest.json")
             if os.path.exists(ledger_path):
@@ -97,6 +97,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                     with open(ledger_path, "r", encoding="utf-8") as lf:
                         raw_json = json.load(lf)
                         active_registry = raw_json.get("modules", {}) if "modules" in raw_json else raw_json.get("platforms", {}).get("windows", {})
+                        using_manifest_fallback = True
                 except:
                     pass
 
@@ -104,9 +105,21 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         total_allocated_bytes = 0
 
         for name, mod_ref in active_registry.items():
-            mod_size = sys.getsizeof(mod_ref)
-            total_allocated_bytes += mod_size
-            memory_breakdown_lines.append(f"   -> [{name.upper()}] Weight: {mod_size} bytes")
+            if using_manifest_fallback:
+                target_filename = mod_ref.get("binary_filename", f"{name}.exe" if os.name == 'nt' else name)
+                target_file_path = os.path.join(modules_dir, target_filename)
+                if not os.path.exists(target_file_path) and os.name == 'nt' and not target_filename.endswith(".exe"):
+                    target_file_path = os.path.join(modules_dir, f"{target_filename}.py")
+                if os.path.exists(target_file_path):
+                    mod_size = os.path.getsize(target_file_path)
+                else:
+                    mod_size = sys.getsizeof(str(mod_ref))
+                total_allocated_bytes += mod_size
+                memory_breakdown_lines.append(f"   -> [{name.upper()}] Disk Weight: {mod_size} bytes")
+            else:
+                mod_size = sys.getsizeof(mod_ref)
+                total_allocated_bytes += mod_size
+                memory_breakdown_lines.append(f"   -> [{name.upper()}] RAM Weight: {mod_size} bytes")
 
         
         manager_panel = [
@@ -125,7 +138,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         manager_panel.extend([
             "---",
-            "🛠️ OPERATIONS HANDLERS:",
+            "🛠 MODULE MANAGER:",
             "   [I] Install    - Stream-download a fresh pluggable module from GitHub.",
             "   [U] Uninstall  - Erase a module extension file and unload its variables.",
             "   [C] Configure  - Modify operational parameter values inside project_saver.cfg.",
@@ -141,17 +154,13 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             box_width_override=74
         )
 
-        sys.stdout.write("\x1b[2K\r[ Manager] Ready for key: ")
+        sys.stdout.write("\x1b[2K\r[Manager] Ready for key: ")
         sys.stdout.flush()
 
         user_input = ""
         if os.name == 'nt':
             import msvcrt
-            if msvcrt.kbhit():
-                user_input = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-            else:
-                time.sleep(0.05)
-                continue
+            user_input = msvcrt.getch().decode('utf-8', errors='ignore').lower()
         else:
             import select
             ready, _, _ = select.select([sys.stdin], [], [], 0.1)
@@ -166,7 +175,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         status_message = "Awaiting input command option..."
 
         if user_input == '-':
-            print("\n[*] Exiting Module Manager. Returning to  Dashboard...")
+            print("\n[*] Exiting Module Manager. Returning to Dashboard...")
             break
 
         elif user_input == 'i':
@@ -202,7 +211,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                     status_message = f"🔴 ERROR: Failed to sweep target off disk -> {err}"
             else:
                 status_message = "🔴 ERROR: Target module does not exist, or is locked by system core configurations."
-
 
         elif user_input == 'c':
             print("\n")
