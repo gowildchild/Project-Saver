@@ -62,7 +62,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
             if isinstance(mod_ref, dict):
-                manifest = mod_ref.get("MODULE MANIFEST", {})
+                manifest = mod_ref.get("MODULE_MANIFEST", {})
                 mod_obj = mod_ref.get("instance") if mod_ref.get("type") == "script" else None
             else:
                 manifest = getattr(mod_ref, "MODULE_MANIFEST", {})
@@ -103,26 +103,26 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                         startup_log.append(f"  {display_m:<28} {description_content}")
                     elif show_title_main:
                         startup_log.append(f"  {display_m}")
-                
-            # CASE 2: Process Clean Backward-Compatible Single Menu Structures
-            meta_menu = 0
-            meta_block = manifest.get("meta")
-            if isinstance(meta_block, dict):
-                meta_menu = int(meta_block.get("menu", manifest.get("menu", 0)))
+            
+            # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, debug, menu, custom)
             else:
-                meta_menu = int(manifest.get("menu", 0))
-            if not meta_menu:
-                continue
-            display_m = manifest.get("display_menu", "")
-            display_d = manifest.get("display_desc", "")
-            show_title = bool(meta_menu & 1)
-            show_desc = bool(meta_menu & 2)
-            if show_title and show_desc:
-                startup_log.append(f"  {display_m:<28} {display_d}")
-            elif show_title:
-                startup_log.append(f"  {display_m}")
-            elif show_desc:
-                startup_log.append(f"  {display_d}")
+                meta_block = manifest.get("meta", {})
+                meta_menu = int(meta_block.get("menu", manifest.get("menu", 3))) if isinstance(meta_block, dict) else int(manifest.get("menu", 3))
+                
+                # Enforce bitmask checking rules consistently for backward compatibility
+                show_title = bool(meta_menu & 1)
+                show_desc = bool(meta_menu & 2)
+                
+                display_m = manifest.get("display_menu", "").strip()
+                display_d = manifest.get("display_desc", "").strip()
+                
+                if display_m:
+                    if show_title and show_desc and display_d:
+                        startup_log.append(f"   {display_m:<25}  {display_d}")
+                    elif show_title:
+                        startup_log.append(f"   {display_m}")
+                    elif show_desc and display_d:
+                        startup_log.append(f"   {display_d}")
 
         startup_log.extend([
             update_menu_string,
