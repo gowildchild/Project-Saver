@@ -67,24 +67,23 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             "GLOBAL SYSTEM_CONFIG DICTIONARY EXTRACTS:"
         ]
 
-        import project_saver_modules
-        if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
-            for k, v in sorted(project_saver_modules.ACTIVE_MODULES.items()):
-                type_str = type(v).__name__
-                if isinstance(v, dict):
-                    # If it is a dictionary, extract its top-level tracking parameters cleanly
-                    inner_keys = list(v.keys())
-                    mod_type = v.get("type", "N/A")
-                    debug_tree.append(f"   [{k}] -> dict (type={mod_type}) Keys: {inner_keys}")
-                    if "MODULE_MANIFEST" in v:
-                        m_val = v["MODULE_MANIFEST"]
-                        m_type = type(m_val).__name__
-                        debug_tree.append(f"     └─ MODULE_MANIFEST is {m_type}")
-                else:
-                    # If it is a raw module object standard layer
-                    debug_tree.append(f"   [{k}] -> raw object ({type_str})")
+        import configparser
+        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        if base_path.lower().endswith("modules"):
+            base_path = os.path.dirname(base_path)
+        cfg_path = os.path.join(base_path, "project_saver.cfg")
+
+        if os.path.exists(cfg_path):
+            try:
+                config_inspector = configparser.ConfigParser()
+                config_inspector.read(cfg_path, encoding="utf-8")
+                for active_section in config_inspector.sections():
+                    key_count = len(config_inspector.options(active_section))
+                    debug_tree.append(f"   [{active_section.upper()}] container has ({key_count}) keys mounted on disk.")
+            except Exception as read_err:
+                debug_tree.append(f"   [-] Configuration profile analysis failed: {read_err}")
         else:
-            debug_tree.append("   (ACTIVE_MODULES pool is completely empty or inaccessible)")
+            debug_tree.append(f"   ⚠️ WARNING: Active project_saver.cfg file not found at: {cfg_path}")
 
         debug_tree.extend([
             "---",
