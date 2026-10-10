@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.11",
+        "version": "v0.0.12",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -108,7 +108,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             f"   {', '.join(sorted(installed_extensions)) if installed_extensions else '(No external extensions found)'}",
             "---",
             "🧠 LIVE MEMORY METRICS:",
-            f"   Total Loaded Cache Size: {total_allocated_bytes} bytes",
+            f"   Total Loaded Cache Size: {total_allocated_bytes} bytes"
         ]
 
         manager_panel.extend(memory_breakdown_lines)
