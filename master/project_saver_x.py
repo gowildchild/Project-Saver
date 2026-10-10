@@ -38,6 +38,16 @@ class ConfirmationTypes(IntFlag):
     TIMED_10S         = 2048 # 10S timer
     TIMED_15S         = 4096 # 15S Timer Down
     
+class AlignFlags:
+    NONE    = 0
+    # Horizontal Constraints (Bits 1-2)
+    LEFT    = 1     # 01 in binary
+    RIGHT   = 2     # 10 in binary
+    CENTER  = 3     # 11 in binary (LEFT & RIGHT both active!)
+    # Vertical Constraints (Bits 16-32)
+    TOP     = 16    # 010000 in binary
+    BOTTOM  = 24    # 100000 in binary
+    MIDDLE  = 40    # 110000 in binary (TOP & BOTTOM both active!)
 
 def print_startup_banner(version_str):
     """
@@ -62,7 +72,181 @@ def print_startup_banner(version_str):
     print(" " * 40 + f"\nProject Saver {version_str}")
     print("═" * 94 + "\n")
 
-def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
+#project_saver_x.render_better_box(
+#    system_stats, 
+#    title_left="NETWORK TRAFFIC INGESTION",
+#    box_style_mask=385, 
+#    fg_color="#00FF66", 
+#    bg_color="#0A0F24"
+#)
+#project_saver_x.render_better_box(
+#    alert_logs, 
+#    title_left="⚠️ CRITICAL EXCEPTION ENCOUNTERED",
+#    box_style_mask=274, 
+#    fg_color="FF0055"
+#)
+
+
+def render_bitmask_box(
+    raw_lines_list: list, 
+    title_left: str = "Project Saver", 
+    title_right: str = "",
+    foot_left: str = "",
+    foot_middle: str = "",
+    foot_right: str = "",
+    box_style_mask: int = 274,  
+    box_width_override: int = 0,
+    fg_color: str = "",         
+    bg_color: str = "",
+    align_mask: int = 0         # 0 = Inline Default, 43 = Center Middle Overlay Pop-up
+):
+    """
+    Advanced Data-Driven Canvas Framework with 24-bit True Colour and Absolute Grid Placement.
+    Uses binary align_mask coordinates to render overlay popups without moving terminal line layers behind it.
+    """
+    def get_visual_width(text_line: str) -> int:
+        import re
+        clean = re.sub(r'\033\[[0-9;]*m', '', str(text_line))
+        width = 0
+        for char in clean:
+            o = ord(char)
+            if o in (0xfe0f, 0x200d): continue
+            if (0x1f300 <= o <= 0x1f9ff) or (0x2600 <= o <= 0x27bf) or (0x2b50 <= o <= 0x2b55): width += 2
+            elif 0x4e00 <= o <= 0x9fff: width += 2
+            else: width += 1
+        return width
+
+    def hex_to_ansi(hex_str: str, is_bg: bool = False) -> str:
+        if not hex_str: return ""
+        clean_hex = hex_str.lstrip('#').strip()
+        if len(clean_hex) != 6: return ""
+        try:
+            r, g, b = int(clean_hex[0:2], 16), int(clean_hex[2:4], 16), int(clean_hex[4:6], 16)
+            return f"\x1b[48;2;{r};{g};{b}m" if is_bg else f"\x1b[38;2;{r};{g};{b}m"
+        except: return ""
+
+    # 1. Isolate Core Frame Typography Widths
+    filtered_lines = [line for line in raw_lines_list if str(line).strip() not in ("---", "===")]
+    header_len = get_visual_width(title_left) + get_visual_width(title_right) + 6
+    footer_len = get_visual_width(foot_left) + get_visual_width(foot_middle) + get_visual_width(foot_right) + 8
+    max_content_len = max((get_visual_width(line) for line in filtered_lines), default=len(title_left))
+    max_len = max(max_content_len, header_len, footer_len)
+    
+    target_width = box_width_override if box_width_override > 0 else 76
+    box_width = max(target_width, max_len + 4)
+    box_height = len(raw_lines_list) + 2  # Total layout rows including top and bottom frames
+
+    # 2. Decode Terminal Screen Position Coordinates Absolute Mapping
+    start_row = 0
+    start_col = 0
+    is_absolute_overlay = align_mask > 0
+
+    if is_absolute_overlay:
+        try:
+            term_cols, term_rows = os.get_terminal_size()
+            
+            # Horizontal Bit Evaluation Pass
+            h_bits = align_mask & 3
+            if h_bits == 3:    start_col = max(1, (term_cols - box_width) // 2)      # CENTER
+            elif h_bits == 1:  start_col = 2                                         # LEFT
+            elif h_bits == 2:  start_col = max(1, term_cols - box_width - 1)         # RIGHT
+            else: start_col = 2
+            
+            # Vertical Bit Evaluation Pass
+            v_bits = align_mask & 48
+            if v_bits == 48:   start_row = max(1, (term_rows - box_height) // 2)     # MIDDLE
+            elif v_bits == 16: start_row = 2                                         # TOP
+            elif v_bits == 32: start_row = max(1, term_rows - box_height - 1)        # BOTTOM
+            else: start_row = 2
+            
+            # Freeze active terminal cursor positioning layout paths safely
+            sys.stdout.write("\x1b[s")
+        except:
+            is_absolute_overlay = False
+
+    def print_line(content_str, current_row_offset):
+        if is_absolute_overlay:
+            # Jump explicitly to terminal absolute column slot without carriage drop cascades
+            sys.stdout.write(f"\x1b[{start_row + current_row_offset};{start_col}H{content_str}")
+        else:
+            print(content_str)
+
+    # 3. Compile Color Elements
+    c_on = f"{hex_to_ansi(fg_color, False)}{hex_to_ansi(bg_color, True)}"
+    c_off = "\x1b[0m" if c_on else ""
+
+    # 4. Map Glyph Line Sets
+    GLYPHS = {
+        1: {"TL": "┌", "TR": "┐", "BL": "└", "BR": "┘", "HZ": "─", "VT": "│", "DIV": "├"},
+        2: {"TL": "╔", "TR": "╗", "BL": "╚", "BR": "╝", "HZ": "═", "VT": "║", "DIV": "╠"},
+        3: {"TL": "▄", "TR": "▄", "BL": "█", "BR": "█", "HZ": "▄", "VT": "█", "DIV": "╠"}
+    }
+    accent_id  = box_style_mask & 7        
+    inside_id  = (box_style_mask & 48) >> 4  
+    outside_id = (box_style_mask & 384) >> 7 
+
+    g_out = GLYPHS.get(outside_id if outside_id in GLYPHS else (accent_id if accent_id in GLYPHS else 1))
+    g_in  = GLYPHS.get(inside_id if inside_id in GLYPHS else (accent_id if accent_id in GLYPHS else 1))
+    g_acc = GLYPHS.get(accent_id if accent_id in GLYPHS else 1)
+
+    # 5. Render Top Header Line
+    left_header = f"─┤ {title_left} ├" if title_left else ""
+    right_header = f"┤ {title_right} ├─" if title_right else ""
+    available_fill = box_width - get_visual_width(left_header) - get_visual_width(right_header)
+    header_dash_line = g_out["HZ"] * max(4, available_fill)
+    
+    print_line(f"{c_on}{g_out['TL']}{left_header}{header_dash_line}{right_header}{g_out['TR']}{c_off}", 0)
+
+    # 6. Render Body Rows
+    row_idx = 1
+    for line in raw_lines_list:
+        clean_line = str(line).rstrip()
+        if clean_line.strip() == "===":
+            print_line(f"{c_on}{g_out['VT']}{g_acc['HZ'] * box_width}{g_out['VT']}{c_off}", row_idx)
+        elif clean_line.strip() == "---":
+            print_line(f"{c_on}{g_in['DIV']}{g_in['HZ'] * box_width}{g_in['DIV']}{c_off}", row_idx)
+        else:
+            current_width = get_visual_width(clean_line)
+            padding_spaces = " " * (box_width - current_width - 2)
+            print_line(f"{c_on}{g_out['VT']}{c_off} {clean_line}{padding_spaces} {c_on}{g_out['VT']}{c_off}", row_idx)
+        row_idx += 1
+
+    # 7. Render Dynamic Footer
+    f_left = f"─┤ {foot_left} ├" if foot_left else ""
+    f_mid = f"┤ {foot_middle} ├" if foot_middle else ""
+    f_right = f"┤ {foot_right} ├─" if foot_right else ""
+    rem_footer_fill = box_width - (get_visual_width(f_left) + get_visual_width(f_mid) + get_visual_width(f_right))
+
+    if rem_footer_fill < 4 or not f_mid:
+        footer_dash = g_out["HZ"] * max(4, rem_footer_fill)
+        print_line(f"{c_on}{g_out['BL']}{f_left}{footer_dash}{f_right}{g_out['BR']}{c_off}", row_idx)
+    else:
+        split_fill = rem_footer_fill // 2
+        print_line(f"{c_on}{g_out['BL']}{f_left}{g_out['HZ'] * split_fill}{f_mid}{g_out['HZ'] * (rem_footer_fill - split_fill)}{f_right}{g_out['BR']}{c_off}", row_idx)
+
+    # 8. Unfreeze Cursor and Clear Line Pipeline
+    if is_absolute_overlay:
+        sys.stdout.write("\x1b[u")
+        sys.stdout.flush()
+
+def render_better_box(raw_lines_list, title_str="Project Saver", box_width_override=0):
+    # Forward pass to the unified engine with explicit defaults
+    render_bitmask_box(raw_lines_list, title_left=title_str, box_width_override=box_width_override)
+
+def draw_fixed_menu_bar(app_version, port_num, active_module="Main Daemon"):
+# ######## 8 Lines of Code After for Navigation Context ########
+    """
+    Natively renders an isolated top system menu dashboard line bar at row 1 
+    holding network port allocations and cross-platform real-time metrics.
+    """
+    import time
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+
+#def render_better_box(raw_lines_list, title_str="Project Saver", box_width_override=0):
+#    # Forward pass to the unified engine with explicit defaults
+#    render_bitmask_box(raw_lines_list, title_left=title_str, box_width_override=box_width_override)
+
+def render_nice_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
     def get_visual_width(text_line: str) -> int:
         clean = re.sub(r'\033\[[0-9;]*m', '', str(text_line))
         width = 0
@@ -92,6 +276,119 @@ def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", bo
             padding_spaces = " " * (box_width - current_width - 2)
             print(f"│ {clean_line}{padding_spaces} │")
     print("└" + "─" * box_width + "┘")
+
+def ask_with_bitmask_countdown(prompt, confirmation_mask):
+    """
+    Enriched interactive countdown dialogue tracking inputs, timing scales, and defaults
+    driven completely by stacked ConfirmationTypes flags while preserving legacy layout widths.
+    """
+    force_window_to_foreground()
+    
+    # 1. Decode durations safely from the enum matrix flags
+    default_timeout = 5
+    if ConfirmationTypes.TIMED_5S in confirmation_mask:
+        default_timeout = 5
+    elif ConfirmationTypes.TIMED_10S in confirmation_mask:
+        default_timeout = 10
+    elif ConfirmationTypes.TIMED_15S in confirmation_mask:
+        default_timeout = 15
+
+    # 2. Extract structural default fallback options on expiration
+    default_value = False
+    if ConfirmationTypes.TIMED_ACCEPT in confirmation_mask:
+        default_value = True
+    elif ConfirmationTypes.TIMED_DENY in confirmation_mask:
+        default_value = False
+    elif ConfirmationTypes.CHOICE_DEFAULT in confirmation_mask:
+        default_value = True
+
+    # 3. Dynamically compile a multi-choice option character label list
+    allowed_choices = []
+    
+    # Yes / Accept Option Mapping
+    if ConfirmationTypes.CHOICE_YES in confirmation_mask:
+        allowed_choices.append("Y" if default_value else "y")
+    else:
+        allowed_choices.append("n") # Safety implicit 'no' option path boundary
+        
+    # Open / Use / Accept Alternative Flag Mapping
+    if ConfirmationTypes.CHOICE_OPEN in confirmation_mask:
+        allowed_choices.append("O" if default_value else "o")
+        
+    # Retry / Try Again Secondary Path Mapping
+    if ConfirmationTypes.CHOICE_RETRY in confirmation_mask:
+        allowed_choices.append("R" if default_value else "r")
+        
+    # Wait Longer Iteration Flag Mapping
+    if ConfirmationTypes.CHOICE_WAIT in confirmation_mask:
+        allowed_choices.append("W" if default_value else "w")
+        
+    # Cancel Job / Abort Command Sequence Mapping
+    if ConfirmationTypes.CHOICE_CANCEL in confirmation_mask:
+        # Cancel often targets the negative space; format case intentionally
+        allowed_choices.append("C" if not default_value else "c")
+
+    # Join gathered options cleanly into a uniform display label (e.g., [y/r/C] or [Y/o/r/c])
+    default_label = "/".join(allowed_choices)
+
+    print(f"[?] {prompt}")
+    user_responded = False
+    input_str = ""
+
+    if os.name == 'nt':  # Windows Engine
+        import msvcrt
+        os.system("")  # Initialize ANSI color tables
+        
+        start_time = time.time()
+        while True:
+            elapsed = time.time() - start_time
+            remaining = int(default_timeout - elapsed)
+            
+            if remaining <= 0:
+                break
+                
+            print(f"\r   --> {prompt} | {remaining}s | [{default_label}]: {input_str} ", end="", flush=True)
+            
+            if msvcrt.kbhit():
+                char = msvcrt.getwche()
+                if char in ('\r', '\n'):
+                    user_responded = True
+                    break
+                elif char == '\b':  # Handle Backspace deletions cleanly
+                    input_str = input_str[:-1]
+                    print(f"\r   --> {prompt} | {remaining}s | [{default_label}]: {input_str} \x1b[K", end="", flush=True)
+                else:
+                    input_str += char
+                    
+            time.sleep(0.1)
+        print()
+
+    else:  # macOS / Linux Engine
+        import select
+        for remaining in range(default_timeout, 0, -1):
+            print(f"\r   --> {prompt} | {remaining}s | [{default_label}]: {input_str} ", end="", flush=True)
+            ready, _, _ = select.select([sys.stdin], [], [], 1.0)
+            if ready:
+                input_str = sys.stdin.readline().strip().lower()
+                user_responded = True
+                break
+
+    # Cleanly remove the countdown visual artifacts from your active console frame memory lines
+    sys.stdout.write("\x1b[1A\x1b[2K\x1b[1A\x1b[2K")
+    sys.stdout.flush()
+
+    if not user_responded:
+        return "DEFAULT_TIMEOUT_TRIGGERED"
+    else:
+        cleaned_input = input_str.strip().lower()
+        if cleaned_input in ['y', 'yes']: return "YES"
+        if cleaned_input in ['n', 'no']: return "NO"
+        if cleaned_input in ['r', 'retry']: return "RETRY"
+        if cleaned_input in ['c', 'cancel']: return "CANCEL"
+        if cleaned_input in ['o', 'open']: return "OPEN"
+        if cleaned_input in ['w', 'wait']: return "WAIT"
+        return "INVALID_SELECTION_FALLBACK"
+
 
 def format_human_readable_bytes(num_bytes: int) -> str:
     """
