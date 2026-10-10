@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.32",
+        "version": "v0.0.34",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -30,16 +30,15 @@ MODULE_MANIFEST = {
             "menu_shortcut": "c",
             "display_menu": "   [C] Cancel:",
             "display_desc": "Aborts any currently active scheduled countdowns.",
-            "mask_bits": 3,
-            "main_menu": False     # Hides this individual sub-command from cluttering the master root menu!
+            "mask_bits": 13
         },
         {
             "callback_key": "timed_shutdown",
             "menu_shortcut": "t",
             "display_menu": "   [T] Timed:",
             "display_desc": "Schedules machine shutdown sequence in minutes.",
-            "mask_bits": 5,        # Bit 1 (Title) + Bit 4 (Live Value)
-            "main_menu": False     # Keeps this option internal to the local power panel!
+            "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
+
         },
         {
             "callback_key": "instant_shutdown",
@@ -47,14 +46,15 @@ MODULE_MANIFEST = {
             "menu_toggles": 3,
             "display_menu": "   [S] Shutdown Now:",
             "display_desc": "Triggers instant system power-down routine.",
-            "mask_bits": 5,        # Bit 1 (Title) + Bit 4 (Live value tracking progress counts)
-            "main_menu": False     # Isolated strictly inside the sub-menu environment!
+            "mask_bits": 5        # Bit 1 (Title) + Bit 4 (Live value tracking progress counts)
         }
     ],
     "defaults": {
+        "timed_shutdown": "5 minutes",
+        "instant_shutdown": "Requires 3 presses.",        
         "default_timer_minutes": "5",
         "safety_trigger_count": "3",
-        "safety_trigger_shortcut": "s",
+        "safety_trigger_shortcut": "s"
     }
 }
 
