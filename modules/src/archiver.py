@@ -16,7 +16,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "a",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.26",
+        "version": "v0.0.30",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -62,8 +62,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     Fired instantly when the user hits 'M' -> selects 'archiver',
     or strikes the direct shortcut hotkey 'A' inside the master dashboard view.
     """
-    import project_saver_config
-    import project_saver_ui
     import subprocess
     
     cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
@@ -91,9 +89,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         ]
 
         # 3. Render via your native box utility layout engine
-        project_saver_ui.render_better_box(
+        import project_saver_x
+        project_saver_x.render_better_box(
             archiver_panel, 
-            title_str=f"Website Archiver", 
+            title_str="Website Archiver", 
             box_width_override=74
         )
 
