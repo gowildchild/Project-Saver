@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.81-mama"
+VERSION = "v0.0.81-nike"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -210,7 +210,10 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                             except: pass
                     try:
                         os.system('cls' if os.name == 'nt' else 'clear')
-                        manager_version = manager_mod.get("mock", {}).get("MODULE_MANIFEST", {}).get("meta", {}).get("version", "v0.0.1")
+                        manager_version = "v0.0.1"
+                        mock_class_ref = manager_mod.get("mock")
+                        if mock_class_ref and hasattr(mock_class_ref, "MODULE_MANIFEST"):
+                            manager_version = mock_class_ref.MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
                         print(f"[*] MODULE LOAD: MANAGER {manager_version}")
                         proc_result = subprocess.run(
                             [manager_mod["path"]], 
@@ -249,7 +252,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 routed = project_saver_modules.route_interactive_shortcut(user_triggered_key, cli_dict, VERSION, PORT)
                 if not routed:
                     project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
-			
+
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
                 update_press_counter = 0
