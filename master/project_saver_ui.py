@@ -83,7 +83,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         startup_log.append(f"   [M]odules Panel:     Open dynamic pluggable extension and package manager dashboard.")
 
-	startup_log.extend([
+    startup_log.extend([
         update_menu_string,
         f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
     ])
