@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.81-foxtrot"
+VERSION = "v0.0.81-golf"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -146,18 +146,21 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key == 'u':
+				update_press_counter += 1
                 config_newest = project_saver_config.SYSTEM_CONFIG.get("update_version_newest")
                 
                 if config_newest and config_newest != VERSION:
-                    print(f"\n[*] Update Triggered: Discovered pending release [{config_newest}] inside config file.")
-                    print("[*] Initializing secure automated binary system upgrade sequence...")
-                    check_and_perform_update(
-                        VERSION, REPO_OWNER, REPO_NAME,
-                        mode_override=4
-                    )
-                    os._exit(0)
+                  if update_press_counter == 1:
+                        latest_discovered_version = config_newest
+                        print(f"\n[*] Discovered new release [{config_newest}].")
+                    elif update_press_counter >= 2:
+                        print(f"\n[*] Upgrading to [{config_newest}] ...")
+                        check_and_perform_update(
+                            VERSION, REPO_OWNER, REPO_NAME,
+                            mode_override=4
+                        )
+                        os._exit(0)
                 else:
-                    update_press_counter += 1
                     if update_press_counter == 1:
                         latest_discovered_version = check_and_perform_update(
                             VERSION, REPO_OWNER, REPO_NAME,
@@ -166,14 +169,13 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                         if not latest_discovered_version or latest_discovered_version == VERSION:
                             update_press_counter = 0
                     elif update_press_counter >= 2:
-                        print("\n[*] Manual Update Started: Initializing secure system upgrade sequence...")
+                        print("\n[*] Manual Update Started...")
                         check_and_perform_update(
                             VERSION, REPO_OWNER, REPO_NAME,
                             mode_override=4
                         )
                         os._exit(0)
-                    continue
-
+                continue
 
             elif user_triggered_key == 'q':
                 quit_press_counter += 1
