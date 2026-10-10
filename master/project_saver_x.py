@@ -769,6 +769,37 @@ def get_native_setting(module_name, key, default_value=""):
         pass
     return default_value
 
+def set_native_setting(module_name: str, key: str, value: str):
+    """
+    Natively writes configuration parameters directly to project_saver.cfg on disk.
+    Allows pluggable binary modules to persist settings completely independently 
+    without importing core daemon configuration frameworks.
+    """
+    import os
+    import sys
+    import configparser
+    try:
+        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        if base_path.lower().endswith("modules"):
+            base_path = os.path.dirname(base_path)
+            
+        cfg_path = os.path.join(base_path, "project_saver.cfg")
+        config = configparser.ConfigParser()
+        
+        if os.path.exists(cfg_path):
+            config.read(cfg_path, encoding="utf-8")
+            
+        section = module_name.lower()
+        if not config.has_section(section):
+            config.add_section(section)
+            
+        config.set(section, key.lower(), str(value))
+        
+        with open(cfg_path, "w", encoding="utf-8") as f:
+            config.write(f)
+    except:
+        pass
+
 def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val_callback, handle_key_callback, box_title="Pluggable Extension"):
     """
     Centralized orchestration loop engine that handles terminal clearing, builds dynamic 
