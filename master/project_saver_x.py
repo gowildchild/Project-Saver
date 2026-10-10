@@ -65,3 +65,86 @@ def get_native_setting(module_name, key, default_value=""):
     except:
         pass
     return default_value
+
+def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val_callback, handle_key_callback, box_title="Pluggable Extension"):
+    """
+    Centralized orchestration loop engine that handles terminal clearing, builds dynamic 
+    panel contents via display_multi registries, captures inputs, and triggers callbacks.
+    """
+    import time
+    import sys
+    import module_library
+    
+    # Isolate parent bootstrap framework overrides if present
+    import module_library
+    cli_dict, _, _ = module_library.bootstrap_session(cli_dict, "v0.0.1", 19763)
+    
+    status_message = "Awaiting input command option..."
+    
+    while True:
+        # 1. Clear terminal screen platform-natively using your shared tracking routine
+        module_library.clear_screen_with_trace(manifest, caller_file)
+
+        # 2. Build the structural layout context arrays dynamically
+        panel_content = [
+            f"   Active Module Name:  {manifest['display_name']}",
+            "---",
+        ]
+
+        # 3. Dynamic row mapping driven entirely by your display_multi metadata rules
+        for option in manifest.get("display_multi", []):
+            bits = int(option.get("mask_bits", 0))
+            if not bits:
+                continue
+                
+            show_title = bool(bits & 1)
+            show_desc  = bool(bits & 2)
+            show_value = bool(bits & 4)
+            
+            display_m = option.get("display_menu", "")
+            display_d = option.get("display_desc", "")
+            
+            live_val = ""
+            if show_value and get_live_val_callback:
+                live_val = get_live_val_callback(option.get("callback_key", ""), cli_dict)
+
+            if show_value and live_val:
+                description_content = f"{display_d} -> ({live_val})"
+            else:
+                description_content = display_d
+
+            if show_title and show_desc:
+                panel_content.append(f"   {display_m:<21}{description_content}")
+            elif show_title:
+                panel_content.append(f"   {display_m}")
+            elif show_desc:
+                panel_content.append(f"   {description_content}")
+
+        panel_content.append("---")
+        panel_content.append(f"   Status Indicator:    {status_message}")
+        panel_content.append("---")
+        panel_content.append("   [-] Return to Main Menu...")
+
+        # 4. Render the gathered panels using your audited visual width calculation engine
+        render_better_box(panel_content, title_str=box_title, box_width_override=74)
+
+        # 5. Non-blocking keyboard hardware state monitoring
+        sys.stdout.write(f"\x1b[2K\r[{manifest['name'].capitalize()}] Ready for key: ")
+        sys.stdout.flush()
+
+        user_input = module_library.get_keystroke()
+        if user_input == "":
+            time.sleep(0.05)
+            continue        
+        
+        # Core parent exit breakout row condition check
+        if user_input == '-':
+            break
+
+        # 6. Hand off key captures directly to the module interior handler to execute routines
+        if handle_key_callback:
+            status_message = handle_key_callback(user_input, cli_dict, manifest)
+            if status_message == "BREAK_LOOP":
+                break
+
+        time.sleep(0.05)
