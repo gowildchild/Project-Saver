@@ -7,6 +7,8 @@ import sys
 import re
 import configparser
 
+status_prompt  = "Awaiting Input..."
+
 def print_startup_banner(version_str):
     """
     Natively renders a stylized high-visibility ASCII art title banner budgeted 
@@ -103,7 +105,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
     cli_dict, _, _ = module_library.bootstrap_session(cli_dict, "v0.0.1", 19763)
     
     status_message = "Awaiting Input..."
-    status_prompt  = "Awaiting Input..."
+    
     
     while True:
         # 1. Clear terminal screen platform-natively using your shared tracking routine
