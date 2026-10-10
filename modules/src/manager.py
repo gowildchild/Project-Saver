@@ -18,7 +18,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.21",
+        "version": "v0.0.22",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -252,3 +252,5 @@ if __name__ == "__main__":
     run_version = MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
     project_saver_modules.bootstrap_and_discover_modules(fallback_cli, run_version, 19763)
     execute_interactive_menu(fallback_cli, run_version, 19763)
+    except ModuleNotFoundError:
+        pass
