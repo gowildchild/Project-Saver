@@ -160,6 +160,16 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             continue        
         
         if user_input in ['-', ' ', '\r', '\n', 'enter']:
+            if os.name == 'nt':
+                import msvcrt
+                while msvcrt.kbhit():
+                    try: msvcrt.getch()
+                    except: pass
+            else:
+                import sys
+                import select
+                while select.select([sys.stdin], [], [], 0.0)[0]:
+                    sys.stdin.readline()
             break
 
         # 6. Hand off key captures directly to the module interior handler to execute routines
