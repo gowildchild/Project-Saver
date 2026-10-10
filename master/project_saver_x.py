@@ -27,7 +27,7 @@ def print_startup_banner(version_str):
     print("\n" + "═" * 94)
     for line in banner:
         print(line)
-    print(" " & 40 + f"\nProject Saver {version_str}")
+    print(" " * 40 + f"\nProject Saver {version_str}")
     print("═" * 94 + "\n")
 
 def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
