@@ -4,13 +4,11 @@ on:
   push:
     branches:
       - modules
-      - modules-distribution
     paths:
       - 'modules/**'
   pull_request:
     branches:
       - modules
-      - modules-distribution
     paths:
       - 'modules/**'
 
@@ -73,13 +71,15 @@ jobs:
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest().lower()
 
-        source_dir = os.path.join("modules", "src")
-        output_dir = "modules"
-        scratch_dir = "scratch_compile_win"
-        build_dir = "build_modules_win"
+        workspace_root = os.environ.get("GITHUB_WORKSPACE", os.getcwd())
+        source_dir = os.path.join(workspace_root, "modules", "src")
+        output_dir = os.path.join(workspace_root, "modules")
+        scratch_dir = os.path.join(workspace_root, "scratch_compile_win")
+        build_dir = os.path.join(workspace_root, "build_modules_win")
 
         os.makedirs(scratch_dir, exist_ok=True)
         os.makedirs(build_dir, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
 
         if source_dir not in sys.path:
             sys.path.insert(0, source_dir)
@@ -248,10 +248,11 @@ jobs:
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest().lower()
 
-        source_dir = os.path.join("modules", "src")
-        linux_out_dir = "modules_linux_dist"
-        scratch_dir = "scratch_compile_linux"
-        build_dir = "build_modules_linux"
+        workspace_root = os.environ.get("GITHUB_WORKSPACE", os.getcwd())
+        source_dir = os.path.join(workspace_root, "modules", "src")
+        linux_out_dir = os.path.join(workspace_root, "modules_linux_dist")
+        scratch_dir = os.path.join(workspace_root, "scratch_compile_linux")
+        build_dir = os.path.join(workspace_root, "build_modules_linux")
 
         os.makedirs(linux_out_dir, exist_ok=True)
         os.makedirs(scratch_dir, exist_ok=True)
