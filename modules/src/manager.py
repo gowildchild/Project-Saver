@@ -99,7 +99,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 
                 if is_script or is_binary:
                     mod_name, _ = os.path.splitext(file_entry)
-                    if mod_name.lower() not in installed_extensions and not in["unins000"]:
+                    if mod_name.lower() not in installed_extensions: #  and not in["unins000"]:
                         installed_extensions.append(mod_name.lower())
 
         memory_breakdown_lines = []
