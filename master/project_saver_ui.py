@@ -106,7 +106,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     if not live_val:
                         live_val = fallback_val
 
-					if show_value_main and live_val:
+                    if show_value_main and live_val:
                         parenthesis_part = f" ({fallback_val})" if fallback_val and live_val != fallback_val else ""
                         description_content = f"{live_val}{parenthesis_part}"
                     else:
