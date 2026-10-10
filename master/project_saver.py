@@ -275,6 +275,7 @@ if __name__ == "__main__":
 	
     import project_saver_x
     project_saver_x.print_startup_banner(VERSION)
+	time.sleep(1.5)
 
     parser = argparse.ArgumentParser(
         description="Project Saver Server.",
