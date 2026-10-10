@@ -19,7 +19,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.31",
+        "version": "v0.0.32",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -99,6 +99,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 
                 if is_script or is_binary:
                     mod_name, _ = os.path.splitext(file_entry)
+                    if mod_name.lower().startswith("unins00"):
+                        continue
                     if mod_name.lower() not in installed_extensions: #  and not in["unins000"]:
                         installed_extensions.append(mod_name.lower())
 
@@ -116,21 +118,29 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 else:
                     mod_size = sys.getsizeof(str(mod_ref))
                 total_allocated_bytes += mod_size
-                memory_breakdown_lines.append(f"   -> [{name.upper()}] Disk Weight: {mod_size} bytes")
+                
+                label_str = f" [{name.upper()}] Disk Use:"
+                import project_saver_x
+                readable_size = project_saver_x.format_human_readable_bytes(mod_size)
+                memory_breakdown_lines.append(f" {label_str:<22}{readable_size}")
             else:
                 mod_size = sys.getsizeof(mod_ref)
                 total_allocated_bytes += mod_size
-                memory_breakdown_lines.append(f"   -> [{name.upper()}] RAM Weight: {mod_size} bytes")
+                label_str = f" [{name.upper()}] RAM Use:"
+                import project_saver_x
+                readable_size = project_saver_x.format_human_readable_bytes(mod_size)
+                memory_breakdown_lines.append(f" {label_str:<22}{readable_size}")
 
-        
+        import project_saver_x
+        readable_total = project_saver_x.format_human_readable_bytes(total_allocated_bytes)        
         manager_panel = [
-            f" Module Name:          {MODULE_MANIFEST['display_name']} {status_message}",
+            f" Module Name:          {MODULE_MANIFEST['display_name']}",
             f" Repository:           https://github.com/{target_repo}",
             f" Branch:               {target_branch.upper()}",
             "---",
             f" Installed:            {', '.join(sorted(installed_extensions)) if installed_extensions else '(No external extensions found)'}",
             "---",
-            f" Cache Memory:         {total_allocated_bytes} bytes"
+            f" Cache Use:            readable_total}"
         ]
 
         manager_panel.extend(memory_breakdown_lines)
