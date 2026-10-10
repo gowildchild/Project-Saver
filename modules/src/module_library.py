@@ -60,9 +60,12 @@ def clear_screen_with_trace(manifest):
     import os
     import sys
     os.system('cls' if os.name == 'nt' else 'clear')
-    
+    if getattr(sys, 'frozen', False):
+        current_path = sys.executable
+    else:
+        current_path = execution_context_file
     current_path = sys.executable if getattr(sys, 'frozen', False) else __file__
-    print(f"[MODULE]: {manifest.get('display_name')} ({manifest.get('meta', {}).get('version', 'v0.0.1')}) by {manifest.get('meta', {}).get('author', 'Unknown')}")
+    print(f"[MODULE]: {manifest.get('display_name', 'Unknown')} ({meta_dict.get('version', 'v0.0.1')}) by {meta_dict.get('author', 'Gunther Voet')}")
     print(f"[PATH]: {os.path.abspath(current_path)}\n")
 
 def get_setting(module_name, key, default_value=""):
