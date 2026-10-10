@@ -14,14 +14,16 @@ import module_library
 MODULE_MANIFEST = {
     "name": "manager",
     "display_name": "Module Manager",
-    "display_menu": "[M]odules Manager",
+    "display_menu": "[M]odules Panel",
+    "display_desc": "Open dynamic modules manager dashboard",
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.30",
+        "version": "v0.0.31",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
-        "available": True          # Sets availability for cloud installation/use
+        "available": True,         # Sets availability for cloud installation/use
+        "menu": 3                  # 0 or nothing = no menu, 1 = only display_menu, 2 = only display_desc, 3 = display_menu + display_desc
     },
     "autostart": False,            # Loaded manually via hotkey actions
     "defaults": {
@@ -97,7 +99,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 
                 if is_script or is_binary:
                     mod_name, _ = os.path.splitext(file_entry)
-                    if mod_name.lower() not in installed_extensions:
+                    if mod_name.lower() not in installed_extensions and not in["unins000"]:
                         installed_extensions.append(mod_name.lower())
 
         memory_breakdown_lines = []
@@ -122,27 +124,23 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         
         manager_panel = [
-            f" Active Module Name:  {MODULE_MANIFEST['display_name']}",
-            f" Target Repository :  https://github.com/{target_repo}",
-            f" Distribution Branch:  {target_branch.upper()}",
+            f" Module Name:          {MODULE_MANIFEST['display_name']} {status_message}",
+            f" Repository:           https://github.com/{target_repo}",
+            f" Branch:               {target_branch.upper()}",
             "---",
-            "📦 INSTALLED LOCAL MODULES:",
-            f"   {', '.join(sorted(installed_extensions)) if installed_extensions else '(No external extensions found)'}",
+            f" Installed:            {', '.join(sorted(installed_extensions)) if installed_extensions else '(No external extensions found)'}",
             "---",
-            "🧠 LIVE MEMORY METRICS:",
-            f"   Total Loaded Cache Size: {total_allocated_bytes} bytes"
+            f" Cache Memory:         {total_allocated_bytes} bytes"
         ]
 
         manager_panel.extend(memory_breakdown_lines)
 
         manager_panel.extend([
             "---",
-            "🛠 MODULE MANAGER:",
+            " MODULE MANAGER:",
             "   [I] Install    - Stream-download a fresh pluggable module from GitHub.",
             "   [U] Uninstall  - Erase a module extension file and unload its variables.",
             "   [C] Configure  - Modify operational parameter values inside project_saver.cfg.",
-            "---",
-            f" Status Indicator:    {status_message}",
             "---",
             " [-] Press [Minus Key] to drop back out to Main Menu..."
         ])
