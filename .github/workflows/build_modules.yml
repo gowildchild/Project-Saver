@@ -390,6 +390,18 @@ jobs:
         print("[+] SUCCESS: Unified modules manifest.json created.")
         EOF
 
+    - name: Commit Unified Release Manifest to Repository
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+        
+        mkdir -p modules
+        cp release_files/manifest.json modules/manifest.json        
+        git add modules/manifest.json
+        git commit --author="Automated Builder <actions@github.com>" -m "Synchronized cryptographic SHA-256 manifest [skip ci]" || exit 0
+        git push origin modules
+
     - name: Create Official GitHub Release
       uses: ncipollo/release-action@v1
       with:
