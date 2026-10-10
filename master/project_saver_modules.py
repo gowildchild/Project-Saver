@@ -247,10 +247,9 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
         # We allow adding or updating configuration attributes safely
         project_saver_config.SYSTEM_CONFIG[full_lookup_key] = str(new_val)
         print(f"🟢 SUCCESS: Config state mapped -> {full_lookup_key} = {new_val}")
-        
-        # * [FIXED] PASSED RAW NAMESPACE OBJECT AND CORRECTED THE INTERNAL VERSION KEYWORD STRINGS
-        # * Note: Ensure your parent file calls this with CLI_ARGS matching your master project_saver.py variable scope
-        project_saver_config.save_config_file("project_saver.cfg", CLI_ARGS, current_version=app_version)
+        main_module_ref = sys.modules.get('__main__')
+        parent_args = getattr(main_module_ref, 'CLI_ARGS', None) or cli_dict
+        project_saver_config.save_config_file("project_saver.cfg", parent_args, current_version=app_version)
 
     elif action == "update":
         print("[*] Re-indexing framework update sequence arrays...")
@@ -270,7 +269,9 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
                 try:
                     os.system('cls' if os.name == 'nt' else 'clear')
                     print(f"[*] Sub-process offload: Executing standalone binary -> {target_name.upper()}")
-                    subprocess.run([module_object["path"]], check=True)
+                    main_module_ref = sys.modules.get('__main__')
+                    active_profile = getattr(main_module_ref, 'active_cfg_profile', 'project_saver.cfg')
+                    subprocess.run([module_object["path"], "--config", active_profile], check=True)
                 except Exception as bin_err:
                     print(f"\n[-] Standalone extension binary engine execution crashed: {bin_err}")
                     time.sleep(2)
