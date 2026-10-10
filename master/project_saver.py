@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.82-julliet"
+VERSION = "v0.0.82-kilo"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -205,49 +205,14 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
             elif user_triggered_key == 'm':
                 manager_mod = project_saver_modules.ACTIVE_MODULES.get("manager")
-                if isinstance(manager_mod, dict) and manager_mod.get("type") == "binary":
-                    import subprocess
-                    if os.name == 'nt':
-                        import msvcrt
-                        while msvcrt.kbhit():
-                            try: msvcrt.getch()
-                            except: pass
+                if manager_mod and hasattr(manager_mod, "execute_interactive_menu"):
+                    print("\n[*] Initializing Pluggable Package Manager sub-workspace panel...")
+                    time.sleep(0.3)
                     try:
-                        os.system('cls' if os.name == 'nt' else 'clear')
-                        manager_version = "v0.0.1"
-                        manifest_data = manager_mod.get("MODULE_MANIFEST", {})
-                        manager_version = manifest_data.get("meta", {}).get("version", "v0.0.1")
-                        print(f"[*] MODULE LOAD: MANAGER {manager_version}")
-                        proc_result = subprocess.run(
-                            [manager_mod["path"], "config", active_cfg_profile],
-                            stdout=None,
-                            stderr=subprocess.PIPE,
-                            text=True,
-                            env=os.environ
-                        )
-                        if proc_result.stderr:
-                            os.system('cls' if os.name == 'nt' else 'clear')
-                            print("CRITICAL CRASH IN SUBPROCESS")
-                            print("==================================================")
-                            print(f"[-] Execution Target: {manager_mod['path']}")
-                            print("[-] Raw Windows Console Error Log:")
-                            print(proc_result.stderr)
-                            print("==================================================")
-                            input("\n[!] Press [Enter] to drop back to Master Dashboard...")
-                    except Exception as bin_err:
-                        print(f"\n[-] Standalone extension binary engine execution crashed: {bin_err}")
-                        time.sleep(3)
-                
-                elif isinstance(manager_mod, dict) and manager_mod.get("type") == "script":
-                    mod_inst = manager_mod.get("instance")
-                    if mod_inst and hasattr(mod_inst, "execute_interactive_menu"):
-                        print("\n[*] Initializing Pluggable Package Manager sub-workspace panel...")
-                        time.sleep(0.3)
-                        try:
-                            mod_inst.execute_interactive_menu(cli_dict, VERSION, PORT)
-                        except Exception as err:
-                            print(f"\n[-] Execution failed inside package manager framework: {err}")
-                            time.sleep(2)
+                        manager_mod.execute_interactive_menu(cli_dict, VERSION, PORT)
+                    except Exception as err:
+                        print(f"\n[-] Execution failed inside package manager framework: {err}")
+                        time.sleep(2)
                 else:
                     print("\n⚠️ WARNING: Manager module extension asset not found or disabled.")
                     time.sleep(1.5)
