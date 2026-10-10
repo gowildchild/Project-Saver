@@ -61,8 +61,10 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
 
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
-            manifest = mod_ref.get("MODULE_MANIFEST", {}) if isinstance(mod_ref, dict) else {}
+            mod_obj = mod_ref["mock"] if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" else mod_ref
+            manifest = getattr(mod_obj, "MODULE_MANIFEST", {})
             
+            # CASE 1: Process Advanced Multi-Menu Configurations (e.g., archiver.py)
             if "display_multi" in manifest:
                 for option in manifest.get("display_multi", []):
                     bits = int(option.get("mask_bits", 0))
@@ -72,6 +74,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     if not bool(bits & 8):
                         continue
                         
+                    # Extract active toggles using pure bitwise AND operators
                     show_title_main = bool(bits & 1)
                     show_desc_main  = bool(bits & 2)
                     show_value_main = bool(bits & 4)
@@ -81,30 +84,28 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                         
                     display_m = option.get("display_menu", "")
                     display_d = option.get("display_desc", "")
-
+                    
+                    # Safely look up local module default definitions fallback
                     defaults_dict = manifest.get("defaults", {})
                     call_id = option.get("callback_key", "")
                     fallback_val = defaults_dict.get(call_id, "")
                     
                     live_val = ""
-                    if show_value_main and isinstance(mod_ref, dict):
-                        if mod_ref.get("type") == "script":
-                            mod_inst = mod_ref.get("instance")
-                            if mod_inst and hasattr(mod_inst, "get_live_display_value"):
-                                try: live_val = mod_inst.get_live_display_value(call_id, cli_dict)
-                                except: pass
-                        elif mod_ref.get("type") == "binary":
+                    if show_value_main and hasattr(mod_obj, "get_live_display_value"):
+                        try:
+                            live_val = mod_obj.get_live_display_value(call_id, cli_dict)
+                        except:
                             pass
-
                     if not live_val:
                         live_val = fallback_val
 
+                    # Compile display layout based on active value presence
                     if show_value_main and live_val:
                         parenthesis_part = f" ({fallback_val})" if fallback_val and live_val != fallback_val else ""
                         description_content = f"{live_val}{parenthesis_part}"
                     else:
                         description_content = display_d
-					
+
                     if show_title_main and show_desc_main:
                         startup_log.append(f"   {display_m:<24}{description_content}")
                     elif show_title_main:
@@ -113,13 +114,8 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                         startup_log.append(f"   {description_content}")
                 continue
             
-            # CASE 2: Process Clean Backward-Compatible Single Menu Structures
-            manifest = mod_ref.get("MODULE_MANIFEST", {}) if isinstance(mod_ref, dict) else {}
-            meta_menu = 0
-            meta_block = manifest.get("meta")
-            if isinstance(meta_block, dict):
-                meta_menu = int(meta_block.get("menu", 0))
-                
+            # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, menu, custom, debug)
+            meta_menu = int(manifest.get("meta", {}).get("menu", 0))
             if not meta_menu:
                 continue
                 
@@ -131,7 +127,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
             show_desc = bool(meta_menu & 2)
             
             if show_title and show_desc:
-                startup_log.append(f"   {display_m:<24}  {display_d}")
+                startup_log.append(f"   {display_m:<24}{display_d}")
             elif show_title:
                 startup_log.append(f"   {display_m}")
             elif show_desc:
