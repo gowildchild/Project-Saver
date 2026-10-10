@@ -16,7 +16,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "a",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.21",
+        "version": "v0.0.26",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -64,10 +64,12 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     """
     import project_saver_config
     import project_saver_ui
+    import subprocess
+    
     cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
     while True:
         # 1. Clear terminal screen platform-natively
-        os.system('cls' if os.name == 'nt' else 'clear')
+        module_library.clear_screen_with_trace(MODULE_MANIFEST)
 
         # 2. Build the sandboxed dashboard view exposing core options wrapped inside the module
         archiver_panel = [
@@ -108,7 +110,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         if user_input == '-':
             break
 
-        elif user_input in ['p', 'f', 'e', 'i', 'r']:
+        elif user_input in ['p', 'f', 'i', 'r']:
             print(f"\n[*] Forwarding hotkey '{user_input.upper()}' upstream to parent monitor engine context...")
             time.sleep(0.2)
             
@@ -126,10 +128,34 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 except Exception as route_err:
                     print(f"[-] Upstream key injection routing failed: {route_err}")
                     time.sleep(1.5)
-
+        elif user_input == 'e':
+            export_path = os.path.abspath(cli_dict.get('export_folder') or "")
+            print(f"\n[E] Export folder opened: {export_path}")
+            if not os.path.exists(export_path):
+                os.makedirs(export_path, exist_ok=True)
+            if os.name == 'nt': subprocess.Popen(f'explorer.exe "{export_path}"')
+            elif sys.platform == 'darwin': subprocess.Popen(['open', export_path])
+            else: subprocess.Popen(['xdg-open', export_path])
+            time.sleep(1.2)
+        
         time.sleep(0.05)
         
 if __name__ == "__main__":
     import sys
-    print(f"\n[+] Project Saver Extension.")
+    print("\n[+] Project Saver Extension.")
+    
+    try:
+        import project_saver_config
+        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        cfg_profile = os.path.join(base_path, "project_saver.cfg")
+        if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
+            cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
+            
+        if os.path.exists(cfg_profile):
+            project_saver_config.load_config_file(cfg_profile)
+    except:
+        pass
+
+    fallback_cli = {"export_folder": "", "export_format": "markdown", "export_type": "auto"}
+    execute_interactive_menu(cli_dict=fallback_cli, app_version="v0.0.1", port_num=19763)
     sys.exit(0)
