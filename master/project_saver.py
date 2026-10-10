@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.81-kilo"
+VERSION = "v0.0.81-lima"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -210,7 +210,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                             except: pass
                     try:
                         os.system('cls' if os.name == 'nt' else 'clear')
-                        print(f"[*] Sub-process offload: Executing standalone binary -> MANAGER")
+                        manager_version = manager_mod.get("mock", {}).get("MODULE_MANIFEST", {}).get("meta", {}).get("version", "v0.0.1")
+                        print(f"[*] MODULE LOAD: MANAGER {manager_version}")
                         proc_result = subprocess.run(
                             [manager_mod["path"]], 
                             stdout=None, 
