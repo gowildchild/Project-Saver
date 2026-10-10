@@ -114,6 +114,44 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
                 project_saver_config.save_config_file("project_saver.cfg", c_dict)
                 return f"🟢 SAVED: Updated setting to -> '{new_val}'!"
             return "⚠️ WARNING: Value empty. Skip save pass."
+        elif key == 'e':
+            # 1. EXPORT PROFILE MODULE MANIFEST TO LOCAL DISK STORAGE
+            try:
+                import json
+                export_dir = os.path.abspath(c_dict.get('export_folder') or "")
+                if not os.path.exists(export_dir):
+                    os.makedirs(export_dir, exist_ok=True)
+                
+                backup_filename = f"manifest_backup_{mf.get('name', 'custom')}.json"
+                backup_path = os.path.join(export_dir, backup_filename)
+                
+                with open(backup_path, "w", encoding="utf-8") as bf:
+                    json.dump(mf, bf, indent=4)
+                return f"🟢 EXPORTED: Manifest saved to {backup_filename}!"
+            except Exception as err:
+                return f"🔴 ERROR: Export profile failed -> {err}"
+
+        elif key == 'i':
+            # 2. IMPORT PROFILE MODULE MANIFEST FROM LOCAL DISK STORAGE
+            try:
+                import json
+                export_dir = os.path.abspath(c_dict.get('export_folder') or "")
+                backup_filename = f"manifest_backup_{mf.get('name', 'custom')}.json"
+                backup_path = os.path.join(export_dir, backup_filename)
+                
+                if not os.path.exists(backup_path):
+                    return f"⚠️ FAILED: Backup file not found at export destination."
+                
+                with open(backup_path, "r", encoding="utf-8") as bf:
+                    loaded_manifest = json.load(bf)
+                
+                # Update global manifest memory state dynamically on the fly
+                global MODULE_MANIFEST
+                MODULE_MANIFEST.update(loaded_manifest)
+                return f"🟢 IMPORTED: Manifest state re-indexed successfully!"
+            except Exception as err:
+                return f"🔴 ERROR: Import profile failed -> {err}"
+                
         return "Custom skeleton module active. Ready for user scripts."
 
     return project_saver_x.handle_unified_keyboard_routing(
