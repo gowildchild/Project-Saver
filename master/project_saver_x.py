@@ -199,6 +199,8 @@ def render_bitmask_box(
 
     # 6. Render Body Rows
     row_idx = 1
+    max_text_width = box_width - 4
+    
     for line in raw_lines_list:
         clean_line = str(line).rstrip()
         if clean_line.strip() == "===":
@@ -207,9 +209,15 @@ def render_bitmask_box(
             print_line(f"{c_on}{g_in['DIV']}{g_in['HZ'] * box_width}{g_in['DIV']}{c_off}", row_idx)
         else:
             current_width = get_visual_width(clean_line)
-            padding_spaces = " " * (box_width - current_width - 2)
-            print_line(f"{c_on}{g_out['VT']}{c_off} {clean_line}{padding_spaces} {c_on}{g_out['VT']}{c_off}", row_idx)
-        row_idx += 1
+            if current_width > max_text_width:
+                truncated_text = clean_line[:max_text_width - 3] + "..."
+                current_width = get_visual_width(truncated_text)
+                padding_spaces = " " * (box_width - current_width - 2)
+                print_line(f"{c_on}{g_out['VT']}{c_off} {truncated_text}{padding_spaces} {c_on}{g_out['VT']}{c_off}", row_idx)
+            else:
+                padding_spaces = " " * (box_width - current_width - 2)
+                print_line(f"{c_on}{g_out['VT']}{c_off} {clean_line}{padding_spaces} {c_on}{g_out['VT']}{c_off}", row_idx)
+        row_idx += 1            
 
     # 7. Render Dynamic Footer
     f_left = f"─┤ {foot_left} ├" if foot_left else ""
@@ -242,10 +250,70 @@ def draw_fixed_menu_bar(app_version, port_num, active_module="Main Daemon"):
     import time
     current_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
-#def render_better_box(raw_lines_list, title_str="Project Saver", box_width_override=0):
-#    # Forward pass to the unified engine with explicit defaults
-#    render_bitmask_box(raw_lines_list, title_left=title_str, box_width_override=box_width_override)
+def manage_cursor(visible: bool = None, x: int = 0, y: int = 0):
+    """
+    Unified Cross-Platform Cursor Controller.
+    Natively manages hardware cursor visibility states and absolute terminal 
+    grid (X, Y) positioning coordinates using low-level ANSI streams.
+    """
+    import sys
+    payload = ""
+    
+    # 1. Evaluate Absolute Positioning Bit Sequences (Y = Row, X = Column)
+    if y > 0 and x > 0:
+        payload += f"\x1b[{y};{x}H"
+        
+    # 2. Evaluate Visibility States
+    if visible is not None:
+        if visible:
+            payload += "\x1b[?25h"  # Show Cursor
+        else:
+            payload += "\x1b[?25l"  # Hide Cursor
+            
+    if payload:
+        sys.stdout.write(payload)
+        sys.stdout.flush()
 
+def stream_text_line(text_line: str, absolute_row: int = 0, absolute_col: int = 0, max_width_override: int = 0):
+    """
+    Decoupled text stream processing routine. Safely manages cursor state tracking,
+    applies terminal width truncation markers, and prints streaming text packets
+    at absolute coordinates without calling or refreshing the layout box matrices.
+    """
+    import sys
+    import os
+    
+    # Temporarily hide cursor to prevent distracting terminal bounces while text is moving
+    manage_cursor(visible=False)
+    
+    try:
+        term_cols, _ = os.get_terminal_size()
+    except:
+        term_cols = 80
+        
+    target_max_width = max_width_override if max_width_override > 0 else (term_cols - 4)
+    clean_line = str(text_line).rstrip()
+    
+    # Native True-Width Truncation evaluation pass
+    # (Reuses your get_visual_width checking function to safely strip ANSI colors for length math)
+    def get_visual_width(text):
+        import re
+        return len(re.sub(r'\033\[[0-9;]*m', '', str(text)))
+
+    current_width = get_visual_width(clean_line)
+    if current_width > target_max_width:
+        clean_line = clean_line[:target_max_width - 3] + "..."
+
+    # Jump to absolute coordinates if requested, otherwise print standard scrolling stream line
+    if absolute_row > 0 and absolute_col > 0:
+        sys.stdout.write(f"\x1b[{absolute_row};{absolute_col}H{clean_line}\x1b[K")
+    else:
+        sys.stdout.write(f"{clean_line}\n")
+        
+    # Instantly restore core terminal cursor controls for standard text operations
+    set_cursor_visibility(True)
+    sys.stdout.flush()
+    
 def render_nice_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
     def get_visual_width(text_line: str) -> int:
         clean = re.sub(r'\033\[[0-9;]*m', '', str(text_line))
