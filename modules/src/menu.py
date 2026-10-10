@@ -15,7 +15,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "x",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.28",
+        "version": "v0.0.29",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -36,8 +36,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     Fired instantly when the user hits 'M' -> selects 'menu',
     or strikes the direct shortcut hotkey 'X' inside the master dashboard view.
     """
-    import project_saver_ui
-    import project_saver_modules
+    #import project_saver_ui
+    #import project_saver_modules
     import json
 
     cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
