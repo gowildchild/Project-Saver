@@ -31,7 +31,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     import os
     import sys
     import project_saver_config
-	import project_saver_modules
+    import project_saver_modules
 
     os.system('cls' if os.name == 'nt' else 'clear')
 
