@@ -16,7 +16,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.26",
+        "version": "v0.0.30",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -38,9 +38,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     Fired instantly when the user hits 'M' -> selects 'shutdown', 
     or strikes the direct shortcut key 'H' inside the main menu.
     """
-    import project_saver_config
-    import project_saver_ui
-
     cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
     is_windows = os.name == 'nt'
     safety_counter = 0
@@ -75,8 +72,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             "   [-] Press [Minus Key] to drop back out to Main Menu..."
         ]
 
-        # 4. Render via your native box utility layout engine
-        project_saver_ui.render_better_box(
+        import project_saver_x
+        project_saver_x.render_better_box(
             shutdown_panel, 
             title_str="Shutdown Controller", 
             box_width_override=72
