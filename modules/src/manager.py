@@ -104,7 +104,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         left_column_lines = []
         right_column_lines = []
 
-                import project_saver_x
+        import project_saver_x
         for idx, m in enumerate(discovered_pool):
             mod_ref = active_registry.get(m)
             mod_size_str = "[ABSENT]"
