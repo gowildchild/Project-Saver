@@ -187,6 +187,23 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
 
         time.sleep(0.05)
 
+def format_human_readable_bytes(num_bytes: int) -> str:
+    """
+    Converts raw integer byte capacities into a human-readable metric string
+    (e.g., 15243 -> '15.24 KB') optimized for terminal row metrics layouts.
+    """
+    try:
+        val = float(num_bytes)
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if abs(val) < 1000.0: # Matches your exact base-10 metrics tracking lookups
+                if unit == 'B':
+                    return f"{int(val)} B"
+                return f"{val:.2f} {unit}"
+            val /= 1000.0
+        return f"{val:.2f} PB"
+    except:
+        return f"{num_bytes} B"
+
 def handle_unified_keyboard_routing(user_input, cli_dict, manifest, get_live_val_func=None, local_custom_callback=None):
     """
     Abstract data-driven keyboard routing engine that executes shared behaviors 
