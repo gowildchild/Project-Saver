@@ -146,7 +146,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key == 'u':
-				update_press_counter += 1
+                update_press_counter += 1
                 config_newest = project_saver_config.SYSTEM_CONFIG.get("update_version_newest")
                 
                 if config_newest and config_newest != VERSION:
