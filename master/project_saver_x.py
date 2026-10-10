@@ -575,9 +575,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
 
         time.sleep(0.05)
 
-
-
-ef handle_unified_keyboard_routing(user_input, cli_dict, manifest, get_live_val_func=None, local_custom_callback=None):
+def handle_unified_keyboard_routing(user_input, cli_dict, manifest, get_live_val_func=None, local_custom_callback=None):
     """
     Abstract data-driven keyboard routing engine that executes shared behaviors 
     (folder loading, upstream bubbling) based strictly on manifest action types.
