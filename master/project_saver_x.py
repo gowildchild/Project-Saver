@@ -800,6 +800,150 @@ def set_native_setting(module_name: str, key: str, value: str):
     except:
         pass
 
+def run_interactive_teletext_loop(manifest, caller_file, cli_dict, get_live_val_callback, handle_key_callback, box_title="Pluggable Extension"):
+    """
+    Centralized orchestration loop engine optimized specifically for 40x24 Teletext Grid layouts.
+    Unpacks display_profile metrics and positions multi-display fields at absolute 
+    display_xy coordinates natively while preventing screen layout bleeding.
+    """
+    import time
+    import sys
+    import module_library
+
+    cli_dict, _, _ = module_library.bootstrap_session(cli_dict, "v0.0.1", 19763)
+    status_message = "Awaiting Input..."
+    strike_counters = {}
+    
+    # Extract design tokens out of the manifest profile definitions
+    profile = manifest.get("display_profile", {})
+    box_mask = int(profile.get("box_style_mask", 1028)) # Snaps layout to 40-col Teletext Mosaic
+    
+    while True:
+        module_library.clear_screen_with_trace(manifest, caller_file)
+
+        # Initialize a fixed 20-row text cell canvas matrix for the internal screen area
+        # (40 width - 4 border/padding spaces = 36 characters of clean text width capacity)
+        canvas_grid = [" " * 36 for _ in range(20)]
+
+        # Inject Module Name Branding info at the top row of our canvas zone
+        mod_headline = f"Module: {manifest.get('display_name', 'Unknown')}"[:36]
+        canvas_grid[0] = f"{mod_headline:<36}"
+        canvas_grid[1] = "─" * 36  # Thin Teletext divider line
+
+        # Dynamic absolute coordinate overlay mapping using display_xy strings
+        for option in manifest.get("display_multi", []):
+            bits = MenuTypes(int(option.get("mask_bits", 0)))
+            if bits == MenuTypes.NONE:
+                continue
+                
+            display_m = option.get("display_menu", "").strip()
+            display_d = option.get("display_desc", "").strip()
+            shortcut = option.get("menu_shortcut", "").upper()
+            callback_key = option.get("callback_key", "")
+            
+            # Fetch real-time value logs
+            live_val = ""
+            if MenuTypes.MENU_VALUE in bits and get_live_val_callback:
+                try: live_val = get_live_val_callback(callback_key, cli_dict)
+                except: pass
+                if not live_val:
+                    live_val = manifest.get("defaults", {}).get(callback_key, "")
+
+            # Compile option text rows cleanly
+            if shortcut:
+                text_row = f"[{shortcut}] {display_m if display_m else callback_key.capitalize()}"
+            else:
+                text_row = f"{display_m if display_m else callback_key.capitalize()}"
+
+            # Extract our classic BBS coordinate tokens ("Row,Col")
+            xy_token = option.get("display_xy", "")
+            if xy_token:
+                try:
+                    y_pos, x_val = map(int, xy_token.split(","))
+                    grid_y = max(0, min(y_pos - 3, 19)) 
+                    grid_x = max(0, min(x_val - 3, 35))
+                    
+                    # Paint Option Header Text into the canvas row string slice safely
+                    orig_row = canvas_grid[grid_y]
+                    new_row = orig_row[:grid_x] + text_row + orig_row[grid_x + len(text_row):]
+                    canvas_grid[grid_y] = new_row[:36]
+                    
+                    # If live values are requested, write them directly on the row underneath
+                    if live_val and grid_y + 1 < 20:
+                        val_str = f"  -> {live_val}"
+                        orig_val_row = canvas_grid[grid_y + 1]
+                        canvas_grid[grid_y + 1] = (orig_val_row[:grid_x] + val_str + orig_val_row[grid_x + len(val_str):])[:36]
+                except:
+                    pass
+
+        # Inject Status Metrics and Return Command Routes into fixed base slots
+        canvas_grid[16] = "─" * 36
+        canvas_grid[17] = f"Status: {status_message}"[:36]
+        canvas_grid[18] = "─" * 36
+        canvas_grid[19] = "[-] Return to Main Menu..."
+
+        # Render compiled canvas grid blocks down into the master true-color mask engine
+        render_bitmask_box(
+            canvas_grid, 
+            title_left=box_title, 
+            title_right="CEEFAX", 
+            box_style_mask=box_mask,
+            box_width_override=40
+        )
+
+        sys.stdout.write(f"\x1b[2K\r[{manifest['name'].capitalize()}] Awaiting Input: ")
+        sys.stdout.flush()
+
+        user_input = module_library.get_keystroke()
+        if user_input == "":
+            time.sleep(0.05)
+            continue        
+        
+        if user_input in ['-', 'q']:
+            if os.name == 'nt':
+                import msvcrt
+                while msvcrt.kbhit():
+                    try: msvcrt.getch()
+                    except: pass
+            else:
+                import sys
+                import select
+                while select.select([sys.stdin], [], [], 0.0)[0]:
+                    sys.stdin.readline()
+            break
+
+        matched_option = None
+        for opt in manifest.get("display_multi", []):
+            if opt.get("menu_shortcut", "").lower() == str(user_input).lower():
+                matched_option = opt
+                break
+                
+        if matched_option:
+            opt_bits = MenuTypes(int(matched_option.get("mask_bits", 0)))
+            required_strikes = 0
+            if MenuTypes.STRIKE_1 in opt_bits: required_strikes = 1
+            elif MenuTypes.STRIKE_2 in opt_bits: required_strikes = 2
+            elif MenuTypes.STRIKE_3 in opt_bits: required_strikes = 3
+            
+            if required_strikes > 0:
+                current_strikes = strike_counters.get(user_input, 0) + 1
+                if current_strikes <= required_strikes:
+                    strike_counters[user_input] = current_strikes
+                    status_message = f"Strike {current_strikes}/{required_strikes + 1} Captured!"
+                    time.sleep(0.05)
+                    continue
+                else:
+                    strike_counters[user_input] = 0
+
+        if handle_key_callback:
+            callback_response = handle_key_callback(user_input, cli_dict, manifest)
+            if callback_response == "BREAK_LOOP":
+                break
+            elif callback_response:
+                status_message = callback_response
+
+        time.sleep(0.05)
+
 def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val_callback, handle_key_callback, box_title="Pluggable Extension"):
     """
     Centralized orchestration loop engine that handles terminal clearing, builds dynamic 
