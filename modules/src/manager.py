@@ -18,7 +18,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.22",
+        "version": "v0.0.26",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -86,9 +86,9 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     status_message = "Module Manager Loaded, ready for commands."
 
     while True:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        target_repo = project_saver_config.SYSTEM_CONFIG.get("manager_target_repository", "gowildchild/Project-Saver")
-        target_branch = project_saver_config.SYSTEM_CONFIG.get("manager_target_branch", "modules")
+        module_library.clear_screen_with_trace(MODULE_MANIFEST, __file__)
+        target_repo = module_library.get_setting("manager", "target_repository", "gowildchild/Project-Saver")
+        target_branch = module_library.get_setting("manager", "target_branch", "modules")
         installed_extensions = []
         if os.path.exists(modules_dir):
             for file_entry in os.listdir(modules_dir):
