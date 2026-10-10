@@ -19,7 +19,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.33",
+        "version": "v0.0.34",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -46,7 +46,7 @@ def install_module_from_cloud(module_name, github_repo):
     target_branch = module_library.get_setting("manager", "target_branch", "modules")
     
     raw_url = f"https://raw.githubusercontent.com/{github_repo}/{target_branch}/modules/{module_name.lower()}.py"
-    print(f"\n[*] Connecting to distribution repository: {raw_url}")
+    print(f"\n[*] Connecting to repository: {raw_url}")
     
     try:
         req = urllib.request.Request(raw_url, headers={'User-Agent': 'Project-Saver-Package-Manager'})
@@ -57,7 +57,7 @@ def install_module_from_cloud(module_name, github_repo):
             f.write(code_payload)
         return True
     except Exception as e:
-        print(f"🔴 FAILED: Cloud package installer routine failed to fetch module: {e}")
+        print(f"🔴 FAILED: Package installer cannot fetch module: {e}")
         time.sleep(2)
         return False
 
@@ -66,8 +66,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     Fired instantly when the user hits 'M' inside the master dashboard menu views.
     Completely isolates package installations, parameter configuration, and uninstalls.
     """
-    #import project_saver_config
-    #import project_saver_ui
 
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
     cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
@@ -85,74 +83,87 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         active_registry = module_library.load_disk_registry(modules_dir)
         if active_registry:
             using_manifest_fallback = True
-    status_message = "Module Manager Loaded, ready for commands."
+    status_message = "Ready for command..."
 
     while True:
         module_library.clear_screen_with_trace(MODULE_MANIFEST, __file__)
         target_repo = module_library.get_setting("manager", "target_repository", "gowildchild/Project-Saver")
         target_branch = module_library.get_setting("manager", "target_branch", "modules")
         installed_extensions = []
-        if os.path.exists(modules_dir):
+        if os.name == 'nt' and os.path.exists(modules_dir):
             for file_entry in os.listdir(modules_dir):
-                is_script = file_entry.endswith(".py") and file_entry != "__init__.py"
-                is_binary = file_entry.endswith(".exe") or (os.name != 'nt' and '.' not in file_entry and file_entry != "__init__.py")
-                
-                if is_script or is_binary:
-                    mod_name, _ = os.path.splitext(file_entry)
-                    if mod_name.lower().startswith("unins00"):
-                        continue
-                    if mod_name.lower() not in installed_extensions: #  and not in["unins000"]:
+                mod_name, _ = os.path.splitext(file_entry)
+                if mod_name.lower().startswith("unins00") or file_entry == "__init__.py" or file_entry == "manifest.json":
+                    continue
+                if file_entry.endswith(".py") or file_entry.endswith(".exe"):
+                    if mod_name.lower() not in installed_extensions:
                         installed_extensions.append(mod_name.lower())
 
-        memory_breakdown_lines = []
+        discovered_pool = sorted(list(set(installed_extensions + [str(k).lower() for k in active_registry.keys()])))
         total_allocated_bytes = 0
+        left_column_lines = []
+        right_column_lines = []
 
-        for name, mod_ref in active_registry.items():
-            if using_manifest_fallback:
-                target_filename = mod_ref.get("binary_filename", f"{name}.exe" if os.name == 'nt' else name)
+                import project_saver_x
+        for idx, m in enumerate(discovered_pool):
+            mod_ref = active_registry.get(m)
+            mod_size_str = "[ABSENT]"
+
+            version_str = "v0.0.0"
+            if mod_ref:
+                mod_obj = mod_ref.get("mock") if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" else mod_ref
+                version_str = getattr(mod_obj, "MODULE_MANIFEST", {}).get("meta", {}).get("version", version_str)
+                if not version_str and isinstance(mod_ref, dict):
+                    version_str = mod_ref.get("version", "v0.0.0")
+            
+            if m in installed_extensions:
+                target_filename = f"{m}.exe" if os.name == 'nt' else m
+                if mod_ref and isinstance(mod_ref, dict):
+                    target_filename = mod_ref.get("binary_filename", target_filename)
+                elif not mod_ref or not isinstance(mod_ref, dict):
+                    target_filename = f"{m}.py"
+                    
                 target_file_path = os.path.join(modules_dir, target_filename)
-                if not os.path.exists(target_file_path) and os.name == 'nt' and not target_filename.endswith(".exe"):
-                    target_file_path = os.path.join(modules_dir, f"{target_filename}.py")
                 if os.path.exists(target_file_path):
                     mod_size = os.path.getsize(target_file_path)
                 else:
-                    mod_size = sys.getsizeof(str(mod_ref))
+                    mod_size = sys.getsizeof(str(mod_ref)) if mod_ref else 0
+                    
                 total_allocated_bytes += mod_size
-                
-                label_str = f" [{name.upper()}] Disk Use:"
-                import project_saver_x
-                readable_size = project_saver_x.format_human_readable_bytes(mod_size)
-                memory_breakdown_lines.append(f" {label_str:<22}{readable_size}")
+                mod_size_str = project_saver_x.format_human_readable_bytes(mod_size)
+            
+            # Formats structural text rows cleanly: e.g., "* ARCHIVER * -> 5.12 KB"
+            status_label = f"[*{m.upper()}*]" if m in installed_extensions else f"[ {m.upper()} ]"
+            formatted_row = f"   {status_label:<14} {version_str:<8} -> {mod_size_str}"
+            # Split items evenly into two balanced dashboard layout columns
+            if idx % 2 == 0:
+                left_column_lines.append(formatted_row)
             else:
-                mod_size = sys.getsizeof(mod_ref)
-                total_allocated_bytes += mod_size
-                label_str = f" [{name.upper()}] RAM Use:"
-                import project_saver_x
-                readable_size = project_saver_x.format_human_readable_bytes(mod_size)
-                memory_breakdown_lines.append(f" {label_str:<22}{readable_size}")
+                right_column_lines.append(formatted_row)
 
-        import project_saver_x
-        readable_total = project_saver_x.format_human_readable_bytes(total_allocated_bytes)        
+        readable_total = project_saver_x.format_human_readable_bytes(total_allocated_bytes)       
         manager_panel = [
             f" Module Name:          {MODULE_MANIFEST['display_name']}",
             f" Repository:           https://github.com/{target_repo}",
             f" Branch:               {target_branch.upper()}",
-            "---",
-            f" Installed:            {', '.join(sorted(installed_extensions)) if installed_extensions else '(No external extensions found)'}",
-            "---",
-            f" Cache Use:            {readable_total}"
+            "---"
         ]
 
-        manager_panel.extend(memory_breakdown_lines)
+        for i in range(max(len(left_column_lines), len(right_column_lines))):
+            left_part = left_column_lines[i] if i < len(left_column_lines) else ""
+            right_part = right_column_lines[i] if i < len(right_column_lines) else ""
+            manager_panel.append(f"{left_part:<36}{right_part}")
 
         manager_panel.extend([
             "---",
-            " MODULE MANAGER:",
-            "   [I] Install    - Stream-download a fresh pluggable module from GitHub.",
-            "   [U] Uninstall  - Erase a module extension file and unload its variables.",
-            "   [C] Configure  - Modify operational parameter values inside project_saver.cfg.",
+            f" Total Active Footprint Cache Size:  {readable_total}",
             "---",
-            " [-] Press [Minus Key] to drop back out to Main Menu..."
+            " MODULE MANAGER OPTIONS:",
+            "   [I] Install    - Download Project Saver module through GitHub.",
+            "   [U] Uninstall  - Unload and erase module.",
+            "   [C] Configure  - Configure Module in project_saver.cfg.",
+            "---",
+            " [-] Return to Main Menu..."
         ])
 
         import project_saver_x
