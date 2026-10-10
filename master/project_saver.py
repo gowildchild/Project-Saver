@@ -224,13 +224,17 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     print("\n⚠️ WARNING: Manager module extension asset not found or disabled.")
                     time.sleep(1.5)
 
+                prompt_visible = False
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key != "":
                 routed = project_saver_modules.route_interactive_shortcut(user_triggered_key, cli_dict, VERSION, PORT)
-                prompt_visible = False
                 if routed:
+                    user_triggered_key = ""
+                    prompt_visible = False
                     project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
+                else:
+                    prompt_visible = False
 
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
