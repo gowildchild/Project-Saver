@@ -117,7 +117,6 @@ jobs:
                 cmd = [
                     "pyinstaller",
                     "--onefile",
-                    "--clean",
                     f"--distpath={scratch_dir}",
                     f"--workpath={build_dir}",
                     f"--name={module_name}",
@@ -350,14 +349,14 @@ jobs:
   publish-github-release:
     needs: [build-modules-release, compile-windows, compile-linux]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write    
     steps:
-
     - name: Checkout Modules Repository Context
       uses: actions/checkout@v4
       with:
         ref: modules
-        fetch-depth: 0
-    
+        fetch-depth: 0    
     - name: Download Compiled Windows Assets
       uses: actions/download-artifact@v4
       with:
@@ -412,7 +411,7 @@ jobs:
         export GIT_AUTHOR_EMAIL="actions@github.com"
         export GIT_COMMITTER_NAME="Automated Builder"
         export GIT_COMMITTER_EMAIL="actions@github.com"
-        git commit --author="Automated Builder <actions@github.com>" -m "Synchronized cryptographic SHA-256 manifest [skip ci]" || exit 0
+        git commit -m "Synchronized cryptographic SHA-256 manifest [skip ci]" || exit 0
         git push origin modules
 
     - name: Create Official GitHub Release
