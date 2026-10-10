@@ -106,16 +106,27 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         import project_saver_x
         for idx, m in enumerate(discovered_pool):
-            mod_ref = active_registry.get(m)
-            mod_size_str = "[ABSENT]"
+            mod_ref = None
+            for reg_key, reg_val in active_registry.items():
+                if reg_key.lower() == m:
+                    mod_ref = reg_val
+                    break
 
             version_str = "v0.0.0"
             if mod_ref:
-                mod_obj = mod_ref.get("mock") if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" else mod_ref
-                version_str = getattr(mod_obj, "MODULE_MANIFEST", {}).get("meta", {}).get("version", version_str)
+                if isinstance(mod_ref, dict) and "MODULE_MANIFEST" in mod_ref:
+                    manifest_block = mod_ref["MODULE_MANIFEST"]
+                    version_str = manifest_block.get("meta", {}).get("version", version_str)
+                else:
+                    mod_obj = mod_ref.get("mock") if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" else mod_ref
+                    manifest_block = getattr(mod_obj, "MODULE_MANIFEST", {})
+                    if isinstance(manifest_block, dict):
+                        version_str = manifest_block.get("meta", {}).get("version", version_str)
+                
                 if not version_str and isinstance(mod_ref, dict):
                     version_str = mod_ref.get("version", "v0.0.0")
-            
+
+            mod_size_str = ""
             if m in installed_extensions:
                 target_filename = f"{m}.exe" if os.name == 'nt' else m
                 if mod_ref and isinstance(mod_ref, dict):
@@ -212,14 +223,14 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 try:
                     if os.path.exists(target_file_py): os.remove(target_file_py)
                     if os.path.exists(target_file_exe): os.remove(target_file_exe)
-                    status_message = f"🟢 SUCCESS: Pluggable file '{target_name}' erased from disk storage context."
+                    status_message = f"🟢 MODULE '{target_name}' erased from disk."
                     main_module_ref = sys.modules.get('__main__')
                     if main_module_ref and hasattr(main_module_ref, 'project_saver_modules'):
                         main_module_ref.project_saver_modules.bootstrap_and_discover_modules(cli_dict, app_version, port_num)
                 except Exception as err:
-                    status_message = f"🔴 ERROR: Failed to sweep target off disk -> {err}"
+                    status_message = f"🔴 ERROR: Failed to delete module from disk -> {err}"
             else:
-                status_message = "🔴 ERROR: Target module does not exist, or is locked by system core configurations."
+                status_message = "🔴 ERROR: Target module does not exist or is locked."
 
         elif user_input == 'c':
             print("\n")
