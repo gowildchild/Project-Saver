@@ -149,7 +149,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 update_press_counter += 1
                 config_newest = project_saver_config.SYSTEM_CONFIG.get("update_version_newest")
                 if config_newest and config_newest != VERSION:
-                  if update_press_counter == 1:
+                    if update_press_counter == 1:
                         latest_discovered_version = config_newest
                         print(f"\n[*] Discovered new release [{config_newest}].")
                     elif update_press_counter >= 2:
