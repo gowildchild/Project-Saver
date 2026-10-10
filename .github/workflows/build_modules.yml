@@ -406,6 +406,10 @@ jobs:
         mkdir -p modules
         cp release_files/manifest.json modules/manifest.json        
         git add modules/manifest.json
+        export GIT_AUTHOR_NAME="Automated Builder"
+        export GIT_AUTHOR_EMAIL="actions@github.com"
+        export GIT_COMMITTER_NAME="Automated Builder"
+        export GIT_COMMITTER_EMAIL="actions@github.com"
         git commit --author="Automated Builder <actions@github.com>" -m "Synchronized cryptographic SHA-256 manifest [skip ci]" || exit 0
         git push origin modules
 
