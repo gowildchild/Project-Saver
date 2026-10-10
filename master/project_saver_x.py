@@ -406,6 +406,81 @@ def draw_fixed_menu_bar(app_version, port_num, active_module="Main Daemon"):
     import time
     current_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
+def format_version_string_live(raw_digits_str: str) -> str:
+    """
+    Intelligent regex layout mask engine. Automatically parses flat keystroke tokens
+    into a structured version matrix format: v[Major].[Minor].[Sub]-[Codename]-[Retry]
+    """
+    import re
+    # Strip any pre-existing separators to keep the translation pool pure
+    clean = re.sub(r'[^a-zA-Z0-9]', '', raw_digits_str)
+    if not clean:
+        return "v0.0.0-draft-0"
+
+    # Isolate digits vs letters using standard regex splits
+    digits = re.findall(r'\d+', clean)
+    words = re.findall(r'[a-zA-Z]+', clean)
+
+    major = digits[0] if len(digits) > 0 else "0"
+    minor = digits[1] if len(digits) > 1 else "0"
+    sub   = digits[2] if len(digits) > 2 else "0"
+    retry = digits[3] if len(digits) > 3 else "0"
+    
+    codename = words[0] if len(words) > 0 else "codename"
+
+    # Handle automatic field progression if the user types a single flat block (e.g. 0082)
+    if len(clean) >= 4 and len(digits) == 1 and not words:
+        flat_str = digits[0]
+        major = flat_str[0] if len(flat_str) > 0 else "0"
+        minor = flat_str[1] if len(flat_str) > 1 else "0"
+        sub   = flat_str[2:] if len(flat_str) > 2 else "0"
+        retry = "0"
+
+    return f"v{major}.{minor}.{sub}-{codename}-{retry}"
+
+def draw_bitmask_input_field(prompt: str, y: int = 0, x: int = 0, max_chars: int = 30, is_version_mode: bool = False) -> str:
+    """
+    Decoupled absolute UI text field widget. Temporarily positions the cursor,
+    captures characters live, applies masking, and prevents screen line breaks.
+    """
+    import sys
+    import os
+    import time
+    
+    # Position the hardware cursor inside your targeted form row context slot
+    manage_cursor(visible=True, x=x, y=y)
+    sys.stdout.write(f"{prompt}: ")
+    sys.stdout.flush()
+    
+    input_buffer = ""
+    
+    if os.name == 'nt':
+        import msvcrt
+        while True:
+            if msvcrt.kbhit():
+                char = msvcrt.getch().decode('utf-8', errors='ignore')
+                if char in ('\r', '\n'):
+                    break
+                elif char == '\b' or ord(char) == 8:  # Handle Backspace
+                    input_buffer = input_buffer[:-1]
+                elif len(input_buffer) < max_chars and char.isalnum():
+                    input_buffer += char
+
+                # Live Update Loop Pass
+                display_text = format_version_string_live(input_buffer) if is_version_mode else input_buffer
+                manage_cursor(visible=True, x=x + len(prompt) + 2, y=y)
+                sys.stdout.write(f"{display_text}\x1b[K")
+                sys.stdout.flush()
+            time.sleep(0.02)
+    else:
+        # Fallback for Linux Server Shells using select/readline bounds
+        import select
+        ready, _, _ = select.select([sys.stdin], [], [], 30.0)
+        if ready:
+            input_buffer = sys.stdin.readline().strip()
+
+    return format_version_string_live(input_buffer) if is_version_mode else input_buffer
+
 def manage_cursor(visible: bool = None, x: int = 0, y: int = 0):
     """
     Unified Cross-Platform Cursor Controller.
