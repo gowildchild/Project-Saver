@@ -84,6 +84,29 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         startup_log.append(f"   [M]odules Panel:     Open dynamic pluggable extension and package manager dashboard.")
 
+    if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
+        for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
+            mod_obj = mod_ref["mock"] if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" else mod_ref
+            manifest = getattr(mod_obj, "MODULE_MANIFEST", {})
+            meta_menu = int(manifest.get("meta", {}).get("menu", 0))
+            
+            if not meta_menu:
+                continue
+                
+            display_m = manifest.get("display_menu", "")
+            display_d = manifest.get("display_desc", "")
+            
+            # Pure bitmask filtering rules pass
+            show_title = bool(meta_menu & 1)
+            show_desc = bool(meta_menu & 2)
+            
+            if show_title and show_desc:
+                startup_log.append(f"   {display_m:<21}{display_d}")
+            elif show_title:
+                startup_log.append(f"   {display_m}")
+            elif show_desc:
+                startup_log.append(f"   {display_d}")
+
     startup_log.extend([
         update_menu_string,
         f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
