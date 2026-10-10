@@ -188,13 +188,7 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
         if not ACTIVE_MODULES:
             print("   No active or enabled MODULES on disk.")
         for name, mod in ACTIVE_MODULES.items():
-            if isinstance(mod, dict) and mod.get("type") == "script":
-                manifest = mod.get("MODULE_MANIFEST", {})
-            elif isinstance(mod, dict) and mod.get("type") == "binary":
-                manifest = mod.get("MODULE_MANIFEST", {})
-            else:
-                manifest = getattr(mod, "MODULE_MANIFEST", {})
-                
+            manifest = getattr(mod, "MODULE_MANIFEST", {})
             meta = manifest.get("meta", {})
             print(f" -> [{name.upper()}] - {manifest.get('display_name')}")
             print(f"    Author : {meta.get('author')} | Version: {meta.get('version')}")
