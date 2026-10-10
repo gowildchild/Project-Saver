@@ -61,9 +61,15 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
 
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
-            mod_obj = mod_ref["mock"] if (isinstance(mod_ref, dict) and mod_ref.get("type") == "binary") else mod_ref
-            manifest = getattr(mod_obj, "MODULE_MANIFEST", {})
-            
+            if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" and "mock" in mod_ref:
+                mod_obj = mod_ref["mock"]
+            elif isinstance(mod_ref, dict) and "instance" in mod_ref:
+                mod_obj = mod_ref["instance"]
+            else:
+                mod_obj = mod_ref
+
+            manifest = mod_ref.get("MODULE_MANIFEST", {}) if isinstance(mod_ref, dict) else getattr(mod_obj, "MODULE_MANIFEST", {})
+			
             # CASE 1: Process Advanced Multi-Menu Configurations (e.g., archiver.py)
             if "display_multi" in manifest:
                 for option in manifest.get("display_multi", []):
@@ -107,7 +113,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                         description_content = display_d
 
                     if show_title_main and show_desc_main:
-                        startup_log.append(f"   {display_m:<24}{description_content}")
+                        startup_log.append(f"   {display_m:<28}  {description_content}")
                     elif show_title_main:
                         startup_log.append(f"   {display_m}")
                     elif show_desc_main:
@@ -115,7 +121,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                 continue
             
             # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, menu, custom, debug)
-            meta_menu = int(manifest.get("meta", {}).get("menu", 0))
+            meta_menu = int(manifest.get("meta", {}).get("menu", 0)) if isinstance(manifest, dict) else 0
             if not meta_menu:
                 continue
                 
