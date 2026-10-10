@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.81-zooloo"
+VERSION = "v0.0.82-alpha"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -94,8 +94,10 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
             # Reset prompt state on any key interaction to allow message repainting
             if user_triggered_key != "":
-                prompt_visible = False
-
+                routed = project_saver_modules.route_interactive_shortcut(user_triggered_key, cli_dict, VERSION, PORT)
+                sys.stdout.flush()
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
+                
             # ─── HOTKEY MATRIX ACTIONS ───
             if user_triggered_key == 'e':
                 # * [FIXED] Converted to underscore lookup to read configuration folder path
@@ -252,8 +254,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
             elif user_triggered_key != "":
                 routed = project_saver_modules.route_interactive_shortcut(user_triggered_key, cli_dict, VERSION, PORT)
-                if not routed:
-                    project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
+                sys.stdout.flush()
+                project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             if user_triggered_key not in ['q', 'u'] and user_triggered_key != "":
                 quit_press_counter = 0
@@ -265,7 +267,9 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
 
 if __name__ == "__main__":
-    print(f"\n[*] Project Saver {VERSION} Starting up, Please wait for system to be ready...")
+    import project_saver_x
+    project_saver_x.print_startup_banner(VERSION)
+	
     if os.name == 'nt':
         os.system('mode con: cols=105 lines=30')
         import ctypes
@@ -288,6 +292,7 @@ if __name__ == "__main__":
     parser.add_argument("--auto", type=int, nargs='?', const=5, default=None, help="Enables automated execution timeout duration.")
     parser.add_argument("--config", default="", help="Load options from a custom configuration text file.")
     parser.add_argument("--config-save", default="", help="Save setup flags into configuration profile text file.")
+	parser.add_argument("--debug", action="store_true", help="Display more debug information")
     parser.add_argument("--about", action="store_true", help="Displays developer credits and exit.")
     parser.add_argument("--update", action="store_true", help="Queries GitHub downloads update binary and exit.")
     parser.add_argument("--chosen-editor", default="system_default", choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool. (Default: system_default)")
@@ -315,7 +320,7 @@ if __name__ == "__main__":
 
     if cli_dict.get("about"):
         about_data = [
-            f"Project Saver {VERSION} - Local & Remote Web Scraping Daemon",
+            f"Project Saver {VERSION} - Local & Remote Project Assistant",
             "---",
             "🛠️ Developer: Gunther Voet",
             "📜 License: Open Source (AGPL-3.0 license)",
