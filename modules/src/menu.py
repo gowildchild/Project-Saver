@@ -14,7 +14,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "x",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.11",
+        "version": "v0.0.20",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -38,15 +38,32 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     import project_saver_config
     import project_saver_ui
     import project_saver_modules
-
+    import json
+    
+    active_registry = getattr(project_saver_modules, 'ACTIVE_MODULES', {})
+    if not active_registry:
+        script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        ledger_path = os.path.join(script_base_dir, "modules", "manifest.json")
+        if not os.path.exists(ledger_path) and (script_base_dir.lower().endswith("modules") or getattr(sys, 'frozen', False)):
+            ledger_path = os.path.join(script_base_dir, "manifest.json")
+        if os.path.exists(ledger_path):
+            try:
+                with open(ledger_path, "r", encoding="utf-8") as lf:
+                    raw_json = json.load(lf)
+                    active_registry = raw_json.get("modules", {}) if "modules" in raw_json else raw_json.get("platforms", {}).get("windows", {})
+            except:
+                pass
+                
     detected_modules_pool = {}
-    for active_name, entry in project_saver_modules.ACTIVE_MODULES.items():
-        mod_obj = entry["mock"] if isinstance(entry, dict) and entry.get("type") == "binary" else entry
-        if hasattr(mod_obj, "MODULE_MANIFEST"):
-            manifest_ref = mod_obj.MODULE_MANIFEST
+    for active_name, entry in active_registry.items():
+        if isinstance(entry, dict):
+            shortcut_key = entry.get("menu_shortcut", "").lower()
+        else:
+            mod_obj = entry["mock"] if hasattr(entry, "get") and entry.get("type") == "binary" else entry
+            manifest_ref = getattr(mod_obj, "MODULE_MANIFEST", {})
             shortcut_key = manifest_ref.get("menu_shortcut", "").lower()
-            if shortcut_key:
-                detected_modules_pool[active_name] = shortcut_key
+        if shortcut_key:
+            detected_modules_pool[active_name] = shortcut_key
 
     current_category = project_saver_config.SYSTEM_CONFIG.get("menu_default_active_category", "utilities")
 
@@ -98,11 +115,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         user_input = ""
         if os.name == 'nt':
             import msvcrt
-            if msvcrt.kbhit():
-                user_input = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-            else:
-                time.sleep(0.05)
-                continue
+            user_input = msvcrt.getch().decode('utf-8', errors='ignore').lower()
         else:
             import select
             ready, _, _ = select.select([sys.stdin], [], [], 0.1)
