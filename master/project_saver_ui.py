@@ -128,7 +128,8 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
             update_menu_string,
             " [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
         ])
-    render_better_box(startup_log, title_str=f"Project Saver {app_version}", box_width_override=65)
+    import project_saver_x
+    project_saver_x.render_better_box(startup_log, title_str=f"Project Saver {app_version}", box_width_override=72)
 
 def log_debug(msg):
     """Prints immediately to the terminal screen AND appends to debug.log natively."""
