@@ -125,8 +125,8 @@ jobs:
                 ]
 
                 if module_name.lower() != "archiver":
-                    cmd.insert(2, "--exclude-module=reportlab")
-                    cmd.insert(3, "--exclude-module=bs4")
+                    cmd.append("--exclude-module=reportlab")
+                    cmd.append("--exclude-module=bs4")
                 
                 result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 if result.returncode != 0:
@@ -301,10 +301,11 @@ jobs:
                     f"--name={module_name}",
                     file_path
                 ]
+
                 if module_name.lower() != "archiver":
-                    cmd.insert(2, "--exclude-module=reportlab")
-                    cmd.insert(3, "--exclude-module=bs4")
-                
+                    cmd.append("--exclude-module=reportlab")
+                    cmd.append("--exclude-module=bs4")
+                    
                 result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 if result.returncode != 0:
                     print(f"[-] PyInstaller Linux compilation failed for {module_name}")
