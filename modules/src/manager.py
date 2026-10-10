@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.17",
+        "version": "v0.0.18",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -67,8 +67,19 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     import project_saver_ui
 
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-    modules_dir = os.path.join(script_base_dir, "modules")
-    status_message = "Module Extension Manager Engine stabilized. Ready for commands."
+    if getattr(sys, 'frozen', False) and len(sys.argv) > 3:
+        try:
+            cli_dict = json.loads(sys.argv[1])
+            app_version = sys.argv[2]
+            port_num = int(sys.argv[3])
+        except:
+            pass
+
+    if getattr(sys, 'frozen', False) or script_base_dir.lower().endswith("modules"):
+        modules_dir = script_base_dir
+    else:
+        modules_dir = os.path.join(script_base_dir, "modules")
+    status_message = "Module Manager Loaded, ready for commands."
 
     while True:
         # 1. Clear terminal screen platform-natively
