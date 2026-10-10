@@ -150,14 +150,16 @@ def route_interactive_shortcut(hotkey_char, cli_dict, app_version, port_num):
                 time.sleep(2)
                 return True
         
-        elif hasattr(module_object, "execute_interactive_menu"):
-            try:
-                module_object.execute_interactive_menu(cli_dict, app_version, port_num)
-                return True
-            except Exception as e:
-                print(f"\n[-] Executing MODULE critical: [{target_module_name}]: {e}")
-                time.sleep(2)
-                return True
+        elif isinstance(module_object, dict) and module_object.get("type") == "script":
+            mod_inst = module_object.get("instance")
+            if mod_inst and hasattr(mod_inst, "execute_interactive_menu"):
+                try:
+                    mod_inst.execute_interactive_menu(cli_dict, app_version, port_num)
+                    return True
+                except Exception as e:
+                    print(f"\n[-] Executing MODULE critical: [{target_module_name}]: {e}")
+                    time.sleep(2)
+                    return True
     return False
     
 
