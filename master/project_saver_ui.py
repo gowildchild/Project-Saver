@@ -127,11 +127,11 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
             show_desc = bool(meta_menu & 2)
             
             if show_title and show_desc:
-                startup_log.append(f"   {display_m:<24}{display_d}")
+                startup_log.append(f" {display_m:<27}{display_d}")
             elif show_title:
-                startup_log.append(f"   {display_m}")
+                startup_log.append(f" {display_m}")
             elif show_desc:
-                startup_log.append(f"   {display_d}")
+                startup_log.append(f" {display_d}")
 
     startup_log.extend([
         update_menu_string,
