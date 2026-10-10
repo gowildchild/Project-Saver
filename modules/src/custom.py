@@ -14,7 +14,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "c",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.39",
+        "version": "v0.0.40",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -167,8 +167,8 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
 def execute_interactive_menu(cli_dict, app_version, port_num):
     """Routes execution straight down into the centralized framework orchestrator loop."""
     import project_saver_x
-    # 1024 (Force 40-Col) + 4 (Teletext Mosaic Border Accent Profile) = 1028
-    project_saver_x.run_interactive_workspace_loop(
+    # Directly drops control into your isolated 40x24 Teletext display engine!
+    project_saver_x.run_interactive_teletext_loop(
         MODULE_MANIFEST, __file__, cli_dict, 
         get_live_display_value, handle_local_keyboard_action, 
         box_title="Custom Module"
