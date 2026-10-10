@@ -17,11 +17,13 @@ def set_terminal_title(title_text, run_version, run_text):
 
 def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
     """
-    Transparently forwards visual raw line list packets directly 
-    down into your cross-platform unified project_saver_x library file.
+    Transparently forwards visual raw line list packets directly down into 
+    your cross-platform unified project_saver_x library file using scoped imports
+    to prevent circular initialization dependencies on startup blocks.
     """
     import project_saver_x
-    project_saver_x.render_better_box(raw_lines_list, title_str, box_width_override)
+    project_saver_x.render_bitmask_box(raw_lines_list, title_left=title_str, box_width_override=box_width_override)
+
 
 
 def refresh_dashboard_view(cli_dict, app_version, port_num):
