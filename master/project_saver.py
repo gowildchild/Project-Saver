@@ -334,7 +334,7 @@ if __name__ == "__main__":
     project_saver_config.resolve_or_create_security_token(config_path=active_cfg_profile, port_num=PORT)
     LATEST_AVAILABLE_VERSION = check_and_perform_update(VERSION, REPO_OWNER, REPO_NAME, mode_override=1) or "v0.0.76-gunther"
     project_saver_config.save_config_file(active_cfg_profile, CLI_ARGS, VERSION, LATEST_AVAILABLE_VERSION)
-	project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
+    project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
     check_for_startup_update_and_run(VERSION, REPO_OWNER, REPO_NAME, check_and_perform_update)
     project_saver_daemon.PORT = PORT
     project_saver_daemon.VERSION = VERSION
