@@ -44,8 +44,9 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
         is_binary = file_entry.endswith(".exe") or (os.name != 'nt' and '.' not in file_entry and file_entry != "__init__.py")
         if is_script or is_binary:
             module_name, _ = os.path.splitext(file_entry)
+            if module_name.lower().startswith("unins00"):
+                continue
             module_path = os.path.join(modules_dir, file_entry)
-            #module_name = file_entry[:-3]
             try:
 
                 if is_script:
@@ -85,10 +86,7 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                             print(f"JSON Parsing Fatal Exception: {json_err}")
                     else:
                         print(f"CRITICAL: File open skipped because os.path.exists returned False.")
-                     
 
-                    
-                    # * [FIXED] READ METADATA DIRECTLY FROM THE FLAT JSON DATA MATRIX STRUCTER
                     display_name = manifest_data.get("display_name") or f"{module_name.capitalize()} Binary Extension"
                     shortcut = manifest_data.get("menu_shortcut") or (module_name.lower() if module_name else "x")
                     author_val = manifest_data.get("author") or "Gunther Voet"
