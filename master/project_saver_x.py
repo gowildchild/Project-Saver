@@ -134,7 +134,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
 
             if not live_val and show_value:
                 live_val = manifest.get("defaults", {}).get(option.get("callback_key", ""), "")
-            
+
             if show_value and live_val:
                 description_content = f"{display_d} -> ({live_val})"
             else:
