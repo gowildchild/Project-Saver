@@ -292,7 +292,7 @@ if __name__ == "__main__":
     parser.add_argument("--auto", type=int, nargs='?', const=5, default=None, help="Enables automated execution timeout duration.")
     parser.add_argument("--config", default="", help="Load options from a custom configuration text file.")
     parser.add_argument("--config-save", default="", help="Save setup flags into configuration profile text file.")
-	parser.add_argument("--debug", action="store_true", help="Display more debug information")
+    parser.add_argument("--debug", action="store_true", help="Display more debug information")
     parser.add_argument("--about", action="store_true", help="Displays developer credits and exit.")
     parser.add_argument("--update", action="store_true", help="Queries GitHub downloads update binary and exit.")
     parser.add_argument("--chosen-editor", default="system_default", choices=["system_default", "obsidian", "vscode", "marktext"], help="Preferred markdown viewer/editor launcher link tool. (Default: system_default)")
