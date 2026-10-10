@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.81-julliet"
+VERSION = "v0.0.81-kilo"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -191,7 +191,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key == 'l':
-                # * [ADDED] MANUAL PROFILE STATE RE-LOADER
                 print("\n[L] Manual Load: Discarding active session drafts and re-indexing configuration...")
                 project_saver_config.load_config_file("project_saver.cfg")
                 if project_saver_config.SYSTEM_CONFIG.get("global_export-format"):
@@ -202,11 +201,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
             elif user_triggered_key == 'm':
                 manager_mod = project_saver_modules.ACTIVE_MODULES.get("manager")
-                
-                # ─── CASE A: COMPILED STANDALONE BINARY MANAGER OFFLOAD ───
                 if isinstance(manager_mod, dict) and manager_mod.get("type") == "binary":
                     import subprocess
-                    # * [ADDED] WIN32 BUFFER PURGE LOOP TO PREVENT KEYBOARD ECHO LEAKS
                     if os.name == 'nt':
                         import msvcrt
                         while msvcrt.kbhit():
@@ -215,12 +211,25 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     try:
                         os.system('cls' if os.name == 'nt' else 'clear')
                         print(f"[*] Sub-process offload: Executing standalone binary -> MANAGER")
-                        subprocess.run([manager_mod["path"]], check=True)
+                        proc_result = subprocess.run(
+                            [manager_mod["path"]], 
+                            stdout=None, 
+                            stderr=subprocess.PIPE, 
+                            text=True
+                        )
+                        if proc_result.stderr:
+                            os.system('cls' if os.name == 'nt' else 'clear')
+                            print("CRITICAL CRASH IN SUBPROCESS")
+                            print("==================================================")
+                            print(f"[-] Execution Target : {manager_mod['path']}")
+                            print("[-] Raw Windows Console Error Log:")
+                            print(proc_result.stderr)
+                            print("==================================================")
+                            input("\n[!] Press [Enter] to drop back to Master Dashboard...")
                     except Exception as bin_err:
                         print(f"\n[-] Standalone extension binary engine execution crashed: {bin_err}")
-                        time.sleep(2)
+                        time.sleep(3)
                 
-                # ─── CASE B: FALLBACK FOR RAW PYTHON SCRIPT HANDLERS ───
                 elif manager_mod and hasattr(manager_mod, "execute_interactive_menu"):
                     print("\n[*] Initializing Pluggable Package Manager sub-workspace panel...")
                     time.sleep(0.3)
@@ -232,7 +241,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 else:
                     print("\n⚠️ WARNING: Manager module extension asset not found or disabled.")
                     time.sleep(1.5)
-                
+
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key != "":
@@ -279,7 +288,6 @@ if __name__ == "__main__":
     parser.add_argument("--module", nargs='+', help="Executes pluggable extension sub-commands layout routing entries.")
     temp_args = sys.argv[1:]
     
-    # ─── 2. DYNAMICALLY ISOLATE THE ACTIVE CONFIGURATION FILENAME ───
     active_cfg_profile = "project_saver.cfg"
     if "--config" in temp_args:
         try:
@@ -289,20 +297,16 @@ if __name__ == "__main__":
         except Exception:
             pass
 
-    # ─── 3. COMBINE ARRAYS IN CORRECT OVERRIDE PRIORITY LAYER ORDER ───
-    # Configuration options are evaluated first, terminal entries come LAST to explicitly override them
     loaded_file_args = project_saver_config.load_config_file(active_cfg_profile) if os.path.exists(active_cfg_profile) else []
     combined_args = loaded_file_args + temp_args
     CLI_ARGS = parser.parse_args(combined_args)
     cli_dict = vars(CLI_ARGS)
 
-    # ─── 4. Add Modules ───
     project_saver_modules.bootstrap_and_discover_modules(cli_dict, VERSION, PORT)
     if cli_dict.get("module"):
         project_saver_modules.handle_module_cli_commands(cli_dict["module"], cli_dict, VERSION, PORT)
         sys.exit(0)
 
-    # ─── 5. EXECUTE OPERATIONAL TASKS USING SAFE DIRECTORY LOOKUPS ───
     if cli_dict.get("about"):
         about_data = [
             f"Project Saver {VERSION} - Local & Remote Web Scraping Daemon",
