@@ -62,80 +62,68 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
 
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
-            manifest = mod_ref.get("MODULE_MANIFEST", {}) if isinstance(mod_ref, dict) else {}
-            mod_obj = mod_ref.get("instance") if (isinstance(mod_ref, dict) and mod_ref.get("type") == "script") else mod_ref
-            
-            # CASE 1: Process Advanced Multi-Menu Configurations (e.g., archiver.py)
-            if "display_multi" in manifest:
-                for option in manifest.get("display_multi", []):
-                    bits = int(option.get("mask_bits", 0))
-                    if not bits:
-                        continue
-                        
-                    if not bool(bits & 8):
-                        continue
-                        
-                    # Extract active toggles using pure bitwise AND operators
-                    show_title_main = bool(bits & 1)
-                    show_desc_main  = bool(bits & 2)
-                    show_value_main = bool(bits & 4)
-                    
-                    if not (show_title_main or show_desc_main):
-                        continue 
-                        
-                    display_m = option.get("display_menu", "")
-                    display_d = option.get("display_desc", "")
-                    
-                    defaults_dict = manifest.get("defaults", {})
-                    call_id = option.get("callback_key", "")
-                    fallback_val = defaults_dict.get(call_id, "")
-                    
-                    live_val = ""
-                    if show_value_main and hasattr(mod_obj, "get_live_display_value"):
-                        try:
-                            live_val = mod_obj.get_live_display_value(call_id, cli_dict)
-                        except:
-                            pass
-                    if not live_val:
-                        live_val = fallback_val
-
-                    # Compile display layout based on active value presence
-                    if show_value_main and live_val:
-                        parenthesis_part = f" ({fallback_val})" if fallback_val and live_val != fallback_val else ""
-                        description_content = f"{live_val}{parenthesis_part}"
-                    else:
-                        description_content = display_d
-
-                    if show_title_main and show_desc_main:
-                        startup_log.append(f"   {display_m:<28}  {description_content}")
-                    elif show_title_main:
-                        startup_log.append(f"   {display_m}")
-                    elif show_desc_main:
-                        startup_log.append(f"   {description_content}")
-                continue
-            
-            # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, menu, custom, debug)
-            meta_menu = 0
-            meta_block = manifest.get("meta")
-            if isinstance(meta_block, dict):
-                meta_menu = int(meta_block.get("menu", 0))
+            if isinstance(mod_ref, dict):
+                    manifest = mod_ref.get("MODULE MANIFEST", {})
+                    mod_obj = mod_ref.get("instance") if mod_ref.get("type") == "script" else None
+                else:
+                    manifest = getattr(mod_ref, "MODULE_MANIFEST", {})
+                    mod_obj = mod_ref
+                if not manifest:
+                    continue
                 
-            if not meta_menu:
-                continue
+                # CASE 1: Process Advanced Multi-Menu Configurations (e.g., archiver.py)
+                if "display_multi" in manifest:
+                    for option in manifest.get("display_multi", []):
+                        bits = int(option.get("mask_bits", 0))
+                        if not bits or not bool(bits & 8):
+                            continue
+                        show_title_main = bool(bits & 1)
+                        show_desc_main = bool(bits & 2)
+                        show_value_main = bool(bits & 4)
+                        if not (show_title_main or show_desc_main):
+                            continue
+                        display_m = option.get("display_menu", "")
+                        display_d = option.get("display_desc", "")
+                        defaults_dict = manifest.get("defaults", {})
+                        call_id = option.get("callback_key", "")
+                        fallback_val = defaults_dict.get(call_id, "")
+                        live_val = ""
+                        if show_value_main and mod_obj and hasattr(mod_obj, "get_live_display_value"):
+                            try:
+                                live_val = mod_obj.get_live_display_value(call_id, cli_dict)
+                            except:
+                                pass
+                        if not live_val:
+                            live_val = fallback_val
+                        if show_value_main and live_val:
+                            parenthesis_part = f" ({fallback_val})" if fallback_val and live_val != fallback_val else ""
+                            description_content = f"{live_val}{parenthesis_part}"
+                        else:
+                            description_content = display_d
+                        if show_title_main and show_desc_main:
+                            startup_log.append(f"  {display_m:<28} {description_content}")
+                        elif show_title_main:
+                            startup_log.append(f"  {display_m}")
                 
-            display_m = manifest.get("display_menu", "")
-            display_d = manifest.get("display_desc", "")
-            
-            # Standard main menu bitmask calculations check
-            show_title = bool(meta_menu & 1)
-            show_desc = bool(meta_menu & 2)
-            
-            if show_title and show_desc:
-                startup_log.append(f"   {display_m:<28}  {display_d}")
-            elif show_title:
-                startup_log.append(f"   {display_m}")
-            elif show_desc:
-                startup_log.append(f"   {display_d}")
+                # CASE 2: Process Clean Backward-Compatible Single Menu Structures
+                meta_menu = 0
+                meta_block = manifest.get("meta")
+                if isinstance(meta_block, dict):
+                    meta_menu = int(meta_block.get("menu", manifest.get("menu", 0)))
+                else:
+                    meta_menu = int(manifest.get("menu", 0))
+                if not meta_menu:
+                    continue
+                display_m = manifest.get("display_menu", "")
+                display_d = manifest.get("display_desc", "")
+                show_title = bool(meta_menu & 1)
+                show_desc = bool(meta_menu & 2)
+                if show_title and show_desc:
+                    startup_log.append(f"  {display_m:<28} {display_d}")
+                elif show_title:
+                    startup_log.append(f"  {display_m}")
+                elif show_desc:
+                    startup_log.append(f"  {display_d}")
 
     startup_log.extend([
         update_menu_string,
