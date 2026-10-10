@@ -1,5 +1,6 @@
 # ==========================================================================
 # Project Saver Shared Module Utilities (module_utils.py)
+# Copyright by Gunther Voet
 # ==========================================================================
 import os
 import sys
