@@ -14,12 +14,39 @@ MODULE_MANIFEST = {
     "menu_shortcut": "c",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.26",
+        "version": "v0.0.33",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
-        "available": True          # Sets availability for cloud installation/use
+        "available": True,         # Sets availability for cloud installation/use
+        "menu": 3
     },
     "autostart": False,            # Set to True if it needs to run background tasks on boot
+    "display_multi": [
+        {
+            "callback_key": "custom_string_setting",
+            "menu_shortcut": "",
+            "display_menu": "Parsed String Setting:",
+            "display_desc": "Active user string parameter text string",
+            "mask_bits": 5,         # Bit 1 (Title) + Bit 4 (Live Value)
+            "action_type": "custom"
+        },
+        {
+            "callback_key": "custom_integer_flag",
+            "menu_shortcut": "",
+            "display_menu": "Parsed Integer Flag:",
+            "display_desc": "Active numeric iteration count limit",
+            "mask_bits": 5,         # Bit 1 (Title) + Bit 4 (Live Value)
+            "action_type": "custom"
+        },
+        {
+            "callback_key": "custom_user_action",
+            "menu_shortcut": "a",
+            "display_menu": "   [A] Action Trigger:",
+            "display_desc": "Execute your custom script routine workspace.",
+            "mask_bits": 3,         # Bit 1 (Title) + Bit 2 (Desc)
+            "action_type": "custom"
+        }
+    ],    
     "defaults": {
         "custom_string_setting": "hello_world",
         "custom_integer_flag": "10"
@@ -33,66 +60,44 @@ def register_module_callbacks(server_reference=None):
     """
     pass
 
-def execute_interactive_menu(cli_dict, app_version, port_num):
+def get_live_display_value(callback_key, cli_dict=None):
     """
-    Fired instantly when the user hits 'M' -> selects 'custom', 
-    or strikes the direct shortcut key 'C' inside the main menu.
+    Resolves active local parameters dynamically for the centralized loop tracer.
     """
-    import project_saver_config
-    import project_saver_ui
-    cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
-    status_message = "Custom skeleton module active. Ready for user scripts."
+    if callback_key == "custom_string_setting":
+        return module_library.get_setting("custom", "custom_string_setting", "hello_world")
+    elif callback_key == "custom_integer_flag":
+        return module_library.get_setting("custom", "custom_integer_flag", "10")
+    return ""
 
-    while True:
-        # 1. Clear terminal screen platform-natively
-        module_library.clear_screen_with_trace(MODULE_MANIFEST)
-
-        # 2. Extract user configuration parameters safely out of the section block
-        user_str = module_library.get_setting("custom", "custom_string_setting", "hello_world")
-        user_int = module_library.get_setting("custom", "custom_integer_flag", "10")
-
-        # 3. Build terminal box UI display list
-        custom_panel = [
-            f"   Active Module Name:  {MODULE_MANIFEST['display_name']}",
-            f"   Module Version:      {MODULE_MANIFEST['meta']['version']} by {MODULE_MANIFEST['meta']['author']}",
-            "---",
-            f"   Parsed String Setting: {user_str}",
-            f"   Parsed Integer Flag  : {user_int}",
-            "---",
-            f"   Status Indicator:    {status_message}",
-            "---",
-            "   [A] Action Trigger:  Execute your custom script.",
-            "   [-] Press [Minus Key] for Main Menu..."
-        ]
-
-        # 4. Render via your native box utility layout engine
-        project_saver_ui.render_better_box(
-            custom_panel, 
-            title_str="Custom Module", 
-            box_width_override=72
-        )
-
-        # 5. Non-blocking keyboard state monitoring
-        sys.stdout.write("\x1b[2K\r[Custom] Ready for key: ")
-        sys.stdout.flush()
-
-        user_input = module_library.get_keystroke()
-
-        if user_input == "":
-            time.sleep(0.05)
-            continue        
-        
-        # ─── HOTKEY MATRIX ACTIONS ───
-        if user_input == '-':
-            break
-            
-        elif user_input == 'a':
-            status_message = f"🟢 SUCCESS: Action triggered at {time.strftime('%H:%M:%S')}!"
+def handle_local_keyboard_action(user_input, cli_dict, manifest):
+    """
+    Localized micro-callback managing only your custom user execution routines.
+    """
+    import project_saver_x
+    
+    # 1. First hand off standard behaviors (folder openings, global keys) to the core cross-library
+    def execute_custom_template_triggers(key, c_dict, mf):
+        if key == 'a':
             os.system('cls' if os.name == 'nt' else 'clear')
             print(f"\n[+] Executing custom module pipeline...")
             time.sleep(1.2)
-            
-        time.sleep(0.05)
+            return f"🟢 SUCCESS: Action triggered at {time.strftime('%H:%M:%S')}!"
+        return "Custom skeleton module active. Ready for user scripts."
+
+    return project_saver_x.handle_unified_keyboard_routing(
+        user_input, cli_dict, manifest,
+        get_live_display_value, local_custom_callback=execute_custom_template_triggers
+    )
+
+def execute_interactive_menu(cli_dict, app_version, port_num):
+    """Routes execution straight down into the centralized framework orchestrator loop."""
+    import project_saver_x
+    project_saver_x.run_interactive_workspace_loop(
+        MODULE_MANIFEST, __file__, cli_dict, 
+        get_live_display_value, handle_local_keyboard_action, 
+        box_title="Custom Module"
+    )
         
 if __name__ == "__main__":
     module_library.run_standalone_safely(MODULE_MANIFEST, execute_interactive_menu)
