@@ -140,7 +140,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             "---",
             f" Installed:            {', '.join(sorted(installed_extensions)) if installed_extensions else '(No external extensions found)'}",
             "---",
-            f" Cache Use:            readable_total}"
+            f" Cache Use:            {readable_total}"
         ]
 
         manager_panel.extend(memory_breakdown_lines)
