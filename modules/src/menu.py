@@ -12,21 +12,45 @@ MODULE_MANIFEST = {
     "name": "menu",
     "display_name": "Custom Menu Navigator",
     "display_menu": "[X] Custom Menu",
+    "display_desc": "Open Multi-Layered Menu",
     "menu_shortcut": "x",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
         "version": "v0.0.30",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
-        "available": True          # Sets availability for cloud installation/use
+        "available": True,         # Sets availability for cloud installation/use
+        "menu": 3
     },
     "autostart": False,            # Loaded manually via hotkey actions
+    "display_multi": [
+        {
+            "callback_key": "power_routing",
+            "menu_shortcut": "1",
+            "display_menu": "   [1] Shutdown Shortcuts",
+            "display_desc": "System Shutdown Shortcuts.",
+            "mask_bits": 3
+        },
+        {
+            "callback_key": "diag_routing",
+            "menu_shortcut": "2",
+            "display_menu": "   [2] System Diagnostics",
+            "display_desc": "Switch routing category perspective to core memory extracts.",
+            "mask_bits": 3
+        },
+        {
+            "callback_key": "asset_routing",
+            "menu_shortcut": "3",
+            "display_menu": "   [3] Extension Assets",
+            "display_desc": "Switch routing category perspective to custom pluggable workspace frames.",
+            "mask_bits": 3
+        }
+    ],
     "defaults": {
         "default_active_category": "utilities",
         "render_style": "compact"
     }
 }
-
 def register_module_callbacks(server_reference=None):
     """Executed automatically on boot if autostart is True."""
     pass
@@ -36,9 +60,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     Fired instantly when the user hits 'M' -> selects 'menu',
     or strikes the direct shortcut hotkey 'X' inside the master dashboard view.
     """
-    #import project_saver_ui
-    #import project_saver_modules
     import json
+    import project_saver_x
 
     cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
@@ -52,6 +75,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     active_registry = getattr(modules_framework, 'ACTIVE_MODULES', {}) if modules_framework else {}
     if not active_registry:
         active_registry = module_library.load_disk_registry(modules_dir)    
+        
     detected_modules_pool = {}
     for active_name, entry in active_registry.items():
         if isinstance(entry, dict):
@@ -99,7 +123,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         navigator_panel.append("   [-] Press [Minus Key] to drop back out to Main Menu...")
 
         # 4. Render via your native box utility layout engine
-        import project_saver_x
         project_saver_x.render_better_box(
             navigator_panel, 
             title_str="Navigation Grid Controller Engine", 
@@ -121,7 +144,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             current_category = "extensions"
             
         elif user_input in detected_modules_pool.values():
-            # Identify which module matches the user's pressed shortcut hotkey
             target_module_key = None
             for mod_name, shortcut_char in detected_modules_pool.items():
                 if shortcut_char == user_input:
@@ -129,20 +151,26 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                     break
             
             if target_module_key:
-                mod_obj = project_saver_modules.ACTIVE_MODULES.get(target_module_key)
+                mod_obj = active_registry.get(target_module_key)
                 
-                # * [FIXED] REDIRECT COMPILED EXTENSION TARGETS THROUGH NATIVE OS SUB-PROCESS HOOKS
+                # ─── CASE A: REDIRECT COMPILED EXTENSION TARGETS THROUGH NATIVE OS SUB-PROCESS HOOKS ───
                 if isinstance(mod_obj, dict) and mod_obj.get("type") == "binary":
                     import subprocess
                     try:
                         os.system('cls' if os.name == 'nt' else 'clear')
                         print(f"[*] Sub-process offload: Executing standalone binary -> {target_module_key.upper()}")
-                        subprocess.run([mod_obj["path"]], check=True)
+                        
+                        # Abstract keyboard helper routes the profile paths dynamically down into sub-process binaries safely
+                        import project_saver_x
+                        project_saver_x.handle_unified_keyboard_routing(
+                            user_input, cli_dict, MODULE_MANIFEST, 
+                            local_custom_callback=lambda k, c, m: subprocess.run([mod_obj["path"]], check=True)
+                        )
                     except Exception as bin_err:
                         print(f"\n[-] Standalone extension binary execution crashed: {bin_err}")
                         time.sleep(2)
                 
-                # ─── FALLBACK MATRIX FOR SCRIPT MODULE OBJECT REFLECTIONS ───
+                # ─── CASE B: FALLBACK MATRIX FOR SCRIPT MODULE OBJECT REFLECTIONS ───
                 elif mod_obj and hasattr(mod_obj, "execute_interactive_menu"):
                     print(f"\n[*] Route shortcut target captured! Redirecting path execution to module: {target_module_key.upper()}")
                     time.sleep(0.3)
@@ -151,6 +179,13 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                     except Exception as e:
                         print(f"\n[-] Execution blew up inside nested sub-module [{target_module_key}]: {e}")
                         time.sleep(2)
+
+        # 6. Evaluate upcoming customizable global shortcuts (e.g. open directory destinations) dynamically via the cross-library
+        else:
+            if user_input != "":
+                project_saver_x.handle_unified_keyboard_routing(
+                    user_input, cli_dict, MODULE_MANIFEST, local_custom_callback=None
+                )
 
         time.sleep(0.05)
 
