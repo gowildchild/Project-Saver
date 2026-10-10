@@ -70,12 +70,36 @@ def clear_screen_with_trace(manifest, execution_context_file=None):
 
 def get_setting(module_name, key, default_value=""):
     """Safely extracts live config parameters out of master configuration memory frames."""
+    import sys
+    import configparser    
     try:
-        import project_saver_config
-        lookup_key = f"{module_name.lower()}_{key.lower()}"
-        return project_saver_config.SYSTEM_CONFIG.get(lookup_key, default_value)
+        # 1. Dynamically locate the project_saver.cfg path relative to the executable execution directory
+        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        if base_path.lower().endswith("modules"):
+            base_path = os.path.dirname(base_path)
+            
+        cfg_path = os.path.join(base_path, "project_saver.cfg")
+        
+        if not os.path.exists(cfg_path):
+            return default_value
+            
+        # 2. Parse the INI structure directly from the file disk layer
+        config = configparser.ConfigParser()
+        config.read(cfg_path, encoding="utf-8")
+        
+        # 3. Look inside the section [module_name] or fallback sections cleanly
+        section = module_name.lower()
+        if config.has_option(section, key.lower()):
+            return config.get(section, key.lower()).strip()
+            
+        # Global configuration fallback mapping context pass check
+        if config.has_option("global", f"{section}_{key.lower()}"):
+            return config.get("global", f"{section}_{key.lower()}").strip()
+            
     except:
-        return default_value
+        pass
+        
+    return default_value
 
 def run_standalone_safely(manifest, menu_callback):
     """
