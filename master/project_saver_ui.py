@@ -5,6 +5,7 @@ import re
 import time
 import subprocess
 import project_saver_config
+import project_saver_modules
 
 def set_terminal_title(title_text, run_version, run_text):
     if os.name == 'nt':
