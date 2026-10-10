@@ -14,7 +14,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "c",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.37",
+        "version": "v0.0.39",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -92,11 +92,10 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
     import project_saver_x
     
     def execute_custom_template_triggers(key, c_dict, mf):
-        import project_saver_config
+        profile = mf.get("display_profile", {})
         
         if key == 'a':
-            # Extract target coordinates directly out of our customized dictionary option mapping
-            target_xy = "14,4"  # Default prompt position row boundary
+            target_xy = "14,4"
             for option in mf.get("display_multi", []):
                 if option.get("callback_key") == "custom_user_action":
                     target_xy = option.get("display_xy", "14,4")
@@ -105,17 +104,17 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
             
             new_val = project_saver_x.draw_bitmask_input_field(
                 prompt="Enter String Setting", 
-                y=y_val + 2, # Space offset underneath option text
+                y=y_val + 2, 
                 x=x_val, 
                 max_chars=20
             )
             if new_val:
-                project_saver_config.SYSTEM_CONFIG["custom_custom_string_setting"] = str(new_val)
-                project_saver_config.save_config_file("project_saver.cfg", c_dict)
+                # Natively write straight to the shared INI via the cross-library!
+                project_saver_x.set_native_setting("custom", "custom_string_setting", new_val)
                 return f"🟢 SAVED: Updated setting to -> '{new_val}'!"
             return "⚠️ WARNING: Value empty. Skip save pass."
+
         elif key == 'e':
-            # 1. EXPORT PROFILE MODULE MANIFEST TO LOCAL DISK STORAGE
             try:
                 import json
                 export_dir = os.path.abspath(c_dict.get('export_folder') or "")
@@ -132,7 +131,6 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
                 return f"🔴 ERROR: Export profile failed -> {err}"
 
         elif key == 'i':
-            # 2. IMPORT PROFILE MODULE MANIFEST FROM LOCAL DISK STORAGE
             try:
                 import json
                 export_dir = os.path.abspath(c_dict.get('export_folder') or "")
@@ -145,9 +143,16 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
                 with open(backup_path, "r", encoding="utf-8") as bf:
                     loaded_manifest = json.load(bf)
                 
-                # Update global manifest memory state dynamically on the fly
                 global MODULE_MANIFEST
                 MODULE_MANIFEST.update(loaded_manifest)
+                
+                # Update persistent settings based on loaded values safely
+                for opt in loaded_manifest.get("display_multi", []):
+                    key_id = opt.get("callback_key")
+                    if key_id:
+                        val = loaded_manifest.get("defaults", {}).get(key_id, "")
+                        project_saver_x.set_native_setting("custom", key_id, val)
+                        
                 return f"🟢 IMPORTED: Manifest state re-indexed successfully!"
             except Exception as err:
                 return f"🔴 ERROR: Import profile failed -> {err}"
