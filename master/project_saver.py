@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.82-echo"
+VERSION = "v0.0.82-foxtrot"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -65,7 +65,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     sys.stdout.write(f"\x1b[2K\r⚠️ Press [Q]uit again [{quit_press_counter}/3] times to escape Kansas...")
                 elif update_press_counter == 1:
                     v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
-                    sys.stdout.write(f"\x1b[2K\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
+                    sys.stdout.write(f"\x1b[2K\r⚠️ Press [U]pdate again to execute automated upgrade to{v_msg}...")
                 else:
                     if 'CORE_STATUS_TRACKER' in globals() or 'CORE_STATUS_TRACKER' in locals():
                         sys.stdout.write(f"\n📢 [SYSTEM STATUS]: {CORE_STATUS_TRACKER}\n")					
