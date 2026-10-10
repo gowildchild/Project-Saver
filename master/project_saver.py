@@ -82,9 +82,9 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     while msvcrt.kbhit():
                         msvcrt.getch()
                 else:
-				    pass
+                    pass
 
-			else:
+            else:
                 import select
                 ready, _, _ = select.select([sys.stdin], [], [], 0.05)
                 if ready:
