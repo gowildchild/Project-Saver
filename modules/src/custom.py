@@ -5,8 +5,8 @@
 import os
 import sys
 import time
+import module_library
 
-# ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
     "name": "custom",
     "display_name": "User Custom Module",
@@ -14,7 +14,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "c",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.15",
+        "version": "v0.0.21",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -40,7 +40,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     """
     import project_saver_config
     import project_saver_ui
-
+    cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
     status_message = "Custom skeleton module active. Ready for user scripts."
 
     while True:
@@ -76,20 +76,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         sys.stdout.write("\x1b[2K\r[Custom] Ready for key: ")
         sys.stdout.flush()
 
-        user_input = ""
-        if os.name == 'nt':
-            import msvcrt
-            if msvcrt.kbhit():
-                user_input = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-            else:
-                time.sleep(0.05)
-                continue
-        else:
-            import select
-            ready, _, _ = select.select([sys.stdin], [], [], 0.1)
-            if not ready:
-                continue
-            user_input = sys.stdin.readline().strip().lower()
+        user_input = module_library.get_keystroke()
 
         if user_input == "":
             time.sleep(0.05)
@@ -106,3 +93,18 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             time.sleep(1.2)
             
         time.sleep(0.05)
+        
+if __name__ == "__main__":
+    import project_saver_config
+    
+    base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+    cfg_profile = os.path.join(base_path, "project_saver.cfg")
+    if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
+        cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
+        
+    if os.path.exists(cfg_profile):
+        project_saver_config.load_config_file(cfg_profile)
+        
+    fallback_cli = {}
+    run_version = MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
+    execute_interactive_menu(fallback_cli, run_version, 19763)
