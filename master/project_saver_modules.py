@@ -102,6 +102,8 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                             "display_desc": manifest_data.get("display_desc") or "",
                             "menu_shortcut": shortcut,
                             "autostart": autostart_val,
+                            "display_multi": manifest_data.get("display_multi", []),
+                            "defaults": manifest_data.get("defaults", {}),
                             "meta": {
                                 "author": author_val,
                                 "version": version_val,
