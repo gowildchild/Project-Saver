@@ -61,15 +61,9 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
 
     if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
         for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
-            if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" and "mock" in mod_ref:
-                mod_obj = mod_ref["mock"]
-            elif isinstance(mod_ref, dict) and "instance" in mod_ref:
-                mod_obj = mod_ref["instance"]
-            else:
-                mod_obj = mod_ref
-
-            manifest = mod_ref.get("MODULE_MANIFEST", {}) if isinstance(mod_ref, dict) else getattr(mod_obj, "MODULE_MANIFEST", {})
-			
+            manifest = mod_ref.get("MODULE_MANIFEST", {}) if isinstance(mod_ref, dict) else {}
+            mod_obj = mod_ref.get("instance") if (isinstance(mod_ref, dict) and mod_ref.get("type") == "script") else mod_ref
+            
             # CASE 1: Process Advanced Multi-Menu Configurations (e.g., archiver.py)
             if "display_multi" in manifest:
                 for option in manifest.get("display_multi", []):
