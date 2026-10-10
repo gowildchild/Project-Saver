@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.81-golf"
+VERSION = "v0.0.81-hotel"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -67,6 +67,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     v_msg = f" {latest_discovered_version}" if latest_discovered_version else ""
                     sys.stdout.write(f"\x1b[2K\rPress [U]pdate again to execute automated upgrade to{v_msg}...")
                 else:
+                    if 'CORE_STATUS_TRACKER' in globals() or 'CORE_STATUS_TRACKER' in locals():
+                        sys.stdout.write(f"\n📢 [SYSTEM STATUS]: {CORE_STATUS_TRACKER}\n")					
                     sys.stdout.write("\x1b[2K\r[?] Ready for hotkey: ")
                 sys.stdout.flush()
                 prompt_visible = True
