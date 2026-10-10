@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.81-sierra"
+VERSION = "v0.0.81-tango"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -219,7 +219,8 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                             [manager_mod["path"], "--config", active_cfg_profile], 
                             stdout=None, 
                             stderr=subprocess.PIPE, 
-                            text=True
+                            text=True,
+							env=os.environ
                         )
 						
                         if proc_result.stderr:
