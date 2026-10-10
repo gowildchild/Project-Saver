@@ -1,6 +1,6 @@
 # ==========================================================================
 # Project Saver Module: Customisable Multi-Layer Menu Navigator (menu.py)
-# Copyright (c) 2026 by Gunther Voet. All Rights Reserved.
+# Copyright (c) 2026 by Gunther Voet. All Rights Reserved. 
 # ==========================================================================
 import os
 import sys
