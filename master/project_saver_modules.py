@@ -68,6 +68,10 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                         ACTIVE_MODULES[manifest["name"]] = mod
                         shortcut = manifest.get("menu_shortcut", "").lower()
                         if shortcut: SHORTCUT_MAP[shortcut] = manifest["name"]
+                        if "display_menu" not in manifest:
+                            manifest["display_menu"] = f"   [{shortcut.upper()}] {module_name.capitalize()}"
+                        if "display_desc" not in manifest:
+                            manifest["display_desc"] = manifest.get("display_desc", "")
                         if manifest.get("autostart", False) and hasattr(mod, "register_module_callbacks"):
                             mod.register_module_callbacks(server_ref)
 
@@ -98,7 +102,7 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                         MODULE_MANIFEST = {
                             "name": module_name.lower(),
                             "display_name": display_name,
-                            "display_menu": manifest_data.get("display_menu") or f"[{shortcut.upper()}]{module_name.capitalize()}",
+                            "display_menu": manifest_data.get("display_menu") or f"[{shortcut.upper()}] {module_name.capitalize()}",
                             "display_desc": manifest_data.get("display_desc") or "",
                             "menu_shortcut": shortcut,
                             "autostart": autostart_val,
