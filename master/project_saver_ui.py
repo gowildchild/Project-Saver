@@ -34,7 +34,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     import project_saver_modules
 
     os.system('cls' if os.name == 'nt' else 'clear')
-	update_menu_string = None
+    update_menu_string = None
 
     def clean_ver(v_str):
         return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', str(v_str).lower())]	
