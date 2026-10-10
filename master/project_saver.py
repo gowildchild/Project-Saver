@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.82-beta"
+VERSION = "v0.0.82-charlie"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -268,13 +268,13 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
 
 
 if __name__ == "__main__":
-    import project_saver_x
-    project_saver_x.print_startup_banner(VERSION)
-	
     if os.name == 'nt':
-        os.system('mode con: cols=105 lines=30')
+        #os.system('mode con: cols=105 lines=30')
         import ctypes
         ctypes.windll.kernel32.SetConsoleMode(ctypes.windll.kernel32.GetStdHandle(-11), 7)
+	
+    import project_saver_x
+    project_saver_x.print_startup_banner(VERSION)
 
     parser = argparse.ArgumentParser(
         description="Project Saver Server.",
