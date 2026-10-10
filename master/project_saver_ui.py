@@ -78,12 +78,15 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
         f"📂 [E]xport Folder:     {resolved_display_path}",
         f"   [I]mport Config:     Open folder containing singlefile-project-saver-config.json configuration.",
         f"   [R]enew Token:       Regenerate randomized API access authorization key.",
-        "---",
-        f"   [M]odules Panel:     Open dynamic pluggable extension and package manager dashboard.",
+        "---"
+    ]
+    if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
+        startup_log.append(f"   [M]odules Panel:     Open dynamic pluggable extension and package manager dashboard.")
+
+	startup_log.extend([
         update_menu_string,
         f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
-    ]
-	
+    ])
     render_better_box(startup_log, title_str=f"Project Saver {app_version}", box_width_override=65)
 
 
