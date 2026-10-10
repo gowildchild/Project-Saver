@@ -118,7 +118,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
                 description_content = display_d
 
             if show_title and show_desc:
-                panel_content.append(f"   {display_m:<21}{description_content}")
+                panel_content.append(f"   {display_m:<24}{description_content}")
             elif show_title:
                 panel_content.append(f"   {display_m}")
             elif show_desc:
