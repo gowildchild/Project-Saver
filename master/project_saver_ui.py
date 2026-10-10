@@ -162,71 +162,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
     render_better_box(startup_log, title_str=f"Project Saver {app_version}", box_width_override=65)
 
 
-def refresh_dashboard_view_old(cli_dict, app_version, port_num):
-    """
-    Clears the screen and renders the standard startup box with the most up-to-date active settings.
-    """
-    import os
-    import sys
-    import project_saver_config
 
-    # Clear terminal window platform-natively (cls for Windows, clear for Linux/macOS)
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-    def clean_ver(v_str):
-        return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', str(v_str).lower())]	
-	
-    latest_available_version = project_saver_config.SYSTEM_CONFIG.get("update_version_newest") or "" 
-    if latest_available_version and clean_ver(latest_available_version) > clean_ver(app_version):
-        update_menu_string = f"💡 [U]pdate Available:  Verify integrity hash and update to {latest_available_version}."
-    else:
-        update_menu_string = f"   [U]pdate:            Verify integrity hash and update application (1x=check, 2x=update)."
-
-    raw_folder_path = cli_dict.get('export_folder') or ""
-    resolved_display_path = os.path.abspath(raw_folder_path) if raw_folder_path else "Initializing path.."		
-	
-    startup_log = [
-        f"   Server Details:      http://localhost:{port_num} (Token: {project_saver_config.EXPECTED_TOKEN})",
-        "---",
-        f"⚙️ [P]rofile Mode:      {str(cli_dict.get('export_type') or 'AUTO').upper()}",
-        f"🗒️ [F]ormats Enabled:   {str(cli_dict.get('export_format') or 'MARKDOWN').upper()}",
-        "---",
-        f"📂 [E]xport Folder:     {resolved_display_path}",
-        f"   [I]mport Config:     Open folder containing singlefile-project-saver-config.json configuration.",
-        f"   [R]enew Token:       Regenerate randomized API access authorization key.",
-        "---"
-    ]
-    if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
-        startup_log.append(f"   [M]odules Panel:     Open dynamic pluggable extension and package manager dashboard.")
-
-    if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
-        for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
-            mod_obj = mod_ref["mock"] if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" else mod_ref
-            manifest = getattr(mod_obj, "MODULE_MANIFEST", {})
-            meta_menu = int(manifest.get("meta", {}).get("menu", 0))
-            
-            if not meta_menu:
-                continue
-                
-            display_m = manifest.get("display_menu", "")
-            display_d = manifest.get("display_desc", "")
-            
-            # Pure bitmask filtering rules pass
-            show_title = bool(meta_menu & 1)
-            show_desc = bool(meta_menu & 2)
-            
-            if show_title and show_desc:
-                startup_log.append(f"   {display_m:<21}{display_d}")
-            elif show_title:
-                startup_log.append(f"   {display_m}")
-            elif show_desc:
-                startup_log.append(f"   {display_d}")
-
-    startup_log.extend([
-        update_menu_string,
-        f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
-    ])
-    render_better_box(startup_log, title_str=f"Project Saver {app_version}", box_width_override=65)
 
 
 def log_debug(msg):
