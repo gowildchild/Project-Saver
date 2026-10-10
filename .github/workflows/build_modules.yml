@@ -118,13 +118,15 @@ jobs:
                     "pyinstaller",
                     "--onefile",
                     "--clean",
-                    "--exclude-module=reportlab",
-                    "--exclude-module=bs4",                    
                     f"--distpath={scratch_dir}",
                     f"--workpath={build_dir}",
                     f"--name={module_name}",
                     file_path
                 ]
+
+                if module_name.lower() != "archiver":
+                    cmd.insert(2, "--exclude-module=reportlab")
+                    cmd.insert(3, "--exclude-module=bs4")
                 
                 result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 if result.returncode != 0:
@@ -291,15 +293,15 @@ jobs:
 
                 cmd = [
                     "pyinstaller",
-                    "--onefile",
-                    "--clean",
-                    "--exclude-module=reportlab",
-                    "--exclude-module=bs4",                    
+                    "--onefile",                
                     f"--distpath={scratch_dir}",
                     f"--workpath={build_dir}",
                     f"--name={module_name}",
                     file_path
                 ]
+                if module_name.lower() != "archiver":
+                    cmd.insert(2, "--exclude-module=reportlab")
+                    cmd.insert(3, "--exclude-module=bs4")
                 
                 result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 if result.returncode != 0:
