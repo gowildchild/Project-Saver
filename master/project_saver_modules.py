@@ -98,12 +98,15 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                         MODULE_MANIFEST = {
                             "name": module_name.lower(),
                             "display_name": display_name,
+                            "display_menu": manifest_data.get("display_menu") or f"[{shortcut.upper()}]{module_name.capitalize()}",
+                            "display_desc": manifest_data.get("display_desc") or "",
                             "menu_shortcut": shortcut,
                             "autostart": autostart_val,
                             "meta": {
                                 "author": author_val,
                                 "version": version_val,
-                                "enabled": True
+                                "enabled": True,
+                                "menu": int(manifest_data.get("menu", 3))
                             }
                         }
                     
