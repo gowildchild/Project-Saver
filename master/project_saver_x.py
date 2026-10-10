@@ -12,13 +12,18 @@ def print_startup_banner(version_str):
     Natively renders a stylized high-visibility ASCII art title banner budgeted 
     to fit cleanly inside a standard 105-column terminal row configuration.
     """
-    banner = [
-        r"    ____                _           _       ____      by Gunther Voet        ",
-        r"   |  _ \ _ __ ___     (_) ___  ___| |_    / ___|  __ ___   _____ _ __       ",
-        r"   | |_) | '__/ _ \ _  | |/ _ \/ __| __|   \___ \ / _` \ \ / / _ \ '__|      ",
-        r"   |  __/| | | (_) | |_| |  __/ (__| |_     ___) | (_| |\ V /  __/ |         ",
-        r"   |_|   |_|  \___/ \___/ \___|\___|\__|   |____/ \__,_| \_/ \___|_|         "
-    ]
+    try:
+        if os.name == 'nt':
+            os.system('mode con: cols=105 lines=30')    
+        banner = [
+            r"    ____                _           _       ____      by Gunther Voet        ",
+            r"   |  _ \ _ __ ___     (_) ___  ___| |_    / ___|  __ ___   _____ _ __       ",
+            r"   | |_) | '__/ _ \ _  | |/ _ \/ __| __|   \___ \ / _` \ \ / / _ \ '__|      ",
+            r"   |  __/| | | (_) | |_| |  __/ (__| |_     ___) | (_| |\ V /  __/ |         ",
+            r"   |_|   |_|  \___/ \___/ \___|\___|\__|   |____/ \__,_| \_/ \___|_|         "
+        ]
+    except:
+        pass
     print("\n" + "═" * 94)
     for line in banner:
         print(line)
