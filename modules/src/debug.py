@@ -11,7 +11,7 @@ MODULE_MANIFEST = {
     "name": "debug",
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.26",
+        "version": "v0.0.30",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -38,9 +38,6 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     Fired instantly when the user hits 'M' -> selects 'debug', 
     or strikes the direct shortcut key 'D' inside the main menu.
     """
-    import project_saver_config
-    import project_saver_ui
-
     cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
     
     while True:
@@ -62,13 +59,28 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             "📊 LIVE SYSTEM PARAMETERS LOOKUP TREE:",
             f"   Active Application Version : {app_version}",
             f"   Core Daemon Server Port     : {port_num}",
-            f"   Security Token Credentials  : {project_saver_config.EXPECTED_TOKEN}",
+            f"   Security Token Credentials  : {module_library.get_setting('singlefile', 'token', 'N/A')}",
             "---",
             "GLOBAL SYSTEM_CONFIG DICTIONARY EXTRACTS:"
         ]
 
         # 4. Safely iterate and print every runtime variable key packed in the registry
-        config_items = sorted(project_saver_config.SYSTEM_CONFIG.items())
+        import configparser
+        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        if base_path.lower().endswith("modules"): base_path = os.path.dirname(base_path)
+        cfg_path = os.path.join(base_path, "project_saver.cfg")
+        
+        config = configparser.ConfigParser()
+        config_items = []
+        if os.path.exists(cfg_path):
+            try:
+                config.read(cfg_path, encoding="utf-8")
+                for section in config.sections():
+                    for k, v in config.items(section):
+                        config_items.append((f"{section.lower()}_{k.lower()}", v))
+            except:
+                pass
+        config_items = sorted(config_items)
         for idx, (key, val) in enumerate(config_items[:12]):
             truncated_val = str(val)[:45] + "..." if len(str(val)) > 45 else str(val)
             debug_tree.append(f"   [{idx:02d}] {key} = {truncated_val}")
@@ -81,9 +93,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
 
         # 5. Render the sandboxed overview via your native layout engine
-        project_saver_ui.render_better_box(
+        import project_saver_x
+        project_saver_x.render_better_box(
             debug_tree, 
-            title_str=f"Debug Diagnostic Module Context", 
+            title_str="Debug Diagnostic Module Context", 
             box_width_override=72
         )
 
