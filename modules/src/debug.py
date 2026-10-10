@@ -10,12 +10,12 @@ import module_library
 MODULE_MANIFEST = {
     "name": "debug",
     "display_name": "Diagnostics",
-    "display_menu": "🔬 [D]ebug Inspector",
+    "display_menu": "[D]ebug Inspector",
     "display_desc": "Open local Diagnostic Info",
     "menu_shortcut": "d",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.33",
+        "version": "v0.0.35",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -67,6 +67,31 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             "GLOBAL SYSTEM_CONFIG DICTIONARY EXTRACTS:"
         ]
 
+        import project_saver_modules
+        if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
+            for k, v in sorted(project_saver_modules.ACTIVE_MODULES.items()):
+                type_str = type(v).__name__
+                if isinstance(v, dict):
+                    # If it is a dictionary, extract its top-level tracking parameters cleanly
+                    inner_keys = list(v.keys())
+                    mod_type = v.get("type", "N/A")
+                    debug_tree.append(f"   [{k}] -> dict (type={mod_type}) Keys: {inner_keys}")
+                    if "MODULE_MANIFEST" in v:
+                        m_val = v["MODULE_MANIFEST"]
+                        m_type = type(m_val).__name__
+                        debug_tree.append(f"     └─ MODULE_MANIFEST is {m_type}")
+                else:
+                    # If it is a raw module object standard layer
+                    debug_tree.append(f"   [{k}] -> raw object ({type_str})")
+        else:
+            debug_tree.append("   (ACTIVE_MODULES pool is completely empty or inaccessible)")
+
+        debug_tree.extend([
+            "---",
+            "GLOBAL SYSTEM_CONFIG DICTIONARY EXTRACTS:"
+        ])
+
+        
         # 4. Safely iterate and print every runtime variable key packed in the registry
         import configparser
         base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
