@@ -95,7 +95,7 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                         print(f"CRITICAL: File skipped because os.path.not-exists.")
 
                     display_name = manifest_data.get("display_name") or f"{module_name.capitalize()} Binary Module"
-                    shortcut = manifest_data.get("menu_shortcut") or (module_name.lower() if module_name else "x")
+                    binary_shortcut = manifest_data.get("menu_shortcut", "").strip().lower() or (module_name.lower() if module_name else "x")
                     author_val = manifest_data.get("author") or "Gunther Voet"
                     version_val = manifest_data.get("version") or "v0.0.1"
                     autostart_val = manifest_data.get("autostart", False)
@@ -104,9 +104,9 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                         MODULE_MANIFEST = {
                             "name": module_name.lower(),
                             "display_name": display_name,
-                            "display_menu": manifest_data.get("display_menu") or f"[{shortcut.upper()}] {module_name.capitalize()}",
+                            "display_menu": manifest_data.get("display_menu") or f"[{binary_shortcut.upper()}] {module_name.capitalize()}",
                             "display_desc": manifest_data.get("display_desc") or "",
-                            "menu_shortcut": shortcut,
+                            "menu_shortcut": binary_shortcut,
                             "autostart": autostart_val,
                             "display_multi": manifest_data.get("display_multi", []),
                             "defaults": manifest_data.get("defaults", {}),
@@ -124,7 +124,8 @@ def bootstrap_and_discover_modules(cli_dict, app_version, port_num, server_ref=N
                         "path": module_path,
                         "MODULE_MANIFEST": MockBinaryModule.MODULE_MANIFEST
                     }
-                    SHORTCUT_MAP[shortcut.lower()] = binary_key
+                    if binary_shortcut:
+                        SHORTCUT_MAP[binary_shortcut] = binary_key
             except Exception as e:
                 print(f"[-] Failed to index module [{module_name}]: {e}")
 
