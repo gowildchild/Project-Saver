@@ -15,7 +15,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "x",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.24",
+        "version": "v0.0.26",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -62,11 +62,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         if shortcut_key:
             detected_modules_pool[active_name] = shortcut_key
 
-    current_category = project_saver_config.SYSTEM_CONFIG.get("menu_default_active_category", "utilities")
+    current_category = module_library.get_setting("menu", "default_active_category", "utilities")
 
     while True:
-        # 1. Clear terminal screen platform-natively
-        os.system('cls' if os.name == 'nt' else 'clear')
+        module_library.clear_screen_with_trace(MODULE_MANIFEST, __file__)
 
         # 2. Build the customisable multi-layered sub-menu dashboard rows
         navigator_panel = [
@@ -154,20 +153,4 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         time.sleep(0.05)
 
 if __name__ == "__main__":
-    import sys
-    print("\n[+] Project Saver Extension.")
-    
-    try:
-        import project_saver_config
-        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-        cfg_profile = os.path.join(base_path, "project_saver.cfg")
-        if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
-            cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
-            
-        if os.path.exists(cfg_profile):
-            project_saver_config.load_config_file(cfg_profile)
-    except:
-        pass
-
-    execute_interactive_menu(cli_dict={}, app_version="v0.0.23", port_num=19763)
-    sys.exit(0)
+    module_library.run_standalone_safely(MODULE_MANIFEST, execute_interactive_menu)
