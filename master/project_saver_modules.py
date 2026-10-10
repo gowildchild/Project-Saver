@@ -189,12 +189,8 @@ def handle_module_cli_commands(module_args_list, cli_dict, app_version, port_num
             print("   No active or enabled MODULES on disk.")
         for name, mod in ACTIVE_MODULES.items():
             manifest = mod.get("MODULE_MANIFEST", {}) if isinstance(mod, dict) else {}
-            if isinstance(mod, dict):
-                manifest = mod.get("MODULE_MANIFEST", {})
-            else:
-                manifest = getattr(mod, "MODULE_MANIFEST", {})
-                
             meta = manifest.get("meta", {}) if isinstance(manifest, dict) else {}
+            
             print(f" -> [{name.upper()}] - {manifest.get('display_name')}")
             print(f"    Author : {meta.get('author')} | Version: {meta.get('version')}")
             print(f"    Shortcut: [{manifest.get('menu_shortcut', 'N/A').upper()}] | Autostart: {manifest.get('autostart')}")
