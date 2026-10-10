@@ -191,9 +191,11 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
 
                     verification_status += ", Performing safe hot-swap update..."
                     print(f"{verification_status}")
+                    if current_exe_path.lower().endswith("python.exe") or not getattr(sys, 'frozen', False):
+                        current_exe_path = os.path.join(install_dir, "project_saver.exe")
                     os.rename(current_exe_path, old_exe_path)
                     os.rename(temp_download_path, current_exe_path)
-                    
+                    time.sleep(3)
                     cleanup_cmd = f"timeout /t 2 >nul && del \"{old_exe_path}\""
                     subprocess.Popen(cleanup_cmd, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
                 else:
