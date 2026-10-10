@@ -79,7 +79,8 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
     import module_library
     cli_dict, _, _ = module_library.bootstrap_session(cli_dict, "v0.0.1", 19763)
     
-    status_message = "Awaiting input command option..."
+    status_message = "Awaiting Input..."
+    status_prompt  = "Awaiting Input..."
     
     while True:
         # 1. Clear terminal screen platform-natively using your shared tracking routine
@@ -108,6 +109,9 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             if show_value and get_live_val_callback:
                 live_val = get_live_val_callback(option.get("callback_key", ""), cli_dict)
 
+            if not live_val and show_value:
+                live_val = manifest.get("defaults", {}).get(option.get("callback_key", ""), "")
+            
             if show_value and live_val:
                 description_content = f"{display_d} -> ({live_val})"
             else:
@@ -129,7 +133,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
         render_better_box(panel_content, title_str=box_title, box_width_override=74)
 
         # 5. Non-blocking keyboard hardware state monitoring
-        sys.stdout.write(f"\x1b[2K\r[{manifest['name'].capitalize()}] Ready for key: ")
+        sys.stdout.write(f"\x1b[2K\r[{manifest['name'].capitalize()}] Awaiting Input: ")
         sys.stdout.flush()
 
         user_input = module_library.get_keystroke()
@@ -137,15 +141,16 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             time.sleep(0.05)
             continue        
         
-        # Core parent exit breakout row condition check
-        if user_input == '-':
+        if user_input in ['-', ' ', '\r', '\n', 'enter']:
             break
 
         # 6. Hand off key captures directly to the module interior handler to execute routines
         if handle_key_callback:
-            status_message = handle_key_callback(user_input, cli_dict, manifest)
-            if status_message == "BREAK_LOOP":
+            callback_response = handle_key_callback(user_input, cli_dict, manifest)
+            if callback_response == "BREAK_LOOP":
                 break
+            elif callback_response:
+                status_message = callback_response
 
         time.sleep(0.05)
 
@@ -186,7 +191,7 @@ def handle_unified_keyboard_routing(user_input, cli_dict, manifest, get_live_val
             elif sys.platform == 'darwin': subprocess.Popen(['open', target_path])
             else: subprocess.Popen(['xdg-open', target_path])
             time.sleep(1.2)
-            return "Awaiting input command option..."
+            return f"{status_prompt}"
 
         elif action_type == "forward_upstream":
             print(f"\n[*] Forwarding hotkey '{user_input.upper()}' upstream to parent monitor engine context...")
@@ -200,16 +205,16 @@ def handle_unified_keyboard_routing(user_input, cli_dict, manifest, get_live_val
                 except Exception as route_err:
                     print(f"[-] Upstream key injection routing failed: {route_err}")
                     time.sleep(1.5)
-            return "Awaiting input command option..."
+            return f"{status_prompt}"
 
     # 3. Process standard parent dashboard global fallback keys safely
     if user_input in ['i', 'r']:
         print(f"\n[*] Forwarding global override key '{user_input.upper()}' upstream...")
         time.sleep(0.2)
-        return "Awaiting input command option..."
+        return f"{status_prompt}"
 
     # 4. Offload custom logic execution threads straight to the localized module handler
     if local_custom_callback:
         return local_custom_callback(user_input, cli_dict, manifest)
 
-    return "Awaiting input command option..."
+    return f"{status_prompt}"
