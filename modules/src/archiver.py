@@ -8,27 +8,53 @@ import time
 import json
 import module_library
 
-# ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
     "name": "archiver",
     "display_name": "Site & Code Archival",
-    "display_menu": "[A]rchiver Engine",
+    "display_menu": "[A]rchive Engine",
+    "display_desc": "Save Projects Through SingleFile",
     "menu_shortcut": "a",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.30",
+        "version": "v0.0.32",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
-        "available": True          # Sets availability for cloud installation/use
+        "available": True,         # Sets availability for cloud installation/use
+        "menu": 3
     },
     "autostart": True,             # AUTO-STARTS: Instantly hooks listening loops on boot!
+    "display_multi": [
+        {
+            "callback_key": "profile_mode",
+            "menu_shortcut": "p",
+            "display_menu": "⚙️ [P]rofile Mode:",
+            "display_desc": "AUTO / CODE / WEB Configuration Profile Strategy",
+            "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
+        },
+        {
+            "callback_key": "formats_enabled",
+            "menu_shortcut": "f",
+            "display_menu": "🗒️ [F]ormats Enabled:",
+            "display_desc": "MARKDOWN / HTML / PDF Asset Output Generation",
+            "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
+        },
+        {
+            "callback_key": "export_folder",
+            "menu_shortcut": "e",
+            "display_menu": "📂 [E]xport Folder:",
+            "display_desc": "Target directory folder location layout path",
+            "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
+        }
+    ],
     "defaults": {
+        "profile_mode": "AUTO",
+        "formats_enabled": "MARKDOWN",
+        "export_folder": r"\\testshare\FWC_science\WEB Vault",
         "autosave_captured_json": "no",
         "verbose_logging": "yes"
     }
 }
 
-# Pluggable volatile cache matrix to monitor server packet streams inside the module workspace
 LAST_CAPTURED_PACKET_INFO = {
     "timestamp": "No packets intercepted yet.",
     "target_url": "N/A",
@@ -38,13 +64,8 @@ LAST_CAPTURED_PACKET_INFO = {
 def register_module_callbacks(server_reference=None):
     """
     Executed automatically on boot because autostart is True.
-    Allows the archiver to register a silent packet interceptor callback
-    on the core HTTP listening server without taking over execution tasks yet.
     """
     global LAST_CAPTURED_PACKET_INFO
-    
-    # This hook is a future-proof placeholder. When the server parses an inbound SingleFile
-    # transmission, it will dynamically broadcast the headers data to this function.
     pass
 
 def process_intercepted_payload_broadcast(url, html_bytes, headers_dict):
@@ -57,6 +78,24 @@ def process_intercepted_payload_broadcast(url, html_bytes, headers_dict):
     LAST_CAPTURED_PACKET_INFO["target_url"] = str(url)
     LAST_CAPTURED_PACKET_INFO["content_length"] = len(html_bytes) if html_bytes else 0
 
+def get_live_display_value(callback_key, cli_dict=None):
+    """
+    Acts as the module-level configuration translation gateway.
+    Resolves active parameters natively inside the module container boundaries.
+    """
+    import os
+    if not cli_dict:
+        cli_dict = {}
+        
+    if callback_key == "export_folder":
+        raw_folder = cli_dict.get('export_folder') or MODULE_MANIFEST["defaults"]["export_folder"]
+        return os.path.abspath(raw_folder) if raw_folder else ""
+    elif callback_key == "profile_mode":
+        return str(cli_dict.get('export_type') or MODULE_MANIFEST["defaults"]["profile_mode"]).upper()
+    elif callback_key == "formats_enabled":
+        return str(cli_dict.get('export_format') or MODULE_MANIFEST["defaults"]["formats_enabled"]).upper()
+    return ""
+
 def execute_interactive_menu(cli_dict, app_version, port_num):
     """
     Fired instantly when the user hits 'M' -> selects 'archiver',
@@ -66,10 +105,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     
     cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
     while True:
-        # 1. Clear terminal screen platform-natively
-        module_library.clear_screen_with_trace(MODULE_MANIFEST)
+        # 1. Clear terminal screen natively with correct two-parameter scope tracking
+        module_library.clear_screen_with_trace(MODULE_MANIFEST, __file__)
 
-        # 2. Build the sandboxed dashboard view exposing core options wrapped inside the module
+        # 2. Build the dynamic sandboxed dashboard panel view content array
         archiver_panel = [
             f"   Active Module Name:  {MODULE_MANIFEST['display_name']}",
             f"   Module Status:       SINGLEFILE MONITORING ACTIVE (AUTOSTART)",
@@ -79,14 +118,46 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             f"   Intercepted Target URL:   {LAST_CAPTURED_PACKET_INFO['target_url']}",
             f"   Intercepted Bytes Length: {LAST_CAPTURED_PACKET_INFO['content_length']} bytes",
             "---",
-            "📥 WRAPPED CORE CONTEXT OPTIONS (EXPOSED VIA HOOKS):",
-            f"   ⚙️ [P]rofile Mode:      {str(cli_dict.get('export_type') or 'AUTO').upper()}",
-            f"   🗒️ [F]ormats Enabled:   {str(cli_dict.get('export_format') or 'MARKDOWN').upper()}",
-            f"   📂 [E]xport Folder:     {os.path.abspath(cli_dict.get('export_folder') or '')}",
-            "       [I]mport Config Folder | [R]enew API Token Credentials Key",
-            "---",
-            "   [-] Press [Minus Key] to drop back out to Main Menu..."
+            "📥 WRAPPED CORE CONTEXT OPTIONS (EXPOSED VIA HOOKS):"
         ]
+
+        # Natively map the display entries using your strict display_multi bitmask rules
+        for option in MODULE_MANIFEST.get("display_multi", []):
+            bits = int(option.get("mask_bits", 0))
+            if not bits:
+                continue
+                
+            show_title = bool(bits & 1)
+            show_desc  = bool(bits & 2)
+            show_value = bool(bits & 4)
+            
+            display_m = option.get("display_menu", "")
+            display_d = option.get("display_desc", "")
+            
+            fallback_val = MODULE_MANIFEST.get("defaults", {}).get(option.get("callback_key", ""), "")
+            
+            live_val = ""
+            if show_value:
+                live_val = get_live_display_value(option.get("callback_key", ""), cli_dict)
+                if not live_val:
+                    live_val = fallback_val
+
+            if show_value and live_val:
+                parenthesis_part = f" ({fallback_val})" if fallback_val and live_val != fallback_val else ""
+                description_content = f"{live_val}{parenthesis_part}"
+            else:
+                description_content = display_d
+
+            if show_title and show_desc:
+                archiver_panel.append(f"   {display_m:<21}{description_content}")
+            elif show_title:
+                archiver_panel.append(f"   {display_m}")
+            elif show_desc:
+                archiver_panel.append(f"   {description_content}")
+
+        archiver_panel.append("       [I]mport Config Folder | [R]enew API Token Credentials Key")
+        archiver_panel.append("---")
+        archiver_panel.append("   [-] Press [Minus Key] to drop back out to Main Menu...")
 
         # 3. Render via your native box utility layout engine
         import project_saver_x
@@ -127,14 +198,17 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                 except Exception as route_err:
                     print(f"[-] Upstream key injection routing failed: {route_err}")
                     time.sleep(1.5)
-        elif user_input == 'e':
-            export_path = os.path.abspath(cli_dict.get('export_folder') or "")
+       elif user_input == 'e':
+            export_path = get_live_display_value("export_folder", cli_dict)
             print(f"\n[E] Export folder opened: {export_path}")
             if not os.path.exists(export_path):
                 os.makedirs(export_path, exist_ok=True)
-            if os.name == 'nt': subprocess.Popen(f'explorer.exe "{export_path}"')
-            elif sys.platform == 'darwin': subprocess.Popen(['open', export_path])
-            else: subprocess.Popen(['xdg-open', export_path])
+            if os.name == 'nt': 
+                subprocess.Popen(f'explorer.exe "{export_path}"')
+            elif sys.platform == 'darwin': 
+                subprocess.Popen(['open', export_path])
+            else: 
+                subprocess.Popen(['xdg-open', export_path])
             time.sleep(1.2)
         
         time.sleep(0.05)
