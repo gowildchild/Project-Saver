@@ -397,6 +397,42 @@ def render_better_box(raw_lines_list, title_str="Project Saver", box_width_overr
     # Forward pass to the unified engine with explicit defaults
     render_bitmask_box(raw_lines_list, title_left=title_str, box_width_override=box_width_override)
 
+COLOR_TABLE_16 = {
+    "0": "000000",  # 0: Black
+    "1": "0000AA",  # 1: Blue
+    "2": "00AA00",  # 2: Green
+    "3": "00AAAA",  # 3: Cyan
+    "4": "AA0000",  # 4: Red
+    "5": "AA00AA",  # 5: Magenta
+    "6": "AA5500",  # 6: Brown / Yellow Low
+    "7": "AAAAAA",  # 7: Light Gray
+    "8": "555555",  # 8: Dark Gray / Bright Black
+    "9": "5555FF",  # 9: Bright Blue
+    "a": "55FF55",  # A: Bright Green
+    "b": "55FFFF",  # B: Bright Cyan
+    "c": "FF5555",  # C: Bright Red
+    "d": "FFFF55",  # D: Bright Magenta
+    "e": "FFFF55",  # E: Bright Yellow (Ceefax Default)
+    "f": "FFFFFF"   # F: Bright White
+}
+
+def get_rgb_from_hex_code(color_code_str: str) -> tuple:
+    """
+    Parses a 2-character hexadecimal color string token (e.g., 'E0') 
+    and returns a tuple holding (foreground_rgb_hex, background_rgb_hex).
+    """
+    clean_code = str(color_code_str).strip().lower()
+    if len(clean_code) != 2:
+        return ("", "") # Fallback to standard theme defaults if malformed
+        
+    fg_char = clean_hex_char = clean_code[0]
+    bg_char = clean_hex_char = clean_code[1]
+    
+    fg_rgb = COLOR_TABLE_16.get(fg_char, "FFFFFF")
+    bg_rgb = COLOR_TABLE_16.get(bg_char, "000000")
+    
+    return fg_rgb, bg_rgb
+
 def draw_fixed_menu_bar(app_version, port_num, active_module="Main Daemon"):
 # ######## 8 Lines of Code After for Navigation Context ########
     """
