@@ -1,5 +1,5 @@
 {
-  "build_timestamp": "2026-10-10 06:00:16 UTC",
+  "build_timestamp": "2026-10-10 06:02:57 UTC",
   "platforms": {
     "windows": {
       "archiver": {
@@ -9,16 +9,7 @@
         "requires_core": "v0.0.79",
         "autostart": true,
         "binary_filename": "archiver.exe",
-        "sha256": "fe40431ddeb1c89380ab514e53795d2b5efe683dfd23112e59c92c7999d39e17"
-      },
-      "custom": {
-        "display_name": "User Custom Module",
-        "menu_shortcut": "c",
-        "version": "v0.0.15",
-        "requires_core": "v0.0.76",
-        "autostart": false,
-        "binary_filename": "custom.exe",
-        "sha256": "0de97d94795c9364821b409c0d1ecc54646a0cb60eb25e6db65df0a95a416854"
+        "sha256": "552d8089165d48f209259681729b07de8dbd0ff748895cfacceaeae71383a638"
       }
     },
     "linux": {
@@ -29,16 +20,7 @@
         "requires_core": "v0.0.79",
         "autostart": true,
         "binary_filename": "archiver",
-        "sha256": "e92a0f659cc30fefe907b9141796a557fc856a1e36e7b6cc03bab4b497b0039c"
-      },
-      "custom": {
-        "display_name": "User Custom Module",
-        "menu_shortcut": "c",
-        "version": "v0.0.15",
-        "requires_core": "v0.0.76",
-        "autostart": false,
-        "binary_filename": "custom",
-        "sha256": "3fb76fd19a43c446917f33d99a0909196cd46e79859b9b3087e6c43cbe08819f"
+        "sha256": "632f927facb4ffa2e33a56f3ed5bd91fa3f80a411f1122d4ae4938179fd98717"
       }
     }
   }
