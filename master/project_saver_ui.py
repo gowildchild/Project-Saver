@@ -59,9 +59,9 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
         "---"
     ]
 
-    if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
-        for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
-            if isinstance(mod_ref, dict):
+        if hasattr(project_saver_modules, 'ACTIVE_MODULES') and project_saver_modules.ACTIVE_MODULES:
+            for mod_key, mod_ref in sorted(project_saver_modules.ACTIVE_MODULES.items()):
+                if isinstance(mod_ref, dict):
                     manifest = mod_ref.get("MODULE MANIFEST", {})
                     mod_obj = mod_ref.get("instance") if mod_ref.get("type") == "script" else None
                 else:
@@ -123,11 +123,12 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     startup_log.append(f"  {display_m}")
                 elif show_desc:
                     startup_log.append(f"  {display_d}")
-
-    startup_log.extend([
-        update_menu_string,
-        f"❌ [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
-    ])
+# ######## 8 Lines of Code After for Navigation Context ########
+        startup_log.extend([
+            "",
+            update_menu_string,
+            " [Q]uit Application:  Requires 3 consecutive taps with the shoes to escape Kansas."
+        ])
     render_better_box(startup_log, title_str=f"Project Saver {app_version}", box_width_override=65)
 
 def log_debug(msg):
