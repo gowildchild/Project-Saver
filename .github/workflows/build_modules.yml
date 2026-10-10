@@ -119,9 +119,7 @@ jobs:
                 cmd = [
                     "pyinstaller",
                     "--onefile",
-                    f"--paths={source_dir}",
-                    "--hidden-import=project_saver_config",
-                    "--hidden-import=project_saver_ui",                    
+                    f"--paths={source_dir}",                  
                     f"--distpath={scratch_dir}",
                     f"--workpath={build_dir}",
                     f"--name={module_name}",
@@ -301,9 +299,7 @@ jobs:
                 cmd = [
                     "pyinstaller",
                     "--onefile",
-                    f"--paths={source_dir}",
-                    "--hidden-import=project_saver_config",
-                    "--hidden-import=project_saver_ui",                    
+                    f"--paths={source_dir}",                
                     f"--distpath={scratch_dir}",
                     f"--workpath={build_dir}",
                     f"--name={module_name}",
