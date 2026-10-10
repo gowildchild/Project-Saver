@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.82-lima"
+VERSION = "v0.0.82-mama"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -81,9 +81,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     user_triggered_key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
                     while msvcrt.kbhit():
                         msvcrt.getch()
-                else:
-                    pass
-
             else:
                 import select
                 ready, _, _ = select.select([sys.stdin], [], [], 0.05)
@@ -242,7 +239,7 @@ if __name__ == "__main__":
 	
     import project_saver_x
     project_saver_x.print_startup_banner(VERSION)
-    time.sleep(1.5)
+    time.sleep(1.2)
 
     parser = argparse.ArgumentParser(
         description="Project Saver Server.",
