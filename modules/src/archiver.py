@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import json
+import module_library
 
 # ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
@@ -15,7 +16,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "a",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.10",
+        "version": "v0.0.21",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -63,7 +64,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     """
     import project_saver_config
     import project_saver_ui
-
+    cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
     while True:
         # 1. Clear terminal screen platform-natively
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -95,24 +96,10 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         )
 
         # 4. Non-blocking keyboard state monitoring
-        sys.stdout.write("\x1b[2K\r[📦 Archiver] Ready for key: ")
+        sys.stdout.write("\x1b[2K\r[Archiver] Ready for key: ")
         sys.stdout.flush()
 
-        user_input = ""
-        if os.name == 'nt':
-            import msvcrt
-            if msvcrt.kbhit():
-                user_input = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-            else:
-                time.sleep(0.05)
-                continue
-        else:
-            import select
-            ready, _, _ = select.select([sys.stdin], [], [], 0.1)
-            if not ready:
-                continue
-            user_input = sys.stdin.readline().strip().lower()
-
+        user_input = module_library.get_keystroke()
         if user_input == "":
             time.sleep(0.05)
             continue        
@@ -141,3 +128,17 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                     time.sleep(1.5)
 
         time.sleep(0.05)
+        
+if __name__ == "__main__":
+    import project_saver_config
+    base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+    cfg_profile = os.path.join(base_path, "project_saver.cfg")
+    if not os.path.exists(cfg_profile) and base_path.lower().endswith("modules"):
+        cfg_profile = os.path.join(os.path.dirname(base_path), "project_saver.cfg")
+        
+    if os.path.exists(cfg_profile):
+        project_saver_config.load_config_file(cfg_profile)
+        
+    fallback_cli = {"export_folder": "", "export_format": "markdown", "export_type": "auto"}
+    run_version = MODULE_MANIFEST.get("meta", {}).get("version", "v0.0.1")
+    execute_interactive_menu(fallback_cli, run_version, 19763)
