@@ -61,12 +61,11 @@ def clear_screen_with_trace(manifest, execution_context_file=None):
     import os
     import sys
     os.system('cls' if os.name == 'nt' else 'clear')
-        
-    track_path = execution_context_file if execution_context_file else __file__
-    current_path = sys.executable if getattr(sys, 'frozen', False) else track_path
-    meta = manifest.get("meta", {})
-    print(f"[MODULE]: {manifest.get('display_name', 'Unknown')} ({meta.get('version', 'v0.0.1')}) by {meta.get('author', 'Gunther Voet')}")
-    print(f"[PATH]: {os.path.abspath(current_path)}\n")
+    #track_path = execution_context_file if execution_context_file else __file__
+    #current_path = sys.executable if getattr(sys, 'frozen', False) else track_path
+    #meta = manifest.get("meta", {})
+    #print(f"[MODULE]: {manifest.get('display_name', 'Unknown')} ({meta.get('version', 'v0.0.1')}) by {meta.get('author', 'Gunther Voet')}")
+    #print(f"[PATH]: {os.path.abspath(current_path)}\n")
 
 def get_setting(module_name, key, default_value=""):
     """Safely extracts live config parameters out of master configuration memory frames."""
