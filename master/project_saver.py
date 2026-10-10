@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.82-uniform"
+VERSION = "v0.0.82-victor"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -201,12 +201,22 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)			
 
             elif user_triggered_key == 'm':
-                manager_mod = project_saver_modules.ACTIVE_MODULES.get("manager")
-                if manager_mod and hasattr(manager_mod, "execute_interactive_menu"):
+                manager_entry = project_saver_modules.ACTIVE_MODULES.get("manager")
+                mod_obj = None
+                if isinstance(manager_entry, dict):
+                    mod_obj = manager_entry.get("instance") if manager_entry.get("type") == "script" else manager_entry
+                else:
+                    mod_obj = manager_entry
+
+                if mod_obj and (hasattr(mod_obj, "execute_interactive_menu") or (isinstance(manager_entry, dict) and manager_entry.get("type") == "binary")):
                     print("\n[*] Initializing Pluggable Package Manager sub-workspace panel...")
                     time.sleep(0.3)
                     try:
-                        manager_mod.execute_interactive_menu(cli_dict, VERSION, PORT)
+                        if isinstance(manager_entry, dict) and manager_entry.get("type") == "binary":
+                            import subprocess
+                            subprocess.run([manager_entry["path"]], check=True)
+                        else:
+                            mod_obj.execute_interactive_menu(cli_dict, VERSION, PORT)
                     except Exception as err:
                         print(f"\n[-] Execution failed inside package manager framework: {err}")
                         time.sleep(2)
