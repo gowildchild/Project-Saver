@@ -105,9 +105,9 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     else:
                         description_content = display_d
                     if show_title_main and show_desc_main:
-                        startup_log.append(f"    {display_m:<28} {description_content}")
+                        startup_log.append(f"   {display_m:<28} {description_content}")
                     elif show_title_main:
-                        startup_log.append(f"    {display_m}")
+                        startup_log.append(f"   {display_m}")
                     modules_added = True
             
             # CASE 2: Process Clean Backward-Compatible Single Menu Structures (manager, debug, menu, custom, shutdown)
@@ -122,10 +122,10 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                 display_d = manifest.get("display_desc", "").strip()
                 
                 # Filter away double bracket visual layout duplicates cleanly
-                if display_m.startswith("[") and not display_m.startswith("   ["):
-                    display_m = f"   {display_m}"
-                elif not display_m.startswith("   [") and not display_m.startswith("["):
-                    display_m = f"   [{manifest.get('menu_shortcut', 'X').upper()}] {display_m}"
+                if display_m.startswith("[") and not display_m.startswith("  ["):
+                    display_m = f"  {display_m}"
+                elif not display_m.startswith("  [") and not display_m.startswith("["):
+                    display_m = f"  [{manifest.get('menu_shortcut', 'X').upper()}] {display_m}"
 
                 if display_m:
                     if show_title and show_desc and display_d:
@@ -133,7 +133,7 @@ def refresh_dashboard_view(cli_dict, app_version, port_num):
                     elif show_title:
                         startup_log.append(f" {display_m}")
                     elif show_desc and display_d:
-                        startup_log.append(f"    {display_d}")
+                        startup_log.append(f"   {display_d}")
                     modules_added = True
 
     if modules_added and "---" not in startup_log[-1]:
