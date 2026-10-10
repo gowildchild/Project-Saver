@@ -54,6 +54,8 @@ jobs:
 
     - name: Generating Pyinstaller Windows Compilation
       shell: bash
+      env:
+        PYTHONPATH: ${{ github.workspace }}/modules/src
       run: |
         python3 << 'EOF'
         import os
@@ -232,6 +234,8 @@ jobs:
         pip install pyinstaller 
 
     - name: Generating Pyinstaller Linux Compilation
+      env:
+        PYTHONPATH: ${{ github.workspace }}/modules/src    
       run: |
         python3 << 'EOF'
         import os
