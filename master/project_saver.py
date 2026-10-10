@@ -81,7 +81,10 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     user_triggered_key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
                     while msvcrt.kbhit():
                         msvcrt.getch()
-            else:
+                else:
+				    pass
+
+			else:
                 import select
                 ready, _, _ = select.select([sys.stdin], [], [], 0.05)
                 if ready:
@@ -96,6 +99,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             if routed:
                 user_triggered_key = ""
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
+                continue
                 
             if user_triggered_key == 'e':
                 # * [FIXED] Converted to underscore lookup to read configuration folder path
