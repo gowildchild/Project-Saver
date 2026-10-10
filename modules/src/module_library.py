@@ -54,3 +54,22 @@ def force_foreground():
             os.system("osascript -e 'tell application \"Terminal\" to activate'")
     except:
         pass
+
+def clear_screen_with_trace(manifest):
+    """Clears terminal natively and prints standardized loading path trace data."""
+    import os
+    import sys
+    os.system('cls' if os.name == 'nt' else 'clear')
+    
+    current_path = sys.executable if getattr(sys, 'frozen', False) else __file__
+    print(f"[MODULE]: {manifest.get('display_name')} ({manifest.get('meta', {}).get('version', 'v0.0.1')}) by {manifest.get('meta', {}).get('author', 'Unknown')}")
+    print(f"[PATH]: {os.path.abspath(current_path)}\n")
+
+def get_setting(module_name, key, default_value=""):
+    """Safely extracts live config parameters out of master configuration memory frames."""
+    try:
+        import project_saver_config
+        lookup_key = f"{module_name.lower()}_{key.lower()}"
+        return project_saver_config.SYSTEM_CONFIG.get(lookup_key, default_value)
+    except:
+        return default_value
