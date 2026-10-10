@@ -71,6 +71,7 @@ jobs:
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest().lower()
 
+        workspace_root = os.environ.get("GITHUB_WORKSPACE", os.getcwd())
         source_dir = os.path.abspath(os.path.join(workspace_root, "modules", "src"))
         output_dir = os.path.abspath(os.path.join(workspace_root, "modules"))
         scratch_dir = os.path.abspath(os.path.join(workspace_root, "scratch_compile_win"))
@@ -248,6 +249,7 @@ jobs:
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest().lower()
 
+        workspace_root = os.environ.get("GITHUB_WORKSPACE", os.getcwd())
         source_dir = os.path.abspath(os.path.join(workspace_root, "modules", "src"))
         linux_out_dir = os.path.abspath(os.path.join(workspace_root, "modules_linux_dist"))
         scratch_dir = os.path.abspath(os.path.join(workspace_root, "scratch_compile_linux"))
