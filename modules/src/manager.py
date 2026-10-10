@@ -19,7 +19,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.34",
+        "version": "v0.0.35",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -119,12 +119,9 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
                     version_str = manifest_block.get("meta", {}).get("version", version_str)
                 else:
                     mod_obj = mod_ref.get("mock") if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" else mod_ref
-                    manifest_block = getattr(mod_obj, "MODULE_MANIFEST", {})
-                    if isinstance(manifest_block, dict):
-                        version_str = manifest_block.get("meta", {}).get("version", version_str)
-                
-                if not version_str and isinstance(mod_ref, dict):
-                    version_str = mod_ref.get("version", "v0.0.0")
+                manifest_block = getattr(mod_ref, "MODULE_MANIFEST", {})
+                if isinstance(manifest_block, dict):
+                    version_str = manifest_block.get("meta", {}).get("version", "v0.0.0")
 
             mod_size_str = ""
             if m in installed_extensions:
