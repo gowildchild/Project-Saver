@@ -56,7 +56,7 @@ def force_foreground():
     except:
         pass
 
-def clear_screen_with_trace(manifest):
+def clear_screen_with_trace(manifest, execution_context_file=None):
     """Clears terminal natively and prints standardized loading path trace data."""
     import os
     import sys
