@@ -13,15 +13,44 @@ MODULE_MANIFEST = {
     "name": "shutdown",
     "display_name": "Shutdown Controller",
     "display_menu": "S[H]utdown Controller",
+    "display_desc": "Manage machine shutdown state",
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
         "version": "v0.0.30",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
-        "available": True          # Sets availability for cloud installation/use
+        "available": True,         # Sets availability for cloud installation/use
+        "menu": 3
     },
     "autostart": False,            # Manually loaded via workspace hotkey selections
+    "display_multi": [
+        {
+            "callback_key": "cancel_shutdown",
+            "menu_shortcut": "c",
+            "display_menu": "   [C] Cancel:",
+            "display_desc": "Aborts any currently active scheduled countdowns.",
+            "mask_bits": 3,
+            "main_menu": False     # Hides this individual sub-command from cluttering the master root menu!
+        },
+        {
+            "callback_key": "timed_shutdown",
+            "menu_shortcut": "t",
+            "display_menu": "   [T] Timed:",
+            "display_desc": "Schedules machine shutdown sequence in minutes.",
+            "mask_bits": 5,        # Bit 1 (Title) + Bit 4 (Live Value)
+            "main_menu": False     # Keeps this option internal to the local power panel!
+        },
+        {
+            "callback_key": "instant_shutdown",
+            "menu_shortcut": "s",
+            "menu_toggles": 3,
+            "display_menu": "   [S] Shutdown Now:",
+            "display_desc": "Triggers instant system power-down routine.",
+            "mask_bits": 5,        # Bit 1 (Title) + Bit 4 (Live value tracking progress counts)
+            "main_menu": False     # Isolated strictly inside the sub-menu environment!
+        }
+    ],
     "defaults": {
         "default_timer_minutes": "5",
         "safety_trigger_count": "3",
@@ -29,113 +58,86 @@ MODULE_MANIFEST = {
     }
 }
 
+STRIKE_STATE = {"current_count": 0}
+
 def register_module_callbacks(server_reference=None):
-    """Hooks into daemon server traffic if autostart is True."""
     pass
 
-def execute_interactive_menu(cli_dict, app_version, port_num):
+# --- TARGET CODE MODIFICATION BLOCK ---
+def get_live_display_value(callback_key, cli_dict=None):
     """
-    Fired instantly when the user hits 'M' -> selects 'shutdown', 
-    or strikes the direct shortcut key 'H' inside the main menu.
+    Resolves active local runtime parameters dynamically on every frame pass, 
+    feeding live string counters directly into the centralized workspace loop.
     """
-    cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
-    is_windows = os.name == 'nt'
-    safety_counter = 0
-    status_message = "Awaiting input command option..."
-
-    while True:
-        # 1. Clear terminal screen platform-natively
-        module_library.clear_screen_with_trace(MODULE_MANIFEST, __file__)
-
-        # 2. Dynamically extract live config parameters with safe fallbacks
-        timer_min_str = module_library.get_setting("shutdown", "default_timer_minutes", "5")
-        safety_max_str = module_library.get_setting("shutdown", "safety_trigger_count", "3")
+    if callback_key == "timed_shutdown":
+        timer_min = module_library.get_setting("shutdown", "default_timer_minutes", "5")
+        return f"{timer_min} minutes"
         
-        try: timer_minutes = int(timer_min_str)
-        except: timer_minutes = 5
-        
-        try: safety_max = int(safety_max_str)
-        except: safety_max = 3
-
-        # 3. Build the clean terminal panel UI overview
-        shutdown_panel = [
-            f"   Active Module Name:  {MODULE_MANIFEST['display_name']}",
-            f"   Module Author:       {MODULE_MANIFEST['meta']['author']} ({MODULE_MANIFEST['meta']['version']})",
-            "---",
-            f"   [C] Cancel:          Aborts any currently active scheduled countdowns.",
-            f"   [T] Timed:           Schedules machine shutdown sequence in {timer_minutes} minutes.",
-            f"   [S] Shutdown Now:    Triggers instant system power-down routine.",
-            f"                        (Requires {safety_max} presses. Current progress: [{safety_counter}/{safety_max}])",
-            "---",
-            f"   Status Indicator:    {status_message}",
-            "---",
-            "   [-] Press [Minus Key] to drop back out to Main Menu..."
-        ]
-
-        import project_saver_x
-        project_saver_x.render_better_box(
-            shutdown_panel, 
-            title_str="Shutdown Controller", 
-            box_width_override=72
-        )
-
-        # 5. Non-blocking keyboard state capture
-        sys.stdout.write("\x1b[2K\r[Power] Ready for key: ")
-        sys.stdout.flush()
-
-        user_input = module_library.get_keystroke()
-        if user_input != 's' and user_input != "":
-            safety_counter = 0
-
-        if user_input == "":
-            time.sleep(0.05)
-            continue        
-        
-        # ─── ACTION HOTKEY MATRIX DETECTIONS ───
-        if user_input == '-':
-            status_message = "Dropping out to main loop..."
-            break
-
-        elif user_input == 'c':
-            try:
-                if is_windows:
-                    subprocess.Popen("shutdown /a", shell=True)
-                else:
-                    subprocess.Popen(["shutdown", "-c"])
-                status_message = "🟢 SUCCESS: Active scheduled shutdowns cancelled successfully."
-            except Exception as err:
-                status_message = f"🔴 ERROR: Failed to execute cancel sequence -> {err}"
-
-        elif user_input == 't':
-            try:
-                seconds_target = timer_minutes * 60
-                if is_windows:
-                    subprocess.Popen(f"shutdown /s /t {seconds_target}", shell=True)
-                else:
-                    subprocess.Popen(["shutdown", "-h", f"+{timer_minutes}"])
-                status_message = f"🟢 SUCCESS: Scheduled system power down sequence active (+{timer_minutes}m)."
-            except Exception as err:
-                status_message = f"🔴 ERROR: Failed to execute timed trigger -> {err}"
-
-        elif user_input == 's':
-            safety_counter += 1
-            # * [FIXED] SHIFT CONDITION MATRIX TO EXECUTE POWER DOWN ON THE EXACT TARGET COUNT VALUE MATCH
-            if safety_counter >= safety_max:
-                status_message = "🔥 CRITICAL: Safety limit cleared! Booting power-down loop..."
-                os.system('cls' if is_windows else 'clear')
-                print("\n[!] Initializing forced machine power-down sequence now...")
+    elif callback_key == "instant_shutdown":
+        max_toggles = 3
+        for opt in MODULE_MANIFEST.get("display_multi", []):
+            if opt.get("callback_key") == "instant_shutdown":
+                max_toggles = int(opt.get("menu_toggles", 3))
                 
-                try:
-                    if is_windows: subprocess.Popen("shutdown /s /t 0", shell=True)
-                    else: subprocess.Popen(["shutdown", "-h", "now"])
-                except:
-                    pass
-                sys.exit(0)
-            else:
-                status_message = f"⚠️ WARNING: Verification captured! Strike key [{safety_counter}/{safety_max}] times to confirm powerdown down switch."
+        current_progress = STRIKE_STATE["current_count"]
+        return f"Requires {max_toggles} presses. Progress: [{current_progress}/{max_toggles}]"
+    return ""
 
-        # Throttles execution slightly to protect raw processor cycle usages
-        time.sleep(0.05)
+def handle_local_keyboard_action(user_input, cli_dict, manifest):
+    """Executes target system command functions natively based on captured hotkeys."""
+    global STRIKE_STATE
+    is_windows = os.name == 'nt'
+    
+    if user_input != 's':
+        STRIKE_STATE["current_count"] = 0
+
+    if user_input == 'c':
+        try:
+            if is_windows: subprocess.Popen("shutdown /a", shell=True)
+            else: subprocess.Popen(["shutdown", "-c"])
+            return "🟢 SUCCESS: Active scheduled shutdowns cancelled successfully."
+        except Exception as err:
+            return f"🔴 ERROR: Failed to execute cancel sequence -> {err}"
+
+    elif user_input == 't':
+        try:
+            timer_min_str = module_library.get_setting("shutdown", "default_timer_minutes", "5")
+            timer_minutes = int(timer_min_str) if timer_min_str.isdigit() else 5
+            seconds_target = timer_minutes * 60
+            
+            if is_windows: subprocess.Popen(f"shutdown /s /t {seconds_target}", shell=True)
+            else: subprocess.Popen(["shutdown", "-h", f"+{timer_minutes}"])
+            return f"🟢 SUCCESS: Scheduled system power down sequence active (+{timer_minutes}m)."
+        except Exception as err:
+            return f"🔴 ERROR: Failed to execute timed trigger -> {err}"
+
+    elif user_input == 's':
+        target_limit = 3
+        for opt in manifest.get("display_multi", []):
+            if opt.get("callback_key") == "instant_shutdown":
+                target_limit = int(opt.get("menu_toggles", 3))
+
+        STRIKE_STATE["current_count"] += 1
+        if STRIKE_STATE["current_count"] >= target_limit:
+            print("\n[!] Initializing forced machine power-down sequence now...")
+            try:
+                if is_windows: subprocess.Popen("shutdown /s /t 0", shell=True)
+                else: subprocess.Popen(["shutdown", "-h", "now"])
+            except: pass
+            sys.exit(0)
+        else:
+            return f"⚠️ WARNING: Verification captured! Strike key [{STRIKE_STATE['current_count']}/{target_limit}] times to confirm powerdown down switch."
+            
+    return "Awaiting input power command option..."
+
+def execute_interactive_menu(cli_dict, app_version, port_num):
+    """Routes execution straight down into the centralized framework orchestrator loop."""
+    import project_saver_x
+    project_saver_x.run_interactive_workspace_loop(
+        MODULE_MANIFEST, __file__, cli_dict, 
+        get_live_display_value, handle_local_keyboard_action, 
+        box_title="Shutdown Controller"
+    )
         
 if __name__ == "__main__":
     module_library.run_standalone_safely(MODULE_MANIFEST, execute_interactive_menu)
