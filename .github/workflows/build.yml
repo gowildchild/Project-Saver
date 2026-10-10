@@ -140,7 +140,7 @@ jobs:
       working-directory: ./master
       shell: bash
       run: |
-        pyinstaller project_saver.py project_saver_config.py project_saver_ui.py project_saver_modules.py project_saver_daemon.py project_saver_archive.py project_saver_update.py project_saver_exporter.py --onefile --distpath ../dist --workpath ../build --version-file=version_info.txt
+        pyinstaller project_saver.py project_saver_config.py project_saver_ui.py project_saver_modules.py project_saver_daemon.py project_saver_archive.py project_saver_update.py project_saver_exporter.py project_saver_x.py --onefile --distpath ../dist --workpath ../build --version-file=version_info.txt
 
     - name: Rename Portable Windows Binary
       working-directory: ./dist
@@ -189,7 +189,7 @@ jobs:
     - name: Compile Linux Binary
       working-directory: ./master
       run: |
-        pyinstaller project_saver.py project_saver_config.py project_saver_ui.py project_saver_modules.py project_saver_daemon.py project_saver_archive.py project_saver_update.py project_saver_exporter.py --onefile --distpath ../dist --workpath ../build
+        pyinstaller project_saver.py project_saver_config.py project_saver_ui.py project_saver_modules.py project_saver_daemon.py project_saver_archive.py project_saver_update.py project_saver_exporter.py project_saver_x.py --onefile --distpath ../dist --workpath ../build
 
     - name: Rename and Pre-Calculate Linux SHA-256 Hash
       working-directory: ./dist
