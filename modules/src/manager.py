@@ -19,7 +19,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.35",
+        "version": "v0.0.36",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -106,6 +106,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         import project_saver_x
         for idx, m in enumerate(discovered_pool):
+            print(f"{idx} {m}")
+
             mod_ref = None
             for reg_key, reg_val in active_registry.items():
                 if reg_key.lower() == m:
@@ -114,15 +116,17 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
             version_str = "v0.0.0"
             if mod_ref:
-                if isinstance(mod_ref, dict) and "MODULE_MANIFEST" in mod_ref:
-                    manifest_block = mod_ref["MODULE_MANIFEST"]
+                if isinstance(mod_ref, dict) and "MODULE MANIFEST" in mod_ref:
+                    manifest_block = mod_ref["MODULE MANIFEST"]
                     version_str = manifest_block.get("meta", {}).get("version", version_str)
+                elif isinstance(mod_ref, dict):
+                    version_str = mod_ref.get("version", version_str)
                 else:
-                    mod_obj = mod_ref.get("mock") if isinstance(mod_ref, dict) and mod_ref.get("type") == "binary" else mod_ref
-                manifest_block = getattr(mod_ref, "MODULE_MANIFEST", {})
-                if isinstance(manifest_block, dict):
-                    version_str = manifest_block.get("meta", {}).get("version", "v0.0.0")
+                    manifest_block = getattr(mod_ref, "MODULE_MANIFEST", {})
+                    if isinstance(manifest_block, dict):
+                        version_str = manifest_block.get("meta", {}).get("version", "v0.0.0")
 
+            
             mod_size_str = ""
             if m in installed_extensions:
                 target_filename = f"{m}.exe" if os.name == 'nt' else m
