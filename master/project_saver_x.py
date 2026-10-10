@@ -7,6 +7,24 @@ import sys
 import re
 import configparser
 
+def print_startup_banner(version_str):
+    """
+    Natively renders a stylized high-visibility ASCII art title banner budgeted 
+    to fit cleanly inside a standard 105-column terminal row configuration.
+    """
+    banner = [
+        r"    ____                _           _     ____      by Gunther Voet          ",
+        r"   |  _ \ _ __ ___     (_) ___  ___| |_  / ___|  __ ___   _____ _ __         ",
+        r"   | |_) | '__/ _ \ _  | |/ _ \/ __| __| \___ \ / _` \ \ / / _ \ '__|        ",
+        r"   |  __/| | | (_) | |_| |  __/ (__| |_   ___) | (_| |\ V /  __/ |           ",
+        r"   |_|   |_|  \___/ \___/ \___|\___|\__| |____/ \__,_| \_/ \___|_|           "
+    ]
+    print("\n" + "═" * 94)
+    for line in banner:
+        print(line)
+    print(f"\nProject Saver {version_str}")
+    print("═" * 94 + "\n")
+
 def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", box_width_override: int = 0):
     def get_visual_width(text_line: str) -> int:
         clean = re.sub(r'\033\[[0-9;]*m', '', str(text_line))
