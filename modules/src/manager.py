@@ -64,8 +64,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
     Fired instantly when the user hits 'M' inside the master dashboard menu views.
     Completely isolates package installations, parameter configuration, and uninstalls.
     """
-    import project_saver_config
-    import project_saver_ui
+    #import project_saver_config
+    #import project_saver_ui
 
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
     cli_dict, app_version, port_num = module_library.bootstrap_session(cli_dict, app_version, port_num)
