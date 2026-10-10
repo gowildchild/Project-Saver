@@ -94,7 +94,7 @@ jobs:
             print(f"[-] Error: Source directory context missing at {source_dir}")
             sys.exit(1)
 
-        module_files = [f for f in os.listdir(source_dir) if f.endswith(".py") and f != "__init__.py"]
+        module_files = [f for f in os.listdir(source_dir) if f.endswith(".py") and f not in ["__init__.py", "module_library.py"]]
         
         for file_entry in module_files:
             module_name = file_entry[:-3]
@@ -271,7 +271,7 @@ jobs:
             print(f"[-] Error: Source directory context missing at {source_dir}")
             sys.exit(1)
 
-        module_files = [f for f in os.listdir(source_dir) if f.endswith(".py") and f != "__init__.py"]
+        module_files = [f for f in os.listdir(source_dir) if f.endswith(".py") and f not in ["__init__.py", "module_library.py"]]
         
         for file_entry in module_files:
             module_name = file_entry[:-3]
