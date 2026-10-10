@@ -16,7 +16,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "x",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.30",
+        "version": "v0.0.35",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -78,12 +78,9 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
         
     detected_modules_pool = {}
     for active_name, entry in active_registry.items():
-        if isinstance(entry, dict):
-            shortcut_key = entry.get("menu_shortcut", "").lower()
-        else:
-            mod_obj = entry["mock"] if hasattr(entry, "get") and entry.get("type") == "binary" else entry
-            manifest_ref = getattr(mod_obj, "MODULE_MANIFEST", {})
-            shortcut_key = manifest_ref.get("menu_shortcut", "").lower()
+        
+        manifest_ref = getattr(entry, "MODULE_MANIFEST", {})
+        shortcut_key = manifest_ref.get("menu_shortcut", "").lower()
         if shortcut_key:
             detected_modules_pool[active_name] = shortcut_key
 
