@@ -36,20 +36,18 @@ def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callb
                 print("[*] Startup complete. Advancing straight to active daemon mode...\n")
                 return
                 
-            # Intercept block: A newer release exists on the cloud
-            print(f"\n📢 UPDATE NOTIFICATION: A newer release [{latest_version_tag}] is available on GitHub!")
-
             elif latest_version_tag and latest_version_tag != version:
                 import project_saver_config
-                print(f"\n[🔄 SYNC]: Newer tag [{latest_version_tag}] isolated on GitHub.")
-                print(f"[*] Updating intermediary data tables inside project_saver.cfg...")
+                print(f"\n[🔄 NOTIFICATION]: A newer build [{latest_version_tag}] is available on GitHub.")
+                print(f"[*] Writing update availability flag into project_saver.cfg...")
                 
                 main_module_ref = sys.modules.get('__main__')
                 parent_args = getattr(main_module_ref, 'CLI_ARGS', None)
                 
                 if parent_args:
+                    # Update the config file parameters on disk but do NOT download the binary yet
                     project_saver_config.save_config_file("project_saver.cfg", parent_args, version, latest_version_tag)
-                return    
+                return 
     
     except Exception:
         print("[-] Network Status: Could not ping GitHub API. Proceeding in offline execution mode.")
@@ -98,7 +96,6 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
             data = json.loads(response.read().decode('utf-8'))
             latest = data.get("tag_name", "").strip()
             
-            # If triggered manually via CLI but already matching, exit early safely
             if latest == version and "--update" in sys.argv:
                 print(f"[+] Already running the latest version {version}.")
                 return
@@ -135,10 +132,17 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
                 print(f"[*] Fetching delivery assets for integrity verification...")
                 with urllib.request.urlopen(manifest_url) as stream:
                     manifest_lines = stream.read().decode('utf-8').splitlines()
+                    target_platform_found = False
                     for line in manifest_lines:
+                        if is_windows and "WINDOWS" in line:
+                            target_platform_found = True
+                        elif not is_windows and "LINUX" in line:
+                            target_platform_found = True
+                            
                         if "Version Tag" in line:
                             expected_version = line.split(":")[1].strip().lower()
-                        if "SHA-256 Checksum" in line:
+                            
+                        if target_platform_found and "SHA-256 Checksum" in line:
                             expected_hash = line.split(":")[1].strip().lower()
                             break
 
@@ -159,7 +163,6 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
                     except: pass
                     return
 
-                # Cryptographic Validation Loop
                 print("[*] Verifying Project Saver integrity SHA-256 hash...")
                 sha256_hash = hashlib.sha256()
                 with open(temp_download_path, "rb") as f:
