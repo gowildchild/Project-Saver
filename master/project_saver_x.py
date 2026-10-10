@@ -6,8 +6,38 @@ import os
 import sys
 import re
 import configparser
+from enum import IntFlag, auto
 
 status_prompt  = "Awaiting Input..."
+
+
+class MenuTypes(IntFlag):
+    NONE              = 0
+    MENU_SHORT_NAME   = 1    # Multiple items on a line possible
+    MENU_DISPLAY_NAME = 2    # display_menu > display_name
+    MENU_VALUE        = 4    # Display real-time value(s) and defaults
+    SHOW_ON_MAIN_MENU = 16   # show entry main menu
+    SHOW_ON_ALL       = 32   # show in every menu
+    SHOW_MULTI_MENU   = 64   # show multi-menu layout engine
+    STRIKE_1          = 128  # 1 extra verification press needed
+    STRIKE_2          = 256  # 2 extra verification presses needed
+    STRIKE_3          = 512  # 3 extra verification presses needed
+    PRESS_LONG        = 1024 # Long Press is required
+
+class ConfirmationTypes(IntFlag):
+    NONE              = 0
+    CHOICE_DEFAULT    = 1    # Default choice available
+    CHOICE_YES        = 2    # Yes/Accept
+    CHOICE_WAIT       = 4    # Wait Longer
+    CHOICE_RETRY      = 8    # Retry/Try Again/Extra Try
+    CHOICE_OPEN       = 32   # Open/Use/Accept
+    CHOICE_CANCEL     = 64   # Cancel current job
+    TIMED_DENY        = 256  # Deny/No/Cancel by default
+    TIMED_ACCEPT      = 512  # Accept/Open/Save/Retry by default
+    TIMED_5S          = 1024 # 5S timer
+    TIMED_10S         = 2048 # 10S timer
+    TIMED_15S         = 4096 # 15S Timer Down
+    
 
 def print_startup_banner(version_str):
     """
@@ -63,6 +93,22 @@ def render_better_box(raw_lines_list: list, title_str: str = "Project Saver", bo
             print(f"│ {clean_line}{padding_spaces} │")
     print("└" + "─" * box_width + "┘")
 
+def format_human_readable_bytes(num_bytes: int) -> str:
+    """
+    Converts raw integer byte capacities into a human-readable metric string
+    (e.g., 15243 -> '15.24 KB') optimized for terminal row metrics layouts.
+    """
+    try:
+        val = float(num_bytes)
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if abs(val) < 1000.0: # Matches your exact base-10 metrics tracking lookups
+                if unit == 'B':
+                    return f"{int(val)} B"
+                return f"{val:.2f} {unit}"
+            val /= 1000.0
+        return f"{val:.2f} PB"
+    except:
+        return f"{num_bytes} B"
 
 def get_native_setting(module_name, key, default_value=""):
     """
@@ -99,13 +145,11 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
     import time
     import sys
     import module_library
-    
-    # Isolate parent bootstrap framework overrides if present
-    import module_library
+
     cli_dict, _, _ = module_library.bootstrap_session(cli_dict, "v0.0.1", 19763)
     
     status_message = "Awaiting Input..."
-    
+    strike_counters = {}
     
     while True:
         # 1. Clear terminal screen platform-natively using your shared tracking routine
@@ -118,21 +162,26 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
         ]
 
         # 3. Dynamic row mapping driven entirely by your display_multi metadata rules
+        short_line_buffer = ""
+        
         for option in manifest.get("display_multi", []):
-            bits = int(option.get("mask_bits", 0))
-            if not bits:
+            bits = MenuTypes(int(option.get("mask_bits", 0)))
+            if bits == MenuTypes.NONE:
                 continue
                 
-            show_title = bool(bits & 1)
-            show_desc  = bool(bits & 2)
-            show_value = bool(bits & 4)
+            show_short_name = MenuTypes.MENU_SHORT_NAME in bits
+            show_display_name = MenuTypes.MENU_DISPLAY_NAME in bits
+            show_value = MenuTypes.MENU_VALUE in bits
             
-            display_m = option.get("display_menu", "")
-            display_d = option.get("display_desc", "")
+            display_m = option.get("display_menu", "").strip()
+            display_d = option.get("display_desc", "").strip()
             
             live_val = ""
             if show_value and get_live_val_callback:
-                live_val = get_live_val_callback(option.get("callback_key", ""), cli_dict)
+                try:
+                    live_val = get_live_val_callback(option.get("callback_key", ""), cli_dict)
+                except:
+                    pass
 
             if not live_val and show_value:
                 live_val = manifest.get("defaults", {}).get(option.get("callback_key", ""), "")
@@ -142,12 +191,28 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             else:
                 description_content = display_d
                 
-            if show_title and show_desc:
-                panel_content.append(f"   {display_m:<24}{description_content}")
-            elif show_title:
-                panel_content.append(f"   {display_m}")
-            elif show_desc:
-                panel_content.append(f"   {description_content}")
+            # Handle option bit compilation layouts dynamically
+            if show_short_name:
+                item_str = f" [{option.get('menu_shortcut', '').upper()}] {display_m if display_m else option.get('callback_key', '')}  "
+                if len(short_line_buffer) + len(item_str) > 65:
+                    panel_content.append(short_line_buffer)
+                    short_line_buffer = "   " + item_str
+                else:
+                    short_line_buffer += item_str if short_line_buffer else "   " + item_str
+            else:
+                if short_line_buffer:
+                    panel_content.append(short_line_buffer)
+                    short_line_buffer = ""
+                    
+                if show_display_name and display_d:
+                    panel_content.append(f"   {display_m:<24}{description_content}")
+                elif show_display_name:
+                    panel_content.append(f"   {display_m}")
+                elif display_d:
+                    panel_content.append(f"   {description_content}")
+
+        if short_line_buffer:
+            panel_content.append(short_line_buffer)
 
         panel_content.append("---")
         panel_content.append(f"   Status Indicator:    {status_message}")
@@ -166,7 +231,6 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             time.sleep(0.05)
             continue        
         
-        #if user_input in ['-', ' ', '\r', '\n', 'enter']:
         if user_input in ['-', 'q']:
             if os.name == 'nt':
                 import msvcrt
@@ -180,6 +244,30 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
                     sys.stdin.readline()
             break
 
+        # Intercept and validate safety verification flags before executing down inside module
+        matched_option = None
+        for opt in manifest.get("display_multi", []):
+            if opt.get("menu_shortcut", "").lower() == str(user_input).lower():
+                matched_option = opt
+                break
+                
+        if matched_option:
+            opt_bits = MenuTypes(int(matched_option.get("mask_bits", 0)))
+            required_strikes = 0
+            if MenuTypes.STRIKE_1 in opt_bits: required_strikes = 1
+            elif MenuTypes.STRIKE_2 in opt_bits: required_strikes = 2
+            elif MenuTypes.STRIKE_3 in opt_bits: required_strikes = 3
+            
+            if required_strikes > 0:
+                current_strikes = strike_counters.get(user_input, 0) + 1
+                if current_strikes <= required_strikes:
+                    strike_counters[user_input] = current_strikes
+                    status_message = f"⚠️ WARNING: Verification Captured! Press [{user_input.upper()}] ({current_strikes}/{required_strikes + 1}) times to verify action."
+                    time.sleep(0.05)
+                    continue
+                else:
+                    strike_counters[user_input] = 0  # Strike validation clear on pass match
+
         # 6. Hand off key captures directly to the module interior handler to execute routines
         if handle_key_callback:
             callback_response = handle_key_callback(user_input, cli_dict, manifest)
@@ -190,24 +278,9 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
 
         time.sleep(0.05)
 
-def format_human_readable_bytes(num_bytes: int) -> str:
-    """
-    Converts raw integer byte capacities into a human-readable metric string
-    (e.g., 15243 -> '15.24 KB') optimized for terminal row metrics layouts.
-    """
-    try:
-        val = float(num_bytes)
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-            if abs(val) < 1000.0: # Matches your exact base-10 metrics tracking lookups
-                if unit == 'B':
-                    return f"{int(val)} B"
-                return f"{val:.2f} {unit}"
-            val /= 1000.0
-        return f"{val:.2f} PB"
-    except:
-        return f"{num_bytes} B"
 
-def handle_unified_keyboard_routing(user_input, cli_dict, manifest, get_live_val_func=None, local_custom_callback=None):
+
+ef handle_unified_keyboard_routing(user_input, cli_dict, manifest, get_live_val_func=None, local_custom_callback=None):
     """
     Abstract data-driven keyboard routing engine that executes shared behaviors 
     (folder loading, upstream bubbling) based strictly on manifest action types.
