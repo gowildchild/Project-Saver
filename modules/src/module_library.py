@@ -62,7 +62,8 @@ def clear_screen_with_trace(manifest):
     import sys
     os.system('cls' if os.name == 'nt' else 'clear')
         
-    current_path = sys.executable if getattr(sys, 'frozen', False) else caller_file
+    track_path = execution_context_file if execution_context_file else __file__
+    current_path = sys.executable if getattr(sys, 'frozen', False) else track_path
     meta = manifest.get("meta", {})
     print(f"[MODULE]: {manifest.get('display_name', 'Unknown')} ({meta.get('version', 'v0.0.1')}) by {meta.get('author', 'Gunther Voet')}")
     print(f"[PATH]: {os.path.abspath(current_path)}\n")
@@ -103,7 +104,7 @@ def run_standalone_safely(manifest, menu_callback):
                 
         # 2. Reconstruct absolute path layers if input profile matches absolute or relative targets
         if not os.path.isabs(active_cfg_profile):
-            bbase_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]))
+            base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]))
             cfg_path = os.path.join(base_path, active_cfg_profile)
             
             # Safe boundary tracking check fallback if binary file is nested in subfolders
