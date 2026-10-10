@@ -38,7 +38,19 @@ def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callb
                 
             # Intercept block: A newer release exists on the cloud
             print(f"\n📢 UPDATE NOTIFICATION: A newer release [{latest_version_tag}] is available on GitHub!")
+
+            elif latest_version_tag and latest_version_tag != version:
+                import project_saver_config
+                print(f"\n[🔄 SYNC]: Newer tag [{latest_version_tag}] isolated on GitHub.")
+                print(f"[*] Updating intermediary data tables inside project_saver.cfg...")
                 
+                main_module_ref = sys.modules.get('__main__')
+                parent_args = getattr(main_module_ref, 'CLI_ARGS', None)
+                
+                if parent_args:
+                    project_saver_config.save_config_file("project_saver.cfg", parent_args, version, latest_version_tag)
+                return    
+    
     except Exception:
         print("[-] Network Status: Could not ping GitHub API. Proceeding in offline execution mode.")
         print("[+] Startup complete. Launching background listening socket loops...\n")
