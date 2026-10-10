@@ -1,0 +1,117 @@
+{
+  "build_timestamp": "2026-10-10 02:51:31 UTC",
+  "platforms": {
+    "windows": {
+      "archiver": {
+        "display_name": "Site & Code Archival",
+        "menu_shortcut": "a",
+        "version": "v0.0.10",
+        "requires_core": "v0.0.79",
+        "autostart": true,
+        "binary_filename": "archiver.exe",
+        "sha256": "aec47abe8894f6018e667d155c493799c5410698ec044607a14491322dadd054"
+      },
+      "custom": {
+        "display_name": "User Custom Module",
+        "menu_shortcut": "c",
+        "version": "v0.0.15",
+        "requires_core": "v0.0.76",
+        "autostart": false,
+        "binary_filename": "custom.exe",
+        "sha256": "907a4ab2223b07306b36be697f87d6f40553eb425608e9ff1c0bfbc787cfcde5"
+      },
+      "debug": {
+        "display_name": "Diagnostic System Inspector",
+        "menu_shortcut": "d",
+        "version": "v0.0.10",
+        "requires_core": "v0.0.76",
+        "autostart": false,
+        "binary_filename": "debug.exe",
+        "sha256": "840cc6bd27a7d38e35becf0c5cea5850aae7864577d46179e6deab57b5a3d7be"
+      },
+      "manager": {
+        "display_name": "Module Manager",
+        "menu_shortcut": "m",
+        "version": "v0.0.15",
+        "requires_core": "v0.0.79",
+        "autostart": false,
+        "binary_filename": "manager.exe",
+        "sha256": "d07239f4848ebab2127b3407b2de4bda90f4a1d5f8567f910403f8fef19361b5"
+      },
+      "menu": {
+        "display_name": "Custom Menu Navigator",
+        "menu_shortcut": "x",
+        "version": "v0.0.11",
+        "requires_core": "v0.0.79",
+        "autostart": false,
+        "binary_filename": "menu.exe",
+        "sha256": "f92216321d519f9fd2291c7a82f6795a84d553387513b9e5bdb4f930c22f3662"
+      },
+      "shutdown": {
+        "display_name": "Shutdown Controller",
+        "menu_shortcut": "h",
+        "version": "v0.0.10",
+        "requires_core": "v0.0.76",
+        "autostart": false,
+        "binary_filename": "shutdown.exe",
+        "sha256": "c049bd8fc39aa318b39f3ac3f48f605cb52933750cb6932d077a3d555b129bd3"
+      }
+    },
+    "linux": {
+      "shutdown": {
+        "display_name": "Shutdown Controller",
+        "menu_shortcut": "h",
+        "version": "v0.0.10",
+        "requires_core": "v0.0.76",
+        "autostart": false,
+        "binary_filename": "shutdown",
+        "sha256": "c9a96485aadea5fe5fa858ee59d27bcf59c200129d3bbbeb09c8aa32cb6475b3"
+      },
+      "menu": {
+        "display_name": "Custom Menu Navigator",
+        "menu_shortcut": "x",
+        "version": "v0.0.11",
+        "requires_core": "v0.0.79",
+        "autostart": false,
+        "binary_filename": "menu",
+        "sha256": "add2446875a3b8250de72db99d91ad75977a3d9b63c18042176b60ecee954402"
+      },
+      "manager": {
+        "display_name": "Module Manager",
+        "menu_shortcut": "m",
+        "version": "v0.0.15",
+        "requires_core": "v0.0.79",
+        "autostart": false,
+        "binary_filename": "manager",
+        "sha256": "4708d7c5509405076316886d17e25d3e0e5520b31699a86b4e20837ad0e2b071"
+      },
+      "debug": {
+        "display_name": "Diagnostic System Inspector",
+        "menu_shortcut": "d",
+        "version": "v0.0.10",
+        "requires_core": "v0.0.76",
+        "autostart": false,
+        "binary_filename": "debug",
+        "sha256": "f92e7420455e24ec8de2528415198f822e878fae01dbc1b9245fceceba72c523"
+      },
+      "archiver": {
+        "display_name": "Site & Code Archival",
+        "menu_shortcut": "a",
+        "version": "v0.0.10",
+        "requires_core": "v0.0.79",
+        "autostart": true,
+        "binary_filename": "archiver",
+        "sha256": "23e58bd668124c38f426153234c8a4ac9328d6c82f85e44341594098d403e7b0"
+      },
+      "custom": {
+        "display_name": "User Custom Module",
+        "menu_shortcut": "c",
+        "version": "v0.0.15",
+        "requires_core": "v0.0.76",
+        "autostart": false,
+        "binary_filename": "custom",
+        "sha256": "61360617bad2c8c1b3490cf8eef3141227005961c3fd066f24c69e3f1c2265d3"
+      }
+    }
+  }
+}
