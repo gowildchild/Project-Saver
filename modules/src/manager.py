@@ -18,7 +18,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.27",
+        "version": "v0.0.30",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True          # Sets availability for cloud installation/use
@@ -41,7 +41,7 @@ def install_module_from_cloud(module_name, github_repo):
     script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
     target_path = os.path.join(script_base_dir, "modules", f"{module_name.lower()}.py")
     
-    target_branch = project_saver_config.SYSTEM_CONFIG.get("manager_target_branch", "modules")
+    target_branch = module_library.get_setting("manager", "target_branch", "modules")
     
     raw_url = f"https://raw.githubusercontent.com/{github_repo}/{target_branch}/modules/{module_name.lower()}.py"
     print(f"\n[*] Connecting to distribution repository: {raw_url}")
@@ -147,7 +147,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             " [-] Press [Minus Key] to drop back out to Main Menu..."
         ])
 
-        project_saver_ui.render_better_box(
+        import project_saver_x
+        project_saver_x.render_better_box(
             manager_panel,
             title_str="Module Manager",
             box_width_override=74
@@ -206,34 +207,33 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             target_name = input("[*] Enter module name section header to configure: ").strip().lower()
             if target_name in installed_extensions or target_name == "manager":
                 print(f"\n[+] Active configuration keys for [{target_name}]:")
-                prefix = f"{target_name}_"
-                matching_keys = [k for k in project_saver_config.SYSTEM_CONFIG.keys() if k.startswith(prefix)]
+                import configparser
+                base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+                if base_path.lower().endswith("modules"): base_path = os.path.dirname(base_path)
+                cfg_path = os.path.join(base_path, "project_saver.cfg")
                 
-                if matching_keys:
-                    for k in matching_keys:
-                        clean_key = k[len(prefix):]
-                        current_val = project_saver_config.SYSTEM_CONFIG[k]
+                config = configparser.ConfigParser()
+                if os.path.exists(cfg_path): config.read(cfg_path, encoding="utf-8")
+                
+                if config.has_section(target_name):
+                    matching_keys = config.options(target_name)
+                    for clean_key in matching_keys:
+                        current_val = config.get(target_name, clean_key)
                         print(f" -> {clean_key} (Current: {current_val})")
                     
                     target_key = input("\nEnter specific parameter key row name to change: ").strip().lower()
-                    full_lookup_key = f"{prefix}{target_key}"
-                    
-                    if full_lookup_key in project_saver_config.SYSTEM_CONFIG:
+                    if config.has_option(target_name, target_key):
                         new_val = input(f"Enter new value for [{target_key}]: ").strip()
                         if new_val:
-                            project_saver_config.SYSTEM_CONFIG[full_lookup_key] = new_val
-                            status_message = f"🟢 SUCCESS: Parameter variable [{target_key}] updated in memory arrays."
-                            main_module_ref = sys.modules.get('__main__')
-                            parent_args = getattr(main_module_ref, 'CLI_ARGS', None) or cli_dict
-                            project_saver_config.save_config_file("project_saver.cfg", parent_args, app_version)
+                            config.set(target_name, target_key, new_val)
+                            with open(cfg_path, "w", encoding="utf-8") as f: config.write(f)
+                            status_message = f"🟢 SUCCESS: Parameter variable [{target_key}] updated in configuration file."
                         else:
                             status_message = "⚠️ WARNING: Configuration change skipped. Input parameter empty."
                     else:
                         status_message = "🔴 ERROR: Specified variable target parameter row name key invalid."
                 else:
                     status_message = f"⚠️ WARNING: No active defaults initialized for section block [{target_name}]."
-            else:
-                status_message = "🔴 ERROR: Target module selection not verified inside active local libraries."
 
         time.sleep(0.05)
 
