@@ -32,14 +32,14 @@ def check_for_startup_update_and_run(version, repo_owner, repo_name, check_callb
             latest_version_tag = data.get("tag_name", "").strip()
             
             if latest_version_tag and latest_version_tag == version:
-                print(f"[+] Running the latest version {version}.")
-                print("[*] Startup complete. Advancing straight to active daemon mode...\n")
+                #print(f"[+] Running the latest version {version}.")
+                #print("[*] Startup complete. Advancing straight to active daemon mode...\n")
                 return
                 
             elif latest_version_tag and latest_version_tag != version:
                 import project_saver_config
-                print(f"\n[🔄 NOTIFICATION]: A newer build [{latest_version_tag}] is available on GitHub.")
-                print(f"[*] Writing update availability flag into project_saver.cfg...")
+                #print(f"\n[🔄 NOTIFICATION]: A newer build [{latest_version_tag}] is available on GitHub.")
+                #print(f"[*] Writing update availability flag into project_saver.cfg...")
                 
                 main_module_ref = sys.modules.get('__main__')
                 parent_args = getattr(main_module_ref, 'CLI_ARGS', None)
@@ -86,7 +86,7 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
         return
 
 
-   if mode_override & (64 | 128 | 256 | 512):
+    if (mode_override & (64 | 128 | 256 | 512)):
         print(f"\n[*] Initializing secure modules branch upgrade check via: {mod_url_json}")
         try:
             script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
