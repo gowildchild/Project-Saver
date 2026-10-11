@@ -1,0 +1,117 @@
+{
+  "build_timestamp": "2026-10-11 01:20:20 UTC",
+  "platforms": {
+    "windows": {
+      "archiver": {
+        "display_name": "Site & Code Archival",
+        "menu_shortcut": "a",
+        "version": "v0.0.34",
+        "requires_core": "v0.0.79",
+        "autostart": true,
+        "binary_filename": "archiver.exe",
+        "sha256": "114c04acd7d7939e09ad839e7e61a20289a0ff6565f751c91d67ad584a3fc808"
+      },
+      "custom": {
+        "display_name": "User Custom Module",
+        "menu_shortcut": "c",
+        "version": "v0.0.42",
+        "requires_core": "v0.0.80",
+        "autostart": false,
+        "binary_filename": "custom.exe",
+        "sha256": "4bcc0bed48e3cfbf2c9516dee302b7c13c5e427b6a956a4efaa306024fa85597"
+      },
+      "debug": {
+        "display_name": "Diagnostics",
+        "menu_shortcut": "d",
+        "version": "v0.0.48",
+        "requires_core": "v0.0.76",
+        "autostart": false,
+        "binary_filename": "debug.exe",
+        "sha256": "9be1c2261b4a0abd295674f2711a8697335371853ed4d30c28b23fda459532f7"
+      },
+      "manager": {
+        "display_name": "Module Manager",
+        "menu_shortcut": "m",
+        "version": "v0.0.36",
+        "requires_core": "v0.0.79",
+        "autostart": false,
+        "binary_filename": "manager.exe",
+        "sha256": "411990c90d8333ab72abf9085221ce3bf654d6aa81aadbc686237622ffe16196"
+      },
+      "menu": {
+        "display_name": "Custom Menu Navigator",
+        "menu_shortcut": "x",
+        "version": "v0.0.35",
+        "requires_core": "v0.0.79",
+        "autostart": false,
+        "binary_filename": "menu.exe",
+        "sha256": "971e2f38ed1903369c3fa73edf5a09ccba4bc794969e9410479d27b99cbb3960"
+      },
+      "shutdown": {
+        "display_name": "Shutdown Controller",
+        "menu_shortcut": "h",
+        "version": "v0.0.50",
+        "requires_core": "v0.0.81",
+        "autostart": true,
+        "binary_filename": "shutdown.exe",
+        "sha256": "f63cca79a705298fc19e17a4d8a4573ae2ef3c869ee63fb624890502ecf5119a"
+      }
+    },
+    "linux": {
+      "shutdown": {
+        "display_name": "Shutdown Controller",
+        "menu_shortcut": "h",
+        "version": "v0.0.50",
+        "requires_core": "v0.0.81",
+        "autostart": true,
+        "binary_filename": "shutdown",
+        "sha256": "6d3274fe5967a6bf1f39c33ff62a5824c9f2f3919b3dea7eda0c5a794c2948c8"
+      },
+      "menu": {
+        "display_name": "Custom Menu Navigator",
+        "menu_shortcut": "x",
+        "version": "v0.0.35",
+        "requires_core": "v0.0.79",
+        "autostart": false,
+        "binary_filename": "menu",
+        "sha256": "7939b1925663db83f34daf06d35b25a51ac62fce48f303c1602bea13cfbc97fd"
+      },
+      "manager": {
+        "display_name": "Module Manager",
+        "menu_shortcut": "m",
+        "version": "v0.0.36",
+        "requires_core": "v0.0.79",
+        "autostart": false,
+        "binary_filename": "manager",
+        "sha256": "d32d46044e502fcf4e0417adbfea2d170d553611f907150f2b2d3c2a7ee99eb1"
+      },
+      "debug": {
+        "display_name": "Diagnostics",
+        "menu_shortcut": "d",
+        "version": "v0.0.48",
+        "requires_core": "v0.0.76",
+        "autostart": false,
+        "binary_filename": "debug",
+        "sha256": "ec3d369412eddfea3c141708126a4b10ddcbc08738434a7199c25a2519750bd8"
+      },
+      "archiver": {
+        "display_name": "Site & Code Archival",
+        "menu_shortcut": "a",
+        "version": "v0.0.34",
+        "requires_core": "v0.0.79",
+        "autostart": true,
+        "binary_filename": "archiver",
+        "sha256": "6ba34580ce8c22f94fd218eac1d4963d0199dd62c3980190146c3b4b9afd412a"
+      },
+      "custom": {
+        "display_name": "User Custom Module",
+        "menu_shortcut": "c",
+        "version": "v0.0.42",
+        "requires_core": "v0.0.80",
+        "autostart": false,
+        "binary_filename": "custom",
+        "sha256": "fdccb22ae4d1ae0003cf9d6de283825047672c08dcdb83385f764d4aeaf54aec"
+      }
+    }
+  }
+}
