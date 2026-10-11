@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.83-india"
+VERSION = "v0.0.83-julliet"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -169,6 +169,12 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                         )
                         if not latest_discovered_version or latest_discovered_version == VERSION:
                             update_press_counter = 0
+                    elif update_press_counter >= 3:
+                        print("\n[*] Module Update Started...")
+                        check_and_perform_update(
+                            VERSION, REPO_OWNER, REPO_NAME,
+                            mode_override=256
+                        )
                     elif update_press_counter >= 2:
                         print("\n[*] Manual Update Started...")
                         check_and_perform_update(
