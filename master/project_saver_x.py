@@ -181,13 +181,18 @@ def render_bitmask_box(
         2: {"TL": "╔", "TR": "╗", "BL": "╚", "BR": "╝", "HZ": "═", "VT": "║", "DIV": "╠"},
         3: {"TL": "▄", "TR": "▄", "BL": "█", "BR": "█", "HZ": "▄", "VT": "█", "DIV": "╠"}
     }
+    GLYPHS[4] = {"TL": "▄", "TR": "▄", "BL": "█", "BR": "█", "HZ": "▄", "VT": "█", "DIV": "█"}
     accent_id  = box_style_mask & 7        
     inside_id  = (box_style_mask & 48) >> 4  
     outside_id = (box_style_mask & 384) >> 7 
 
-    g_out = GLYPHS.get(outside_id if outside_id in GLYPHS else (accent_id if accent_id in GLYPHS else 1))
-    g_in  = GLYPHS.get(inside_id if inside_id in GLYPHS else (accent_id if accent_id in GLYPHS else 1))
-    g_acc = GLYPHS.get(accent_id if accent_id in GLYPHS else 1)
+    if box_style_mask & 1024 and box_width_override == 0:
+        box_width = 40
+        g_out, g_in, g_acc = GLYPHS[4], GLYPHS[4], GLYPHS[4]
+    else:
+        g_out = GLYPHS.get(outside_id if outside_id in GLYPHS else (accent_id if accent_id in GLYPHS else 1))
+        g_in  = GLYPHS.get(inside_id if inside_id in GLYPHS else (accent_id if accent_id in GLYPHS else 1))
+        g_acc = GLYPHS.get(accent_id if accent_id in GLYPHS else 1)
 
     # 5. Render Top Header Line
     left_header = f"─┤ {title_left} ├" if title_left else ""
