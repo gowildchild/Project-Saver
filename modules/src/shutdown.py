@@ -220,9 +220,9 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
         try:
             if is_windows: subprocess.Popen("shutdown /a", shell=True)
             else: subprocess.Popen(["shutdown", "-c"])
-            return "🟢 SUCCESS: Active scheduled shutdowns cancelled successfully."
+            return "🟢 Shutdown cancelled successfully."
         except Exception as err:
-            return f"🔴 ERROR: Failed to execute cancel sequence -> {err}"
+            return f"🔴 ERROR cancelling Shutdown sequence -> {err}"
 
     elif user_input == 't':
         try:
@@ -232,7 +232,7 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
             
             if is_windows: subprocess.Popen(f"shutdown /s /t {seconds_target}", shell=True)
             else: subprocess.Popen(["shutdown", "-h", f"+{timer_minutes}"])
-            return f"🟢 SUCCESS: Scheduled system power down sequence active (+{timer_minutes}m)."
+            return f"🟢 Shutdown power down sequenceactivated (+{timer_minutes}m)."
         except Exception as err:
             return f"🔴 ERROR: Failed to execute timed trigger -> {err}"
 
@@ -244,9 +244,9 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
             
             if is_windows: subprocess.Popen(f"shutdown /s /t {emg_seconds_target}", shell=True)
             else: subprocess.Popen(["shutdown", "-h", f"+{emg_timer_minutes}"])
-            return f"🟢 SUCCESS: Emergency Shutdown Override (+{emg_timer_minutes}m)."
+            return f"🟢 Emergency Shutdown Override (+{emg_timer_minutes}m)."
         except Exception as err:
-            return f"🔴 ERROR: Failed to execute Shutdown Override -> {err}"
+            return f"🔴 Failed to execute Shutdown Override -> {err}"
 
     elif user_input == 's':
         target_limit = 3
@@ -256,7 +256,7 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
 
         STRIKE_STATE["current_count"] += 1
         if STRIKE_STATE["current_count"] >= target_limit:
-            print("\n[!] Initializing forced machine power-down sequence now...")
+            print("\n[!] Initializing forced machine shutdown now...")
             try:
                 if is_windows: subprocess.Popen("shutdown /s /t 0", shell=True)
                 else: subprocess.Popen(["shutdown", "-h", "now"])
