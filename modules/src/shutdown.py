@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.34",
+        "version": "v0.0.42",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -28,18 +28,26 @@ MODULE_MANIFEST = {
         {
             "callback_key": "cancel_shutdown",
             "menu_shortcut": "c",
-            "display_menu": "   [C] Cancel:",
+            "display_menu": "  [C] Cancel:",
             "display_desc": "Aborts any currently active scheduled countdowns.",
             "mask_bits": 13
         },
         {
             "callback_key": "timed_shutdown",
             "menu_shortcut": "t",
-            "display_menu": "   [T] Timed:",
+            "display_menu": "  [T] Timed:",
             "display_desc": "Schedules machine shutdown sequence in minutes.",
             "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
 
         },
+        {
+            "callback_key": "emg_shutdown",
+            "menu_shortcut": "e",
+            "display_menu": "  [E] EMG:",
+            "display_desc": "Emergency shutdown sequencing.",
+            "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
+
+        },        
         {
             "callback_key": "instant_shutdown",
             "menu_shortcut": "s",
@@ -51,8 +59,10 @@ MODULE_MANIFEST = {
     ],
     "defaults": {
         "timed_shutdown": "5 minutes",
+        "emg_shutdown": "3 minutes",
         "instant_shutdown": "Requires 3 presses.",        
         "default_timer_minutes": "5",
+        "emg_timer_minutes": "3",
         "safety_trigger_count": "3",
         "safety_trigger_shortcut": "s"
     }
@@ -63,7 +73,6 @@ STRIKE_STATE = {"current_count": 0}
 def register_module_callbacks(server_reference=None):
     pass
 
-# --- TARGET CODE MODIFICATION BLOCK ---
 def get_live_display_value(callback_key, cli_dict=None):
     """
     Resolves active local runtime parameters dynamically on every frame pass, 
@@ -72,7 +81,11 @@ def get_live_display_value(callback_key, cli_dict=None):
     if callback_key == "timed_shutdown":
         timer_min = module_library.get_setting("shutdown", "default_timer_minutes", "5")
         return f"{timer_min} minutes"
-        
+
+    if callback_key == "emg_shutdown":
+        emg_timer_min = module_library.get_setting("shutdown", "emg_timer_minutes", "5")
+        return f"{emg_timer_min} minutes"
+    
     elif callback_key == "instant_shutdown":
         max_toggles = 3
         for opt in MODULE_MANIFEST.get("display_multi", []):
@@ -111,6 +124,18 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
         except Exception as err:
             return f"🔴 ERROR: Failed to execute timed trigger -> {err}"
 
+    elif user_input == 'e':
+        try:
+            emg_timer_min_str = module_library.get_setting("shutdown", "emg_timer_minutes", "3")
+            emg_timer_minutes = int(emg_timer_min_str) if emg_timer_min_str.isdigit() else 3
+            emg_seconds_target = emg_timer_minutes * 60
+            
+            if is_windows: subprocess.Popen(f"shutdown /s /t {emg_seconds_target}", shell=True)
+            else: subprocess.Popen(["shutdown", "-h", f"+{emg_timer_minutes}"])
+            return f"🟢 SUCCESS: Emergency Shutdown Override (+{emg_timer_minutes}m)."
+        except Exception as err:
+            return f"🔴 ERROR: Failed to execute Shutdown Override -> {err}"
+
     elif user_input == 's':
         target_limit = 3
         for opt in manifest.get("display_multi", []):
@@ -126,7 +151,7 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
             except: pass
             sys.exit(0)
         else:
-            return f"⚠️ WARNING: Verification captured! Strike key [{STRIKE_STATE['current_count']}/{target_limit}] times to confirm powerdown down switch."
+            return f"⚠️ WARNING: [{STRIKE_STATE['current_count']}/{target_limit}] times to confirm powerdown down switch."
             
     return "Awaiting input power command option..."
 
