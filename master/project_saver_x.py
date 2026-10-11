@@ -1108,7 +1108,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
         time.sleep(0.05)
 
 def draw_fixed_menu_bar(app_version, port_num, active_module="Main Daemon"):
-_SHARED_NET_STATE = {"connected": False, "msg": "Booting...", "lock": __import__("threading").Lock()}
+    _SHARED_NET_STATE = {"connected": False, "msg": "Booting...", "lock": __import__("threading").Lock()}
 
 def _net_check_worker(host, port):
     global _SHARED_NET_STATE
