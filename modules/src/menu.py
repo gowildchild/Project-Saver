@@ -16,7 +16,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "x",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.35",
+        "version": "v0.0.45",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -29,21 +29,21 @@ MODULE_MANIFEST = {
             "menu_shortcut": "1",
             "display_menu": "   [1] Shutdown Shortcuts",
             "display_desc": "System Shutdown Shortcuts.",
-            "mask_bits": 3
+            "mask_bits": 5
         },
         {
             "callback_key": "diag_routing",
             "menu_shortcut": "2",
             "display_menu": "   [2] System Diagnostics",
             "display_desc": "Switch routing category perspective to core memory extracts.",
-            "mask_bits": 3
+            "mask_bits": 6
         },
         {
             "callback_key": "asset_routing",
             "menu_shortcut": "3",
             "display_menu": "   [3] Extension Assets",
             "display_desc": "Switch routing category perspective to custom pluggable workspace frames.",
-            "mask_bits": 3
+            "mask_bits": 5
         }
     ],
     "defaults": {
