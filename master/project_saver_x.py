@@ -188,7 +188,7 @@ def render_bitmask_box(
 
     if box_style_mask == 145:
         g_out, g_in, g_acc = GLYPHS[1], GLYPHS[1], GLYPHS[1]
-    if box_style_mask & 1024 and box_width_override == 0:
+    elif box_style_mask & 1024 and box_width_override == 0:
         box_width = 40
         g_out, g_in, g_acc = GLYPHS[4], GLYPHS[4], GLYPHS[4]
     else:
@@ -1029,7 +1029,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             panel_content.append(short_line_buffer)
 
         panel_content.append("---")
-        panel_content.append(f"   Status:    {status_message}")
+        panel_content.append(f"   Status     {status_message}")
         panel_content.append("---")
         panel_content.append("   [-] Return to Main Menu...")
 
