@@ -300,7 +300,7 @@ if __name__ == "__main__":
         import project_saver_x
         project_saver_x.print_startup_banner(VERSION)
         time.sleep(1.2)
-		about_data = [
+        about_data = [
             f"Project Saver {VERSION} - Local & Remote Project Assistant",
             "---",
             "🛠️ Developer: Gunther Voet",
