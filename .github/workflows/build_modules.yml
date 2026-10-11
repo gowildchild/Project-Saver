@@ -83,7 +83,9 @@ jobs:
         output_dir = os.path.abspath(os.path.join(workspace_root, "modules"))
         scratch_dir = os.path.abspath(os.path.join(workspace_root, "scratch_compile_win"))
         build_dir = os.path.abspath(os.path.join(workspace_root, "build_modules_win"))
-
+        commit_sha = os.environ.get("GITHUB_SHA", "UNKNOWN_COMMIT")
+        short_sha = commit_sha[:7] if commit_sha else "UNKNOWN"
+        
         os.makedirs(scratch_dir, exist_ok=True)
         os.makedirs(build_dir, exist_ok=True)
         os.makedirs(output_dir, exist_ok=True)
@@ -93,6 +95,7 @@ jobs:
 
         global_manifest = {
             "build_timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            "build_signature": f"{commit_sha} of {short_sha}",
             "platform": "windows",
             "modules": {}
         }
@@ -134,9 +137,6 @@ jobs:
                 if module_name.lower() != "archiver":
                     cmd.append("--exclude-module=reportlab")
                     cmd.append("--exclude-module=bs4")
-                    
-                if module_name.lower() != "shutdown":
-                    cmd.append("--exclude-module=pywin32")
                 
                 result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 if result.returncode != 0:
@@ -178,15 +178,20 @@ jobs:
         import re
         core_version = os.environ.get("CORE_VERSION", "1.0.0")
         clean_version = re.sub(r"[vV]", "", core_version)
+        commit_sha = os.environ.get("GITHUB_SHA", "UNKNOWN_COMMIT")
+        short_sha = commit_sha[:7] if commit_sha else "UNKNOWN"
         template_inno = """[Setup]
-        AppName=Project Saver Pluggable Extensions Pack
+        AppName=Project Saver - Extension Modules Pack
         AppVersion={0}
-        AppPublisher=Gunther Voet
+        AppPublisher=Gunther Voet (commit: {2})
+        AppPublisherURL=https://github.com/{3}/
+        AppSupportURL=https://github.com/gowildchild/Project-Saver/issues
+        AppUpdatesURL=https://github.com/gowildchild/Project-Saver/issues
         DefaultDirName={{localappdata}}\\ProjectSaver\\modules
         DisableDirPage=yes
         DisableProgramGroupPage=yes
         OutputDir=modules
-        OutputBaseFilename=modules_setup
+        OutputBaseFilename=modules_setup_${{ needs.build-modules-release.outputs.app_version }}
         Compression=lzma
         SolidCompression=yes
         PrivilegesRequired=lowest
@@ -195,6 +200,8 @@ jobs:
         [Files]
         Source: "modules\\*.exe"; DestDir: "{{app}}"; Flags: ignoreversion nocompression
         Source: "modules\\manifest_windows.json"; DestDir: "{{app}}"; DestName: "manifest.json"; Flags: ignoreversion
+        [Run]
+        Filename: "https://github.com/gowildchild/project-saver"; Description: "🌐 Visit Project Saver Website"; Flags: shellexec postinstall unchecked
         """
         
         formatted_blueprint = template_inno.format(clean_version)
@@ -220,7 +227,7 @@ jobs:
         name: pluggable-module-packages-windows
         path: |
           modules/*.zip
-          modules/modules_setup.exe
+          modules/modules_setup-*.exe
           modules/manifest_windows.json
 
   compile-linux:
@@ -266,6 +273,8 @@ jobs:
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest().lower()
 
+        commit_sha = os.environ.get("GITHUB_SHA", "UNKNOWN_COMMIT")
+        short_sha = commit_sha[:7] if commit_sha else "UNKNOWN"
         workspace_root = os.environ.get("GITHUB_WORKSPACE", os.getcwd())
         source_dir = os.path.abspath(os.path.join(workspace_root, "modules", "src"))
         linux_out_dir = os.path.abspath(os.path.join(workspace_root, "modules_linux_dist"))
@@ -281,6 +290,7 @@ jobs:
 
         global_manifest = {
             "build_timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            "build_signature": f"{commit_sha} of {short_sha}",
             "platform": "linux",
             "modules": {}
         }
@@ -434,7 +444,7 @@ jobs:
         export GIT_AUTHOR_EMAIL="actions@github.com"
         export GIT_COMMITTER_NAME="Automated Builder"
         export GIT_COMMITTER_EMAIL="actions@github.com"
-        git commit -m "Synchronized cryptographic SHA-256 manifest [skip ci]" || exit 0
+        git commit -m "Synchronized SHA-256 manifest [skip ci]" || exit 0
         git push origin modules
 
     - name: Create Official GitHub Release
@@ -448,7 +458,7 @@ jobs:
           Multi-platform pluggable modules compiled successfully.
           
           ### 💻 Windows Delivery Nodes
-          - **All-in-One Setup Installer Wizard**: `modules_setup.exe`
+          - **All-in-One Setup Installer Wizard**: `modules_setup_${{ needs.build-modules-release.outputs.app_version }}.exe`
           - **Individual Extensions Standalone ZIP Bundle**: `windows_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.zip`
           
           ### 🐧 Linux Server Nodes
