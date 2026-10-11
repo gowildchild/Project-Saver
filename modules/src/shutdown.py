@@ -30,7 +30,8 @@ MODULE_MANIFEST = {
             "menu_shortcut": "",
             "display_menu": " Daemon State:",
             "display_desc": "Live capture stream status from host operating system.",
-            "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 5,         # Bit 1 (Title) + Bit 4 (Live Value)
+            "action_type": "custom"
         },        
         {
             "callback_key": "cancel_shutdown",
@@ -93,11 +94,11 @@ def _windows_power_message_pump():
 
     def wndproc(hwnd, msg, wparam, lparam):
         if msg == win32con.WM_QUERYENDSESSION:
-            with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "🚨 WIN SHUTDOWN!"
+            with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "SHUTDOWN!"
             return True 
         elif msg == win32con.WM_ENDSESSION:
             if wparam is True:
-                with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "⚠️ WIN CLOSING!"
+                with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "LOGOUT!"
             return 0
         return win32gui.DefWindowProc(hwnd, msg, wparam, lparam)
 
@@ -108,7 +109,7 @@ def _windows_power_message_pump():
     try:
         class_atom = win32gui.RegisterClass(wc)
         hwnd = win32gui.CreateWindow(class_atom, "Project Saver Hook", 0, 0, 0, 0, 0, 0, 0, hinst, None)
-        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "Active (Windows) 🟢"
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "Active 🟢"
         win32gui.PumpMessages()
     except Exception as err:
         with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = f"Win Hook Error: {err}"
@@ -125,7 +126,7 @@ def _linux_dbus_message_pump():
 
     def shutdown_signal_handler(preparing):
         if preparing:
-            with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "🚨 LNX SHUTDOWN!"
+            with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "LNX SHUTDOWN!"
 
     try:
         bus = dbus.SystemBus()
@@ -149,7 +150,7 @@ def _macos_cocoa_message_pump():
 
     class ShutdownObserver(NSObject):
         def receiveWillPowerOff_(self, notification):
-            with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "🚨 MAC SHUTDOWN!"
+            with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "MAC SHUTDOWN!"
 
     try:
         nc = NSWorkspace.sharedWorkspace().notificationCenter()
@@ -195,7 +196,7 @@ def get_live_display_value(callback_key, cli_dict=None):
         return f"{timer_min} minutes"
 
     if callback_key == "emg_shutdown":
-        emg_timer_min = module_library.get_setting("shutdown", "emg_timer_minutes", "5")
+        emg_timer_min = module_library.get_setting("shutdown", "emg_timer_minutes", "3")
         return f"{emg_timer_min} minutes"
     
     elif callback_key == "instant_shutdown":
