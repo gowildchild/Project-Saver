@@ -147,7 +147,6 @@ jobs:
       shell: bash
       run: |
         mv project_saver.exe project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe
-        mv project_saver_setup.exe project_saver_${{ needs.build-and-release.outputs.app_version }}-setup.exe
 
     - name: Compile Windows Setup Installer
       run: |
@@ -266,6 +265,10 @@ jobs:
           
           ### Verification Footprint Note
           Please inspect the `manifest.txt` to verify your matching SHA-256 integrity hash keys.
+
+          ### Project Saver Integrity Validation 
+          The application will not update if the SHA-256 integrity is not guaranteed. In that case,
+          check the downloadable with the manifest. If there is a supply-chain risk, it will refuse.
         artifacts: "release_files/*"
         token: ${{ secrets.GITHUB_TOKEN }}
 
