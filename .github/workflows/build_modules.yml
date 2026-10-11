@@ -180,11 +180,12 @@ jobs:
         clean_version = re.sub(r"[vV]", "", core_version)
         commit_sha = os.environ.get("GITHUB_SHA", "UNKNOWN_COMMIT")
         short_sha = commit_sha[:7] if commit_sha else "UNKNOWN"
+        repo_repository = os.environ.get("GITHUB_REPOSITORY", "gowildchild/Project-Saver")
         template_inno = """[Setup]
         AppName=Project Saver - Extension Modules Pack
         AppVersion={0}
-        AppPublisher=Gunther Voet (commit: {2})
-        AppPublisherURL=https://github.com/{3}/
+        AppPublisher=Gunther Voet (commit: {1})
+        AppPublisherURL=https://github.com/{2}/
         AppSupportURL=https://github.com/gowildchild/Project-Saver/issues
         AppUpdatesURL=https://github.com/gowildchild/Project-Saver/issues
         DefaultDirName={{localappdata}}\\ProjectSaver\\modules
@@ -204,7 +205,7 @@ jobs:
         Filename: "https://github.com/gowildchild/project-saver"; Description: "🌐 Visit Project Saver Website"; Flags: shellexec postinstall unchecked
         """
         
-        formatted_blueprint = template_inno.format(clean_version)
+        formatted_blueprint = template_inno.format(clean_version, short_sha, repo_repository)
         cleaned_blueprint = "\n".join([line.strip() for line in formatted_blueprint.split("\n") if line.strip()])
         with open("modules_installer.iss", "w", encoding="utf-8") as f:
             f.write(cleaned_blueprint)
