@@ -18,7 +18,7 @@ MODULE_MANIFEST = {
     "meta": {
         "author": "Gunther Voet",
         "version": "v0.0.50",
-        "requires": "v0.0.80",     # Minimal version required of the core engine
+        "requires": "v0.0.81",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
         "menu": 19
