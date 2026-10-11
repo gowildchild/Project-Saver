@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.50",
+        "version": "v0.0.51",
         "requires": "v0.0.81",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -34,22 +34,22 @@ MODULE_MANIFEST = {
         {
             "callback_key": "daemon_status_info", 
             "menu_shortcut": "",
-            "display_menu": " Daemon State:",
-            "display_desc": "Live capture stream status from host operating system.",
+            "display_menu": "Daemon State:",
+            "display_desc": "Host OS",
             "mask_bits": 6,         # Bit 1 (Title) + Bit 4 (Live Value)
             "action_type": "custom"
         },        
         {
             "callback_key": "cancel_shutdown",
             "menu_shortcut": "c",
-            "display_menu": "  Cancel:",
+            "display_menu": "Cancel:",
             "display_desc": "Aborts any currently active scheduled countdowns.",
             "mask_bits": 2
         },
         {
             "callback_key": "timed_shutdown",
             "menu_shortcut": "t",
-            "display_menu": "  Timed:",
+            "display_menu": "Timed:",
             "display_desc": "Schedules machine shutdown sequence in minutes.",
             "mask_bits": 6         # Bit 1 (Title) + Bit 4 (Live Value)
 
@@ -57,7 +57,7 @@ MODULE_MANIFEST = {
         {
             "callback_key": "emg_shutdown",
             "menu_shortcut": "e",
-            "display_menu": "  EMG",
+            "display_menu": "EMG",
             "display_desc": "Emergency shutdown sequencing.",
             "mask_bits": 6         # Bit 1 (Title) + Bit 4 (Live Value)
 
@@ -66,7 +66,7 @@ MODULE_MANIFEST = {
             "callback_key": "instant_shutdown",
             "menu_shortcut": "s",
             "menu_toggles": 3,
-            "display_menu": "   Shutdown Now:",
+            "display_menu": "Shutdown Now",
             "display_desc": "Triggers instant system power-down routine.",
             "mask_bits": 5        # Bit 1 (Title) + Bit 4 (Live value tracking progress counts)
         }
