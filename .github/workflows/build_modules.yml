@@ -95,6 +95,7 @@ jobs:
 
         global_manifest = {
             "build_timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            "build_core": f"${{ steps.get_version.outputs.CORE_VERSION }}",
             "build_signature": f"{commit_sha} of {short_sha}",
             "platform": "windows",
             "modules": {}
@@ -187,7 +188,7 @@ jobs:
         AppPublisher=Gunther Voet (commit: {1})
         AppPublisherURL=https://github.com/{2}/
         AppSupportURL=https://github.com/gowildchild/Project-Saver/issues
-        AppUpdatesURL=https://github.com/gowildchild/Project-Saver/issues
+        AppUpdatesURL=https://github.com/gowildchild/Project-Saver/releases/latest
         DefaultDirName={{localappdata}}\\ProjectSaver\\modules
         DisableDirPage=yes
         DisableProgramGroupPage=yes
@@ -276,6 +277,7 @@ jobs:
 
         commit_sha = os.environ.get("GITHUB_SHA", "UNKNOWN_COMMIT")
         short_sha = commit_sha[:7] if commit_sha else "UNKNOWN"
+        build_core = ${{ needs.build-modules-release.outputs.app_version }}
         workspace_root = os.environ.get("GITHUB_WORKSPACE", os.getcwd())
         source_dir = os.path.abspath(os.path.join(workspace_root, "modules", "src"))
         linux_out_dir = os.path.abspath(os.path.join(workspace_root, "modules_linux_dist"))
@@ -291,7 +293,8 @@ jobs:
 
         global_manifest = {
             "build_timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
-            "build_signature": f"{commit_sha} of {short_sha}",
+            "build_signature": f"{commit_sha}",
+            "build_core": f"{{ needs.build-modules-release.outputs.app_version }}",
             "platform": "linux",
             "modules": {}
         }
@@ -448,6 +451,17 @@ jobs:
         git commit -m "Synchronized SHA-256 manifest [skip ci]" || exit 0
         git push origin modules
 
+    - name: Fetch Existing GitHub Release Description
+      id: fetch_release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        TAG_NAME="${{ needs.build-modules-release.outputs.app_version }}"
+        EXISTING_BODY=$(gh api repos/${{ github.repository }}/releases/tags/$TAG_NAME --jq '.body' 2>/dev/null || echo "")
+        echo "OLD_BODY<<EOF" >> $GITHUB_OUTPUT
+        echo "$EXISTING_BODY" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
     - name: Create Official GitHub Release
       uses: ncipollo/release-action@v1
       with:
@@ -455,6 +469,10 @@ jobs:
         tag: ${{ needs.build-modules-release.outputs.app_version }}
         name: Release ${{ needs.build-modules-release.outputs.app_version }}
         body: |
+          ${{ steps.fetch_release.outputs.OLD_BODY }}
+
+          ***
+          
           ## Automated Module Build Success!
           Multi-platform pluggable modules compiled successfully.
           
