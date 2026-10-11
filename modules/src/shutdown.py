@@ -172,37 +172,21 @@ def _macos_cocoa_message_pump():
 
 
 def register_module_callbacks(server_reference=None):
-    """Auto-detects the host system ecosystem and maps hooks cleanly."""
+    """
+    Unified Background Thread Spawner.
+    """
+    import threading
+    
+    t = None
     if os.name == 'nt':
         t = threading.Thread(target=_windows_power_message_pump, daemon=True)
     elif sys.platform == 'darwin':
         t = threading.Thread(target=_macos_cocoa_message_pump, daemon=True)
     else:
         t = threading.Thread(target=_linux_dbus_message_pump, daemon=True)
-    t.start()
-
-def register_module_callbacks(server_reference=None):
-    """Executed on system boot. Spawns our platform-specific feedback monitors."""
-    if os.name == 'nt':
-        t = threading.Thread(target=_windows_power_message_pump, daemon=True)
+        
+    if t:
         t.start()
-    else:
-        with LIVE_DAEMON_STATE["lock"]:
-            LIVE_DAEMON_STATE["status_text"] = "Unsupported OS Platform"
-
-def register_module_callbacks(server_reference=None):
-    """
-    Executed on system boot. Safely spawns our platform-specific feedback monitors 
-    inside an isolated background sub-thread wrapper to prevent main loop locking.
-    """
-    import threading
-    if os.name == 'nt':
-        # Spawning an explicit daemonized sub-thread unblocks your main core application loop instantly!
-        t = threading.Thread(target=_windows_power_message_pump, daemon=True)
-        t.start()
-    else:
-        with LIVE_DAEMON_STATE["lock"]:
-            LIVE_DAEMON_STATE["status_text"] = "Unsupported OS Platform"
 
 
 def get_live_display_value(callback_key, cli_dict=None):
