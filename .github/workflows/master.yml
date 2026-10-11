@@ -1,0 +1,174 @@
+name: Compile Master Suite Installer
+
+on:
+  release:
+    types: [published]
+  repository_dispatch:
+    types: [trigger-master-suite]
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-merge-suite:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout Source Repository Code
+      uses: actions/checkout@v4
+
+    - name: Fetch Latest Release Versions
+      id: check_versions
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        CORE_TAG=$(gh api repos/gowildchild/Project-Saver/releases/latest --jq '.tag_name' 2>/dev/null || echo "0.0.0")
+        MODULES_TAG=$(gh api repos/${{ github.repository }}/releases --jq '.[] | select(.target_commitish=="modules") | .tag_name' 2>/dev/null | head -n 1)
+        if [ -z "$MODULES_TAG" ]; then MODULES_TAG="0.0.0"; fi
+        echo "[*] Project Saver All-In-One Suite"
+        echo "                  Release Version:    $CORE_TAG"
+        echo "                  Modules Version:    $MODULES_TAG"
+        echo "[ ]"
+
+        if [ "$CORE_TAG" != $MODULES_TAG" ]; then
+          echo "⚠️ Repo out of sync ($CORE_TAG vs $MODULES_TAG). Failing."
+          echo "MATCH_FOUND=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        echo "🟢 Repo synchronized ($CORE_TAG.)"
+        echo "MATCH_FOUND=true" >> $GITHUB_OUTPUT
+        echo "SUITE_VERSION=$CORE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Download Precompiled Core Application
+      if: steps.check_versions.outputs.MATCH_FOUND == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        mkdir -p master_suite
+        gh release download ${{ steps.check_versions.outputs.SUITE_VERSION }} -R ${{ github.repository }} -p "project_saver.exe" -D master_suite/ || echo "Using fallback skeleton..."
+
+    - name: Download Precompiled Modules
+      if: steps.check_versions.outputs.MATCH_FOUND == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        mkdir -p master_suite/modules
+        gh release download ${{ steps.check_versions.outputs.SUITE_VERSION }} -R ${{ github.repository }} -p "*.exe" -D master_suite/modules/ || echo "No MODULES found."
+        gh release download ${{ steps.check_versions.outputs.SUITE_VERSION }} -R ${{ github.repository }} -p "manifest.json" -D master_suite/modules/ || echo "No MODULES manifest found."
+
+    - name: Create Installer Documentation
+      shell: bash
+      run: |
+        cat << 'EOF' > master_suite/README.txt
+        ===============================================================
+        PROJECT SAVER - Full Suite - Swiss Knife of Computer Utilities
+        ===============================================================
+        Use at your own risk, this is mostly  Alpha/Beta  software, use
+        dry run to be sure and then again, even that could call demons!
+        Designed  to cleanly  archive browser,  coding and  AI sessions
+        but grew out to an open-source tool-kit with all kinds of tools
+        and  modules  available to keep on top  of computer and network 
+        issues. It has debugging  tools to  look  at computer  and data
+        protocols on any network, to visualize packets, sample REST and
+        Webhook and diagnose with data integrity tools. 
+
+        Read more at the repositories with technical documentation.
+
+        Sovereign Architecture:
+
+        - Core Engine:                         [Fixed Component]
+        - Modules in Sandbox:             [Selectable Component]
+
+          soon categorized
+
+        https://github.com/gowildchild/
+        Copyright (c) 2026 Gunther Voet. All Rights Reserved.
+        ==============================================================
+        EOF
+
+    - name: Generate Master Suite Blueprint
+      if: steps.check_versions.outputs.MATCH_FOUND == 'true'
+      shell: bash
+      env:
+        SUITE_VERSION: ${{ steps.check_versions.outputs.SUITE_VERSION }}
+      run: |
+        python3 << 'EOF'
+        import os
+        import re
+        
+        suite_version = os.environ.get("SUITE_VERSION", "1.0.0")
+        clean_version = re.sub(r"[vV]", "", suite_version)
+        commit_sha = os.environ.get("GITHUB_SHA", "UNKNOWN_COMMIT")
+        short_sha = commit_sha[:7] if commit_sha else "UNKNOWN"
+        
+        master_inno_template = """[Setup]
+        AppName=Project Saver (All-in-One Master Suite)
+        AppVersion={0}
+        AppPublisher=Gunther Voet ({1})
+        AppPublisherURL=https://github.com/{2}/
+        AppSupportURL=https://github.com/gowildchild/Project-Saver/issues
+        AppUpdatesURL=https://github.com/gowildchild/Project-Saver/releases/latest
+        DefaultDirName={{localappdata}}\\ProjectSaver\\modules
+        DisableDirPage=yes
+        DisableProgramGroupPage=yes
+        OutputDir=MasterOutput
+        OutputBaseFilename=ProjectSaver_FullSetup_v{0}
+        Compression=lzma
+        SolidCompression=yes
+        PrivilegesRequired=lowest
+        CloseApplications=yes
+        InfoBeforeFile=master_suite\\README.txt
+
+        [Components]
+        Name: "core"; Description: "Project Saver Core"; Types: full custom; Flags: fixed
+        Name: "modules"; Description: "Project Saver Modules Pack"; Types: full
+
+        [Files]
+        ; 1. Core Application Installation
+        Source: "master_suite\\project_saver.exe"; DestDir: "{{app}}"; Flags: ignoreversion overrideallowed; Components: core; Check: FileExists("master_suite\\project_saver.exe")
+        
+        ; 2. Modules Installation
+        Source: "master_suite\\modules\\*.exe"; DestDir: "{{app}}\\modules"; Flags: ignoreversion nocompression; Components: modules
+        Source: "master_suite\\modules\\manifest.json"; DestDir: "{{app}}\\modules"; Flags: ignoreversion; Components: modules
+
+        [Icons]
+        Name: "{{userdesktop}}\\Project Saver"; Filename: "{{app}}\\project_saver.exe"; WorkingDir: "{{app}}"; IconsStream: "project_saver.exe"; Components: core; Check: FileExists("master_suite\\project_saver.exe")
+
+
+        [Run]
+        Filename: "{{app}}\\project_saver.exe"; Description: "🚀 Launch Project Saver Now"; Flags: nowait postinstall skipifsilent unchecked; Components: core; Check: FileExists("master_suite\\project_saver.exe")
+        """
+        
+        master_inno_template.format(clean_version, short_sha, os.environ.get("GITHUB_REPOSITORY", "gowildchild/Project-Saver"))
+        cleaned_blueprint = "\n".join([line.strip() for line in formatted_blueprint.split("\n") if line.strip()])
+        with open("master_suite_installer.iss", "w", encoding="utf-8") as f:
+            f.write(cleaned_blueprint)
+        print(f"[+] Master blueprint created for {clean_version}.")
+        EOF
+
+    - name: Compile Master Suite Setup Installer
+      if: steps.check_versions.outputs.MATCH_FOUND == 'true'
+      run: |
+        iscc master_suite_installer.iss
+
+    - name: Update Official GitHub Release
+      if: steps.check_versions.outputs.MATCH_FOUND == 'true'
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        tag: ${{ steps.check_versions.outputs.SUITE_VERSION }}
+        body: |
+          ## This is the best of both worlds!
+          The suite and the available newest modules!
+
+          ## All-in-One Master Suite Release Validated!
+          Core and Modules are synchronized at version ${{ steps.check_versions.outputs.SUITE_VERSION }}.
+
+          ### Master Installation Setup Suite
+          - **All-in-One Master Suite Setup Wizard Installer (.exe)**: `ProjectSaver_FullSetup_v${{ steps.check_versions.outputs.SUITE_VERSION }}.exe` (Installs Core + Pluggable Modules simultaneously)
+        artifacts: "MasterOutput/ProjectSaver_FullSetup_*.exe"
+        token: ${{ secrets.GITHUB_TOKEN }}
+
