@@ -8,7 +8,7 @@ import time
 import subprocess
 import threading
 import module_library
-# ─── MODULE SYSTEM MANIFEST REGISTRY ───
+
 MODULE_MANIFEST = {
     "name": "shutdown",
     "display_name": "Shutdown Controller",
@@ -28,15 +28,15 @@ MODULE_MANIFEST = {
         "box_style_mask": 145,     # Standard high-density layout view
         "align_mask": 16,           # Inline Default
         "fg_color": "",            
-        "bg_color": "330000"             
+        "bg_color": ""             
     },
     "display_multi": [
         {
             "callback_key": "daemon_status_info", 
             "menu_shortcut": "",
             "display_menu": "Daemon State",
-            # "display_name": "Host OS",
-            "mask_bits": 12,   # 4 (MENU_VALUE) + 2 (MENU_DISPLAY_NAME)
+            "display_name": "Host OS",
+            "mask_bits": 6,   # 4 (MENU_VALUE) + 2 (MENU_DISPLAY_NAME)
             "action_type": "custom"
         },        
         {
@@ -253,7 +253,7 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
             return f"🔴 Failed to execute Shutdown Override -> {err}"
 
     elif user_input == 's':
-        target_limit = 3
+        target_limit = 5
         for opt in manifest.get("display_multi", []):
             if opt.get("callback_key") == "instant_shutdown":
                 target_limit = int(opt.get("menu_toggles", 3))
@@ -267,7 +267,7 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
             except: pass
             sys.exit(0)
         else:
-            return f"⚠️ WARNING: [{STRIKE_STATE['current_count']}/{target_limit}] times to confirm powerdown down switch."
+            return f"⚠️ WARNING: [{STRIKE_STATE['current_count']}/{target_limit}] times to powerdown."
             
     return "Awaiting input power command option..."
 
