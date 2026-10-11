@@ -16,11 +16,11 @@ MODULE_MANIFEST = {
     "menu_shortcut": "a",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.34",
+        "version": "v0.0.44",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
-        "menu": 3
+        "menu": 86
     },
     "autostart": True,             # AUTO-STARTS: Instantly hooks listening loops on boot!
     "display_multi": [
@@ -29,7 +29,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "",
             "display_menu": "",
             "display_desc": "",
-            "mask_bits": 4,
+            "mask_bits": 6,
             "action_type": "custom"
         },        
         {
@@ -37,7 +37,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "p",
             "display_menu": "⚙️ [P]rofile Mode:",
             "display_desc": "AUTO / CODE / WEB Configuration Profile Strategy",
-            "mask_bits": 13,         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 118,         # Bit 1 (Title) + Bit 4 (Live Value)
             "action_type": "forward_upstream"
         },
         {
@@ -45,7 +45,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "f",
             "display_menu": "🗒️ [F]ormats Enabled:",
             "display_desc": "MARKDOWN / HTML / PDF Asset Output Generation",
-            "mask_bits": 13,         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 118,         # Bit 1 (Title) + Bit 4 (Live Value)
             "action_type": "forward_upstream"
         },
         {
@@ -53,7 +53,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "e",
             "display_menu": "📂 [E]xport Folder:",
             "display_desc": "Target directory folder location layout path",
-            "mask_bits": 13,         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 6,         # Bit 1 (Title) + Bit 4 (Live Value)
             "action_type": "forward_upstream"
         }
     ],
