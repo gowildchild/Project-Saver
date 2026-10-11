@@ -228,7 +228,7 @@ jobs:
         name: pluggable-module-packages-windows
         path: |
           modules/*.zip
-          modules/modules_setup-*.exe
+          modules/modules_setup_*.exe
           modules/manifest_windows.json
 
   compile-linux:
