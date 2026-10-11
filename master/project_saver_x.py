@@ -946,6 +946,157 @@ def run_interactive_teletext_loop(manifest, caller_file, cli_dict, get_live_val_
 
 def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val_callback, handle_key_callback, box_title="Pluggable Extension"):
     """
+    Standard high-density multi-layered orchestration loop engine.
+    Maintains clean 74-column layouts for data-heavy views like the Module Manager.
+    """
+    import time
+    import sys
+    import module_library
+
+    cli_dict, _, _ = module_library.bootstrap_session(cli_dict, "v0.0.1", 19763)
+    status_message = "Awaiting Input..."
+    strike_counters = {}
+    
+    while True:
+        # 1. Clear terminal screen platform-natively using your shared tracking routine
+        module_library.clear_screen_with_trace(manifest, caller_file)
+
+        # 2. Build the structural layout context arrays dynamically
+        panel_content = [
+            f"   Active Module Name:  {manifest['display_name']}",
+            "---",
+        ]
+
+        # 3. Dynamic row mapping driven entirely by your display_multi metadata rules
+        short_line_buffer = ""
+        
+        for option in manifest.get("display_multi", []):
+            bits = MenuTypes(int(option.get("mask_bits", 0)))
+            if bits == MenuTypes.NONE:
+                continue
+                
+            show_short_name = MenuTypes.MENU_SHORT_NAME in bits
+            show_display_name = MenuTypes.MENU_DISPLAY_NAME in bits
+            show_value = MenuTypes.MENU_VALUE in bits
+            
+            display_m = option.get("display_menu", "").strip()
+            display_d = option.get("display_desc", "").strip()
+            
+            live_val = ""
+            if show_value and get_live_val_callback:
+                try:
+                    live_val = get_live_val_callback(option.get("callback_key", ""), cli_dict)
+                except:
+                    pass
+
+            if not live_val and show_value:
+                live_val = manifest.get("defaults", {}).get(option.get("callback_key", ""), "")
+
+            if show_value and live_val:
+                description_content = f"{display_d} -> ({live_val})"
+            else:
+                description_content = display_d
+                
+            # Handle option bit compilation layouts dynamically
+            if show_short_name:
+                item_str = f" [{option.get('menu_shortcut', '').upper()}] {display_m if display_m else option.get('callback_key', '')}  "
+                if len(short_line_buffer) + len(item_str) > 65:
+                    panel_content.append(short_line_buffer)
+                    short_line_buffer = "   " + item_str
+                else:
+                    short_line_buffer += item_str if short_line_buffer else "   " + item_str
+            else:
+                if short_line_buffer:
+                    panel_content.append(short_line_buffer)
+                    short_line_buffer = ""
+                    
+                if show_display_name and display_d:
+                    panel_content.append(f"   {display_m:<24}{description_content}")
+                elif show_display_name:
+                    panel_content.append(f"   {display_m}")
+                elif display_d:
+                    panel_content.append(f"   {description_content}")
+
+        if short_line_buffer:
+            panel_content.append(short_line_buffer)
+
+        panel_content.append("---")
+        panel_content.append(f"   Status Indicator:    {status_message}")
+        panel_content.append("---")
+        panel_content.append("   [-] Return to Main Menu...")
+
+        # 4. Render the gathered panels using your audited visual width calculation engine
+        render_better_box(panel_content, title_str=box_title, box_width_override=74)
+
+        # 5. Non-blocking keyboard hardware state monitoring
+        sys.stdout.write(f"\x1b[2K\r[{manifest['name'].capitalize()}] Awaiting Input: ")
+        sys.stdout.flush()
+
+        user_input = module_library.get_keystroke()
+        if user_input == "":
+            time.sleep(0.05)
+            continue        
+        
+        if user_input in ['-', 'q']:
+            if os.name == 'nt':
+                import msvcrt
+                while msvcrt.kbhit():
+                    try: msvcrt.getch()
+                    except: pass
+            else:
+                import sys
+                import select
+                while select.select([sys.stdin], [], [], 0.0)[0]:
+                    sys.stdin.readline()
+            break
+
+        # Fixed: Global commands like 'i' and 'r' bypass intercept counters to bubble upstream
+        if user_input in ['i', 'r', 'e']:
+            if handle_key_callback:
+                callback_response = handle_key_callback(user_input, cli_dict, manifest)
+                if callback_response == "BREAK_LOOP":
+                    break
+                elif callback_response:
+                    status_message = callback_response
+            continue
+
+        # Intercept and validate safety verification flags before executing down inside module
+        matched_option = None
+        for opt in manifest.get("display_multi", []):
+            if opt.get("menu_shortcut", "").lower() == str(user_input).lower() and opt.get("menu_shortcut", "") != "":
+                matched_option = opt
+                break
+                
+        if matched_option:
+            opt_bits = MenuTypes(int(matched_option.get("mask_bits", 0)))
+            required_strikes = 0
+            if MenuTypes.STRIKE_1 in opt_bits: required_strikes = 1
+            elif MenuTypes.STRIKE_2 in opt_bits: required_strikes = 2
+            elif MenuTypes.STRIKE_3 in opt_bits: required_strikes = 3
+            
+            if required_strikes > 0:
+                current_strikes = strike_counters.get(user_input, 0) + 1
+                if current_strikes <= required_strikes:
+                    strike_counters[user_input] = current_strikes
+                    status_message = f"⚠️ WARNING: Verification Captured! Press [{user_input.upper()}] ({current_strikes}/{required_strikes + 1}) times to verify action."
+                    time.sleep(0.05)
+                    continue
+                else:
+                    strike_counters[user_input] = 0
+
+        # 6. Hand off key captures directly to the module interior handler to execute routines
+        if handle_key_callback:
+            callback_response = handle_key_callback(user_input, cli_dict, manifest)
+            if callback_response == "BREAK_LOOP":
+                break
+            elif callback_response:
+                status_message = callback_response
+
+        time.sleep(0.05)
+
+
+def run_old_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val_callback, handle_key_callback, box_title="Pluggable Extension"):
+    """
     Centralized orchestration loop engine that handles terminal clearing, builds dynamic 
     panel contents via display_multi registries, captures inputs, and triggers callbacks.
     """
