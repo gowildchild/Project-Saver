@@ -10,6 +10,9 @@ from enum import IntFlag, auto
 
 status_prompt  = "Awaiting Input..."
 
+menu_exit = ['-','q','\n']
+menu_next = ['+','y']
+menu_stop = ['c']
 
 class MenuTypes(IntFlag):
     NONE              = 0
@@ -68,14 +71,14 @@ def print_startup_banner(version_str):
             r"   |  _ \ _ __ ___     (_) ___  ___| |_    / ___|  __ ___   _____ _ __       ",
             r"   | |_) | '__/ _ \ _  | |/ _ \/ __| __|   \___ \ / _` \ \ / / _ \ '__|      ",
             r"   |  __/| | | (_) | |_| |  __/ (__| |_     ___) | (_| |\ V /  __/ |         ",
-            r"   |_|   |_|  \___/ \___/ \___|\___|\__|   |____/ \__,_| \_/ \___|_|         "
+            r"   |_|   |_|  \___/ \___/ \___|\___|\__|   |____/ \__,_| \_/ \___|_|         ",""
         ]
     except:
         pass
     print("\n" + "═" * 94)
     for line in banner:
         print(line)
-    print(" " * 40 + f"\nProject Saver {version_str}")
+    print(" " * 40 + f"Project Saver {version_str}")
     print("═" * 94 + "\n")
 
 #project_saver_x.render_better_box(
@@ -384,6 +387,8 @@ def draw_abstract_selection_menu(blueprint_commands: list, box_style_mask: int =
             time.sleep(0.02)
             continue
 
+
+        
         # Map Windows virtual key escape paths or standard characters
         if user_key in ('-', 'q', '\x1b'):  # Exit or Escape drops back out cleanly
             current_selection = -1
@@ -891,7 +896,7 @@ def run_interactive_teletext_loop(manifest, caller_file, cli_dict, get_live_val_
 
         # Inject Status Metrics and Return Command Routes into fixed base slots
         canvas_grid[16] = "─" * 36
-        canvas_grid[17] = f"Status: {status_message}"[:36]
+        canvas_grid[17] = f"[{manifest['name'].capitalize()}] {status_message}"[:36]
         canvas_grid[18] = "─" * 36
         canvas_grid[19] = "[-] Return to Main Menu..."
 
@@ -904,7 +909,7 @@ def run_interactive_teletext_loop(manifest, caller_file, cli_dict, get_live_val_
             box_width_override=40
         )
 
-        sys.stdout.write(f"\x1b[2K\r[{manifest['name'].capitalize()}] Awaiting Input: ")
+        #sys.stdout.write(f"\x1b[2K\r[{manifest['name'].capitalize()}] Awaiting Input: ")
         sys.stdout.flush()
 
         user_input = module_library.get_keystroke()
@@ -912,7 +917,7 @@ def run_interactive_teletext_loop(manifest, caller_file, cli_dict, get_live_val_
             time.sleep(0.05)
             continue        
         
-        if user_input in ['-', 'q']:
+        if user_input in menu_exit:
             if os.name == 'nt':
                 import msvcrt
                 while msvcrt.kbhit():
@@ -1007,9 +1012,9 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
                 live_val = manifest.get("defaults", {}).get(option.get("callback_key", ""), "")
 
             if show_value and live_val:
-                description_content = f"{display_d} -> ({live_val})"
+                description_content = f"{live_val} -> ({display_d or display_m})"
             else:
-                description_content = display_d
+                description_content = display_d or display_m
                 
             # Handle option bit compilation layouts dynamically
             if show_short_name:
@@ -1051,7 +1056,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             time.sleep(0.05)
             continue        
         
-        if user_input in ['-', 'q','\n']:
+        if user_input in menu_exit:
             if os.name == 'nt':
                 import msvcrt
                 while msvcrt.kbhit():
@@ -1296,13 +1301,13 @@ def handle_unified_keyboard_routing(user_input, cli_dict, manifest, get_live_val
             return f"{status_prompt}"
 
         elif action_type == "forward_upstream":
-            print(f"\n[*] Forwarding hotkey '{user_input.upper()}' upstream to parent monitor engine context...")
+            print(f"\n[*] Forwarding hotkey '{user_input.upper()}' upstream to {main_module_ref} engine context...")
             time.sleep(0.2)
             
             main_module_ref = sys.modules.get('__main__')
             if main_module_ref:
                 try:
-                    if hasattr(main_module_ref, 'execute_interactive_dashboard_monitor'):
+                    if hasattr(main_module_ref, 'execute_interactive_menu'):
                         pass 
                 except Exception as route_err:
                     print(f"[-] Upstream key injection routing failed: {route_err}")
