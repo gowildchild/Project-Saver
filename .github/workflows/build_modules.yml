@@ -62,7 +62,7 @@ jobs:
       env:
         PYTHONPATH: ${{ github.workspace }}/modules/src
       run: |
-        python3 << 'EOF'
+        python3 << EOF
         import os
         import sys
         import json
@@ -95,8 +95,8 @@ jobs:
 
         global_manifest = {
             "build_timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
-            "build_core": f"${{ steps.get_version.outputs.CORE_VERSION }}",
-            "build_signature": f"{commit_sha} of {short_sha}",
+            "build_core": "${{ needs.build-modules-release.outputs.app_version }}",
+            "build_signature": f"{commit_sha}",
             "platform": "windows",
             "modules": {}
         }
@@ -174,7 +174,7 @@ jobs:
       env:
         CORE_VERSION: ${{ needs.build-modules-release.outputs.app_version }}
       run: |
-        python3 << 'EOF'
+        python3 << EOF
         import os
         import re
         core_version = os.environ.get("CORE_VERSION", "1.0.0")
@@ -216,6 +216,7 @@ jobs:
     - name: Compile Windows Setup Installer
       run: |
         iscc modules_installer.iss
+        mv modules/Output/modules_setup_*.exe modules/
 
     - name: Generate Windows Zip Pack
       shell: bash
