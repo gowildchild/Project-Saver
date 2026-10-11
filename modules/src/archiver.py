@@ -36,7 +36,7 @@ MODULE_MANIFEST = {
             "callback_key": "profile_mode",
             "menu_shortcut": "p",
             "display_menu": "⚙️ [P]rofile Mode:",
-            "display_desc": "AUTO / CODE / WEB Configuration Profile Strategy",
+            "display_desc": "AUTO / CODE / WEB Profile",
             "mask_bits": 118,         # Bit 1 (Title) + Bit 4 (Live Value)
             "action_type": "forward_upstream"
         },
@@ -44,7 +44,7 @@ MODULE_MANIFEST = {
             "callback_key": "formats_enabled",
             "menu_shortcut": "f",
             "display_menu": "🗒️ [F]ormats Enabled:",
-            "display_desc": "MARKDOWN / HTML / PDF Asset Output Generation",
+            "display_desc": "MARKDOWN / HTML / PDF Exporting",
             "mask_bits": 118,         # Bit 1 (Title) + Bit 4 (Live Value)
             "action_type": "forward_upstream"
         },
@@ -52,7 +52,7 @@ MODULE_MANIFEST = {
             "callback_key": "export_folder",
             "menu_shortcut": "e",
             "display_menu": "📂 [E]xport Folder:",
-            "display_desc": "Target directory folder location layout path",
+            "display_desc": "Target saving folder location",
             "mask_bits": 6,         # Bit 1 (Title) + Bit 4 (Live Value)
             "action_type": "forward_upstream"
         }
