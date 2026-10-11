@@ -1,5 +1,5 @@
 {
-  "build_timestamp": "2026-10-11 07:41:52 UTC",
+  "build_timestamp": "2026-10-11 07:47:00 UTC",
   "platforms": {
     "windows": {
       "archiver": {
@@ -9,7 +9,7 @@
         "requires_core": "v0.0.79",
         "autostart": true,
         "binary_filename": "archiver.exe",
-        "sha256": "817fdc8028c45cc68a9968e6b02296116838e8c4f3e287d586f37c85d31cb20b"
+        "sha256": "a14f6651e1eb9fa8bcf6a3f38c64d98f32ffe403b0ac377f97a29ba15f8b3512"
       },
       "custom": {
         "display_name": "User Custom Module",
@@ -18,7 +18,7 @@
         "requires_core": "v0.0.80",
         "autostart": false,
         "binary_filename": "custom.exe",
-        "sha256": "ca71c2002f23e9ba380e540d1a673b75c3c8dd71b9faf37e3b5e2f1e40a237b9"
+        "sha256": "ff5eff8ff6565689201bb3b364d4089b64e3163bc54141e7ad40b3068b4a0b8f"
       },
       "debug": {
         "display_name": "Diagnostics",
@@ -27,7 +27,7 @@
         "requires_core": "v0.0.76",
         "autostart": false,
         "binary_filename": "debug.exe",
-        "sha256": "101814f8800726c6ca757d4947631acdb0efd38a1537ff6ceecf7fb1b0745416"
+        "sha256": "f4693a3af53de22b9f7c33e08dc5a83274982e903236c3b1f6247bb57cd7fda6"
       },
       "manager": {
         "display_name": "Module Manager",
@@ -36,7 +36,7 @@
         "requires_core": "v0.0.79",
         "autostart": false,
         "binary_filename": "manager.exe",
-        "sha256": "fd3a13beb8340eea81d221a30808e1956f3d5fb6e190bae9395933d5b57d562a"
+        "sha256": "2fea5879ff67896e6a08f84fa157eede74cbaa0f94621aea4324cb5afba7d758"
       },
       "menu": {
         "display_name": "Custom Menu Navigator",
@@ -45,27 +45,27 @@
         "requires_core": "v0.0.79",
         "autostart": false,
         "binary_filename": "menu.exe",
-        "sha256": "a4fb815b99fef69dde727856da6c636e1c9158aeea9529780ab4086d85ed98f7"
+        "sha256": "1d3a5c47f5cd8983f3fe9b9704b7b7ec776514a5092cfc82a981d576ad6a0fef"
       },
       "shutdown": {
         "display_name": "Shutdown Controller",
         "menu_shortcut": "h",
-        "version": "v0.0.60",
+        "version": "v0.0.61",
         "requires_core": "v0.0.81",
         "autostart": true,
         "binary_filename": "shutdown.exe",
-        "sha256": "5ab169bd6578ef45b52a7631777bcd651562a746470d2398fe519c25ceb60c1b"
+        "sha256": "0a22be525722c70ece2c79bccee2765c2a525177a60ee30e2563f41c32b630f2"
       }
     },
     "linux": {
       "shutdown": {
         "display_name": "Shutdown Controller",
         "menu_shortcut": "h",
-        "version": "v0.0.60",
+        "version": "v0.0.61",
         "requires_core": "v0.0.81",
         "autostart": true,
         "binary_filename": "shutdown",
-        "sha256": "f597742eedc79c693afba58b67a076eaaed03851383495de3948dc61febc2c3c"
+        "sha256": "5668544c223aa3ae046e02ca0d8ef88e2baddf6269f53045801b477ec5129797"
       },
       "menu": {
         "display_name": "Custom Menu Navigator",
@@ -74,7 +74,7 @@
         "requires_core": "v0.0.79",
         "autostart": false,
         "binary_filename": "menu",
-        "sha256": "01169ef50e62a2ed5868c92f97f9516f0077f1e1331d112d0c7a5caf7bc98839"
+        "sha256": "3b663f6acfc1e1dbd289383e5210ece6263f6819148c390801052f4761bccccb"
       },
       "manager": {
         "display_name": "Module Manager",
@@ -83,7 +83,7 @@
         "requires_core": "v0.0.79",
         "autostart": false,
         "binary_filename": "manager",
-        "sha256": "1e0d4608c1b31699d4cd32696ee6c1bc234b8c3deecab54559cb0ee16fb4e79f"
+        "sha256": "772576284828e19d64c7a892c0cd0aa11c05282640bf09557c0c449c03023f51"
       },
       "debug": {
         "display_name": "Diagnostics",
@@ -92,7 +92,7 @@
         "requires_core": "v0.0.76",
         "autostart": false,
         "binary_filename": "debug",
-        "sha256": "3eedf75fa630cc4cc4ac40d8eae62859b5079fb1d3ec81162f40a51c7c2d2b98"
+        "sha256": "45c96fead0e5f1b770d5cebe1eecd5fa3200473382f9dedac710b247675b099d"
       },
       "archiver": {
         "display_name": "Site & Code Archival",
@@ -101,7 +101,7 @@
         "requires_core": "v0.0.79",
         "autostart": true,
         "binary_filename": "archiver",
-        "sha256": "79f912bfb55931962a6c0676a4af35dfdfd970732984913c534331f2e411f48f"
+        "sha256": "01dd25bd27f4b763813e970007d9aac91d367b7fec5d662986a12660b33cde8b"
       },
       "custom": {
         "display_name": "User Custom Module",
@@ -110,7 +110,7 @@
         "requires_core": "v0.0.80",
         "autostart": false,
         "binary_filename": "custom",
-        "sha256": "a3888d6dda386e000a33acd2f1044f2fd31b43335ff09275846b4d31ee631981"
+        "sha256": "89629986301b23e09e122b2e3670171375c4b7d23ae07ace60e6ad2c9349cbd9"
       }
     }
   }
