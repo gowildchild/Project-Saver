@@ -949,7 +949,7 @@ def run_interactive_teletext_loop(manifest, caller_file, cli_dict, get_live_val_
 
         time.sleep(0.05)
 
-def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val_callback, handle_key_callback, box_title="Pluggable Extension"):
+def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val_callback, handle_key_callback, box_title="Modules"):
     """
     Standard high-density multi-layered orchestration loop engine.
     Maintains clean 74-column layouts for data-heavy views like the Module Manager.
@@ -967,10 +967,11 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
         module_library.clear_screen_with_trace(manifest, caller_file)
 
         # 2. Build the structural layout context arrays dynamically
-        panel_content = [
-            f"   Active Module Name:  {manifest['display_name']}",
-            "---",
-        ]
+        #panel_content = [
+        #    f"   Active Module Name:  {manifest['display_name']}",
+        #    "---",
+        #]
+        panel_content = []
 
         # 3. Dynamic row mapping driven entirely by your display_multi metadata rules
         short_line_buffer = ""
@@ -1026,7 +1027,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             panel_content.append(short_line_buffer)
 
         panel_content.append("---")
-        panel_content.append(f"   Status Indicator:    {status_message}")
+        panel_content.append(f"   Status:    {status_message}")
         panel_content.append("---")
         panel_content.append("   [-] Return to Main Menu...")
 
@@ -1034,7 +1035,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
         render_better_box(panel_content, title_str=box_title, box_width_override=74)
 
         # 5. Non-blocking keyboard hardware state monitoring
-        sys.stdout.write(f"\x1b[2K\r[{manifest['name'].capitalize()}] Awaiting Input: ")
+        sys.stdout.write(f"\x1b[2K\r[{manifest['name'].capitalize()}] Awaiting Command: ")
         sys.stdout.flush()
 
         user_input = module_library.get_keystroke()
@@ -1042,7 +1043,7 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
             time.sleep(0.05)
             continue        
         
-        if user_input in ['-', 'q']:
+        if user_input in ['-', 'q','\n']:
             if os.name == 'nt':
                 import msvcrt
                 while msvcrt.kbhit():
@@ -1075,15 +1076,20 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
         if matched_option:
             opt_bits = MenuTypes(int(matched_option.get("mask_bits", 0)))
             required_strikes = 0
-            if MenuTypes.STRIKE_1 in opt_bits: required_strikes = 1
-            elif MenuTypes.STRIKE_2 in opt_bits: required_strikes = 2
-            elif MenuTypes.STRIKE_3 in opt_bits: required_strikes = 3
+            if MenuTypes.STRIKE_1 in opt_bits: required_strikes += 1
+            if MenuTypes.STRIKE_2 in opt_bits: required_strikes += 2
+            if MenuTypes.STRIKE_3 in opt_bits: required_strikes += 3
+
+            if required_strikes > 5 or MenuTypes.PRESS_LONG in opt_bits:
+                status_message = f"⚠️ Hold [{user_input.upper()}] down for 5s to execute action."
+                time.sleep(0.05)
+                continue
             
             if required_strikes > 0:
                 current_strikes = strike_counters.get(user_input, 0) + 1
                 if current_strikes <= required_strikes:
                     strike_counters[user_input] = current_strikes
-                    status_message = f"⚠️ WARNING: Verification Captured! Press [{user_input.upper()}] ({current_strikes}/{required_strikes + 1}) times to verify action."
+                    status_message = f"⚠️ Press [{user_input.upper()}] ({current_strikes}/{required_strikes + 1}) times to execute."
                     time.sleep(0.05)
                     continue
                 else:
@@ -1178,7 +1184,7 @@ def run_old_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live
             panel_content.append(short_line_buffer)
 
         panel_content.append("---")
-        panel_content.append(f"   Status Indicator:    {status_message}")
+        panel_content.append(f"   Status:    {status_message}")
         panel_content.append("---")
         panel_content.append("   [-] Return to Main Menu...")
 
@@ -1225,7 +1231,7 @@ def run_old_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live
                 current_strikes = strike_counters.get(user_input, 0) + 1
                 if current_strikes <= required_strikes:
                     strike_counters[user_input] = current_strikes
-                    status_message = f"⚠️ WARNING: Verification Captured! Press [{user_input.upper()}] ({current_strikes}/{required_strikes + 1}) times to verify action."
+                    status_message = f"⚠️ Press [{user_input.upper()}] ({current_strikes}/{required_strikes + 1}) times to execute action."
                     time.sleep(0.05)
                     continue
                 else:
