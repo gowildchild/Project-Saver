@@ -94,7 +94,7 @@ def render_bitmask_box(
     foot_left: str = "",
     foot_middle: str = "",
     foot_right: str = "",
-    box_style_mask: int = 274,  
+    box_style_mask: int = 145, # 274  
     box_width_override: int = 0,
     fg_color: str = "",         
     bg_color: str = "",
@@ -186,6 +186,8 @@ def render_bitmask_box(
     inside_id  = (box_style_mask & 48) >> 4  
     outside_id = (box_style_mask & 384) >> 7 
 
+    if box_style_mask == 145:
+        g_out, g_in, g_acc = GLYPHS[1], GLYPHS[1], GLYPHS[1]
     if box_style_mask & 1024 and box_width_override == 0:
         box_width = 40
         g_out, g_in, g_acc = GLYPHS[4], GLYPHS[4], GLYPHS[4]
