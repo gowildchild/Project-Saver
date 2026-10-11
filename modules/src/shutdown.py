@@ -28,7 +28,7 @@ MODULE_MANIFEST = {
         "box_style_mask": 145,     # Standard high-density layout view
         "align_mask": 16,           # Inline Default
         "fg_color": "",            
-        "bg_color": "#330000"             
+        "bg_color": "330000"             
     },
     "display_multi": [
         {
@@ -36,7 +36,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "",
             "display_menu": "Daemon State",
             # "display_name": "Host OS",
-            "mask_bits": 6,   # 4 (MENU_VALUE) + 2 (MENU_DISPLAY_NAME)
+            "mask_bits": 12,   # 4 (MENU_VALUE) + 2 (MENU_DISPLAY_NAME)
             "action_type": "custom"
         },        
         {
@@ -50,7 +50,7 @@ MODULE_MANIFEST = {
             "callback_key": "timed_shutdown",
             "menu_shortcut": "t",
             "display_menu": "Timed",
-            "display_desc": "Schedules machine shutdown sequence in",
+            "display_desc": "Schedules shutdown sequence in",
             "mask_bits": 6         # Bit 1 (Title) + Bit 4 (Live Value)
 
         },
@@ -73,9 +73,9 @@ MODULE_MANIFEST = {
     ],
     "defaults": {
         "daemon_status_info": "Detecting...",
-        "timed_shutdown": "5 minutes",
-        "emg_shutdown": "3 minutes",
-        "instant_shutdown": "Requires 3 presses.",        
+        "timed_shutdown": "6m",
+        "emg_shutdown": "3m",
+        "instant_shutdown": "3X",        
         "default_timer_minutes": "5",
         "emg_timer_minutes": "3",
         "safety_trigger_count": "3",
@@ -196,11 +196,11 @@ def get_live_display_value(callback_key, cli_dict=None):
             
     if callback_key == "timed_shutdown":
         timer_min = module_library.get_setting("shutdown", "default_timer_minutes", "5")
-        return f"{timer_min} minutes"
+        return f"{timer_min}m"
 
     if callback_key == "emg_shutdown":
         emg_timer_min = module_library.get_setting("shutdown", "emg_timer_minutes", "3")
-        return f"{emg_timer_min} minutes"
+        return f"{emg_timer_min}m"
     
     elif callback_key == "instant_shutdown":
         max_toggles = 3
@@ -209,7 +209,7 @@ def get_live_display_value(callback_key, cli_dict=None):
                 max_toggles = int(opt.get("menu_toggles", 3))
                 
         current_progress = STRIKE_STATE["current_count"]
-        return f"Requires {max_toggles} presses. Progress: [{current_progress}/{max_toggles}]"
+        return f"Requires {max_toggles} presses. [{current_progress}/{max_toggles}]"
     return ""
 
 def handle_local_keyboard_action(user_input, cli_dict, manifest):
