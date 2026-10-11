@@ -107,7 +107,7 @@ jobs:
         DefaultGroupName=Project Saver
         DisableProgramGroupPage=yes
         OutputDir=..\\dist
-        OutputBaseFilename=project_saver_setup
+        OutputBaseFilename=project_saver_${{ needs.build-and-release.outputs.app_version }}-setup
         Compression=lzma
         SolidCompression=yes
         PrivilegesRequired=lowest
@@ -147,6 +147,7 @@ jobs:
       shell: bash
       run: |
         mv project_saver.exe project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe
+        mv project_saver_setup.exe project_saver_${{ needs.build-and-release.outputs.app_version }}-setup.exe
 
     - name: Compile Windows Setup Installer
       run: |
@@ -157,7 +158,7 @@ jobs:
       shell: bash
       run: |
         certutil -hashfile "project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]' > win_portable.hash
-        certutil -hashfile "project_saver_setup.exe" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]' > win_setup.hash
+        certutil -hashfile "project_saver_${{ needs.build-and-release.outputs.app_version }}-setup.exe" SHA256 | sed -n '2p' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]' > win_setup.hash
 
     - name: Upload Windows Asset to Job Memory
       uses: actions/upload-artifact@v4
@@ -165,7 +166,7 @@ jobs:
         name: windows-assets
         path: |
           dist/project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe
-          dist/project_saver_setup.exe
+          dist/project_saver_${{ needs.build-and-release.outputs.app_version }}-setup.exe
           dist/win_portable.hash
           dist/win_setup.hash
           
@@ -243,7 +244,7 @@ jobs:
         echo "💻 WINDOWS x64 PLATFORM TARGETS" >> manifest.txt
         echo "1. Portable Asset : project_saver_${{ needs.build-and-release.outputs.app_version }}-portable.exe" >> manifest.txt
         echo "   SHA-256 Checksum: $WIN_PORTABLE_HASH" >> manifest.txt
-        echo "2. Setup Installer: project_saver_setup.exe" >> manifest.txt
+        echo "2. Setup Installer: project_saver_${{ needs.build-and-release.outputs.app_version }}-setup.exe" >> manifest.txt
         echo "   SHA-256 Checksum: $WIN_SETUP_HASH" >> manifest.txt
         echo "--------------------------------------------------" >> manifest.txt
         echo "🐧 LINUX x64 PLATFORM TARGETS" >> manifest.txt
