@@ -35,7 +35,7 @@ MODULE_MANIFEST = {
             "callback_key": "daemon_status_info", 
             "menu_shortcut": "",
             "display_menu": "Daemon State",
-            "display_desc": "Host OS",
+            "display_name": "Host OS",
             "mask_bits": 6,   # 4 (MENU_VALUE) + 2 (MENU_DISPLAY_NAME)
             "action_type": "custom"
         },        
@@ -240,7 +240,7 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
             
             if is_windows: subprocess.Popen(f"shutdown /s /t {seconds_target}", shell=True)
             else: subprocess.Popen(["shutdown", "-h", f"+{timer_minutes}"])
-            return f"🟢 Shutdown power down sequenceactivated (+{timer_minutes}m)."
+            return f"🟢 Shutdown power sequence activated (+{timer_minutes}m)."
         except Exception as err:
             return f"🔴 ERROR: Failed to execute timed trigger -> {err}"
 
