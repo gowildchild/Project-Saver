@@ -24,7 +24,7 @@ def load_config_file(filepath):
         for section in config.sections():
             section_lower = section.strip().lower()
             for key, val in config.items(section):
-                if section_lower not in ['global', 'update', 'save', 'singlefile']:
+                if section_lower not in ['global', 'update', 'save', 'singlefile','shutdown','archives','manager','menu','custom']:
                     sanitized_key = f"{section_lower}_{key.strip().lower()}".replace("-", "_").replace(" ", "_")
                     SYSTEM_CONFIG[sanitized_key] = val.strip()
                 else:
@@ -63,6 +63,12 @@ def save_config_file(filepath, args_namespace, current_version="v0.0.76", latest
         if not config.has_section("update"):     config.add_section("update")
         if not config.has_section("save"):       config.add_section("save")
         if not config.has_section("singlefile"): config.add_section("singlefile")
+        if not config.has_section("shutdown"):   config.add_section("shutdown")
+        if not config.has_section("archiver"):   config.add_section("archiver")
+        if not config.has_section("menu"):       config.add_section("menu")
+        if not config.has_section("archiver"):   config.add_section("archiver")
+        if not config.has_section("custom"):     config.add_section("custom")
+        if not config.has_section("manager"):    config.add_section("manager")
 
         # Safely set the token inside the newly created [singlefile] section
         if EXPECTED_TOKEN:
