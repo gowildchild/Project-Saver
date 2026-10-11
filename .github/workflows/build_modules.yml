@@ -171,6 +171,9 @@ jobs:
         print("[+] Sync complete. Windows binaries moved into modules/")
         EOF
 
+    - name: Install Inno Setup Compiler Client
+      uses: kocherovc/install-inno-setup@v1
+
     - name: Generate blueprints
       shell: bash
       env:
@@ -480,11 +483,11 @@ jobs:
           Multi-platform pluggable modules compiled successfully.
           
           ### 💻 Windows Delivery Nodes
-          - **All-in-One Setup Installer Wizard**: `modules_setup_${{ needs.build-modules-release.outputs.app_version }}.exe`
-          - **Individual Extensions Standalone ZIP Bundle**: `windows_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.zip`
+          - **All-in-One Setup Installer Wizard**: modules_setup_${{ needs.build-modules-release.outputs.app_version }}.exe
+          - **Individual Extensions Standalone ZIP Bundle**: windows_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.zip
           
           ### 🐧 Linux Server Nodes
-          - **Execution-Preserved Compressed Native Package Archive**: `linux_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.tar.gz`
+          - **Execution-Preserved Compressed Native Package Archive**: linux_modules_pack_${{ needs.build-modules-release.outputs.app_version }}.tar.gz
           
           ### 🛡️ SHA-256 fingerprints
           Please parse the tracking parameters embedded inside the unified `manifest.json` file schema to verify your cryptographic SHA-256 binary integrity footprints for security.
