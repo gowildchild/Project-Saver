@@ -15,7 +15,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "d",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.36",
+        "version": "v0.0.48",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -54,41 +54,41 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         # 3. Build diagnostic layout text matrix array
         debug_tree = [
-            f"   Active Module Name:  {MODULE_MANIFEST['display_name']}",
+            f"   Active Module:       {MODULE_MANIFEST['display_name']}",
             f"   Module Author:       {MODULE_MANIFEST['meta']['author']} ({MODULE_MANIFEST['meta']['version']})",
             f"   Token Profile Mode:  {token_mode.upper()}",
             f"   Config Log to File:  {log_enabled.upper()} | Verbose Matrix: {verbose_mode.upper()}",
             "---",
-            "📊 LIVE SYSTEM PARAMETERS LOOKUP TREE:",
-            f"   Active Application Version : {app_version}",
-            f"   Core Daemon Server Port     : {port_num}",
+            "  LIVE SYSTEM PARAMETERS LOOKUP TREE:",
+            f"   Active Application Version:   {app_version}",
+            f"   Core Daemon Server Port:      {port_num}",
             f"   Security Token Credentials  : {module_library.get_setting('singlefile', 'token', 'N/A')}",
             "---",
             "GLOBAL SYSTEM_CONFIG DICTIONARY EXTRACTS:"
         ]
 
-        import configparser
-        base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
-        if base_path.lower().endswith("modules"):
-            base_path = os.path.dirname(base_path)
-        cfg_path = os.path.join(base_path, "project_saver.cfg")
+        #import configparser
+        #base_path = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        #if base_path.lower().endswith("modules"):
+        #    base_path = os.path.dirname(base_path)
+        #cfg_path = os.path.join(base_path, "project_saver.cfg")
 
-        if os.path.exists(cfg_path):
-            try:
-                config_inspector = configparser.ConfigParser()
-                config_inspector.read(cfg_path, encoding="utf-8")
-                for active_section in config_inspector.sections():
-                    key_count = len(config_inspector.options(active_section))
-                    debug_tree.append(f"   [{active_section.upper()}] container has ({key_count}) keys mounted on disk.")
-            except Exception as read_err:
-                debug_tree.append(f"   [-] Configuration profile analysis failed: {read_err}")
-        else:
-            debug_tree.append(f"   ⚠️ WARNING: Active project_saver.cfg file not found at: {cfg_path}")
+        #if os.path.exists(cfg_path):
+        #    try:
+        #        config_inspector = configparser.ConfigParser()
+        #        config_inspector.read(cfg_path, encoding="utf-8")
+        #        for active_section in config_inspector.sections():
+        #            key_count = len(config_inspector.options(active_section))
+        #            debug_tree.append(f"   [{active_section.upper()}] container has ({key_count}) keys mounted on disk.")
+        #    except Exception as read_err:
+        #        debug_tree.append(f"   [-] Configuration profile analysis failed: {read_err}")
+        #else:
+        #    debug_tree.append(f"   ⚠️ WARNING: Active project_saver.cfg file not found at: {cfg_path}")
 
-        debug_tree.extend([
-            "---",
-            "GLOBAL SYSTEM_CONFIG DICTIONARY EXTRACTS:"
-        ])
+        #debug_tree.extend([
+        #    "---",
+        #    "GLOBAL SYSTEM_CONFIG DICTIONARY EXTRACTS:"
+        #])
 
         
         # 4. Safely iterate and print every runtime variable key packed in the registry
