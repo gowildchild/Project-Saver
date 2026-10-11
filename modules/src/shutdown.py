@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.49",
+        "version": "v0.0.50",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -30,7 +30,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "",
             "display_menu": " Daemon State:",
             "display_desc": "Live capture stream status from host operating system.",
-            "mask_bits": 17,         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 6,         # Bit 1 (Title) + Bit 4 (Live Value)
             "action_type": "custom"
         },        
         {
@@ -38,14 +38,14 @@ MODULE_MANIFEST = {
             "menu_shortcut": "c",
             "display_menu": "  Cancel:",
             "display_desc": "Aborts any currently active scheduled countdowns.",
-            "mask_bits": 13
+            "mask_bits": 2
         },
         {
             "callback_key": "timed_shutdown",
             "menu_shortcut": "t",
             "display_menu": "  Timed:",
             "display_desc": "Schedules machine shutdown sequence in minutes.",
-            "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 6         # Bit 1 (Title) + Bit 4 (Live Value)
 
         },
         {
@@ -53,7 +53,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "e",
             "display_menu": "  EMG",
             "display_desc": "Emergency shutdown sequencing.",
-            "mask_bits": 17         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 6         # Bit 1 (Title) + Bit 4 (Live Value)
 
         },        
         {
