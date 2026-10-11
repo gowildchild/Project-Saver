@@ -58,13 +58,14 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
     """
     Performs manual force upgrade downloads via --update with full SHA-256 manifest validation
     Bitmask stacking flags (0-15): 1 = Check Version, 2 = SHA-256 Integrity Check, 4 = Update (Hot-Swap), 8 = New Token and renew singlefile JSON config profile
+                                   64 = Check Module Version, 128 = SHA-256 Integrity Module, 256 = Update Module, 512 = New Module Install
     """
 
     is_windows = platform.system().lower() == "windows" 
     expected_version = ""
     expected_hash = None
     api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
-    
+    mod_url_json = f"https://raw.githubusercontent.com/{repo_owner}/{repo_name}/refs/heads/modules/modules/manifest.json"
     if mode_override & 8:
         script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
         cfg_file_path = os.path.join(script_base_dir, "project_saver.cfg")
@@ -81,11 +82,102 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
         if mode_override == 8:
             return
 
-    # Skip network queries if no update or version bits are stacked
-    if not (mode_override & 1 or mode_override & 2 or mode_override & 4):
+    if not (mode_override & (1 | 2 | 4 | 64 | 128 | 256)):
         return
 
-    print(f"\n[*] Initializing secure system upgrade check via: {api_url}")
+
+   if mode_override & (64 | 128 | 256 | 512):
+        print(f"\n[*] Initializing secure modules branch upgrade check via: {mod_url_json}")
+        try:
+            script_base_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+            modules_dir = os.path.join(script_base_dir, "modules")
+            
+            req = urllib.request.Request(mod_url_json, headers={'User-Agent': 'Project-Saver-Secure-Module-Updater'})
+            with urllib.request.urlopen(req) as response:
+                remote_manifest = json.loads(response.read().decode('utf-8'))
+            
+            # Isolate platform tracking dictionary boundaries from data schema
+            platform_key = "windows" if is_windows else "linux"
+            remote_modules = remote_manifest.get("platforms", {}).get(platform_key, {})
+            
+            import project_saver_modules
+            modules_pool = project_saver_modules.ACTIVE_MODULES
+            
+            # Iterate through available component registries natively
+            for mod_name, remote_meta in remote_modules.items():
+                online_ver = remote_meta.get("version", "v0.0.0").strip()
+                expected_mod_hash = remote_meta.get("sha256", "").strip().lower()
+                binary_filename = remote_meta.get("binary_filename", f"{mod_name}.exe" if is_windows else mod_name)
+                target_file_path = os.path.join(modules_dir, binary_filename)
+                
+                # Fetch active local version strings straight out of module memory boundaries
+                local_mod_ref = modules_pool.get(mod_name.lower())
+                manifest_block = local_mod_ref.get("MODULE_MANIFEST", {}) if isinstance(local_mod_ref, dict) else {}
+                local_ver = manifest_block.get("meta", {}).get("version", "v0.0.0").strip()
+                
+                project_saver_config.SYSTEM_CONFIG[f"update_version_modules_current"] = local_ver
+                project_saver_config.SYSTEM_CONFIG[f"update_version_modules_newest"] = online_ver
+                
+                # ─── A2. EVALUATE MODULE BITMASK: CHECK VERSION ONLY (Bit 64) ───
+                if (mode_override & 64) and not (mode_override & 256):
+                    if online_ver != local_ver:
+                        print(f"[U] MODULE UPDATE AVAILABLE: [{mod_name.upper()}] {local_ver} < {online_ver}")
+                    else:
+                        print(f"[+] Module {mod_name.upper()} already running at the latest version: {local_ver}.")
+                
+                # ─── A3. EVALUATE MODULE BITMASK: CRYPTOGRAPHIC SHA-256 CHECK (Bit 128) ───
+                mod_integrity_passed = False
+                if (mode_override & 128) and os.path.exists(target_file_path):
+                    sha256_algo = hashlib.sha256()
+                    with open(target_file_path, "rb") as f_in:
+                        for chunk in iter(lambda: f_in.read(4096), b""):
+                            sha256_algo.update(chunk)
+                    computed_mod_hash = sha256_algo.hexdigest().lower()
+                    
+                    if computed_mod_hash == expected_mod_hash:
+                        print(f"    🟢 OK: SHA-256 integrity hash ok for module [{mod_name.upper()}].")
+                        mod_integrity_passed = True
+                    else:
+                        print(f"    🔴 ERROR: SHA-256 integrity hash footprint mismatch for module [{mod_name.upper()}]!")
+                
+                # ─── A4. EVALUATE MODULE BITMASK: HOT-SWAP UPGRADE OVER THE WIRE (Bit 256) ───
+                if mode_override & 256:
+                    if (mode_override & 128) and not mod_integrity_passed and os.path.exists(target_file_path):
+                        print(f"    ⚠️ ABORTED: Skipping hot-swap update for [{mod_name.upper()}].")
+                        continue
+                        
+                    # Build absolute download branch paths based on remote mapping metadata instructions
+                    dl_url = f"https://raw.githubusercontent.com/{repo_owner}/{repo_name}/refs/heads/modules/modules/{binary_filename}"
+                    
+                    print(f"[*] Pre-Fetching module asset stream payload for [{mod_name.upper()}]...")
+                    try:
+                        req_dl = urllib.request.Request(dl_url, headers={'User-Agent': 'Project-Saver-Module-HotSwap'})
+                        with urllib.request.urlopen(req_dl, timeout=10) as stream_dl:
+                            payload_bytes = stream_dl.read()
+                            
+                        # Force clean filesystem overwrite directly to your modules subdirectory folder
+                        with open(target_file_path, "wb") as f_out:
+                            f_out.write(payload_bytes)
+                        print(f"    🟢 SUCCESS: Module [{mod_name.upper()}] safely upgraded to: {online_ver}!")
+                    except Exception as err_dl:
+                        print(f"    🔴 FAILED to upgrade module over the wire: {err_dl}")
+                        
+            # Save newly established metrics version strings out to file profile disk layers
+            main_module_ref = sys.modules.get('__main__')
+            p_args = getattr(main_module_ref, 'CLI_ARGS', None) or {}
+            project_saver_config.save_config_file("project_saver.cfg", p_args, current_version=version)
+            
+            # Re-index parameters workspace component registries tracks smoothly
+            project_saver_modules.bootstrap_and_discover_modules({}, version, 19763)
+            if not (mode_override & (1 | 2 | 4)):
+                return "v0.0.0"
+        except Exception as e:
+            print(f"[-] Pluggable modules pipeline upgrade failed: {e}")
+            if not (mode_override & (1 | 2 | 4)):
+                return "v0.0.0"
+
+    
+    print(f"\n[*] Initializing SHA-256 integrity check via: {api_url}")
     
     try:
         current_exe_path = os.path.abspath(sys.executable)
@@ -110,7 +202,7 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
                     print(f"[+] You are running the latest release ({version}).")
                 else:
                     print(f"[U] UPDATE FOUND: Latest version is [{latest}]. Local version is [{version}].")
-                if mode_override == 1:
+                if not (mode_override & (2 | 4)):
                     return latest
 
             download_url = None
@@ -123,13 +215,13 @@ def check_and_perform_update(version, repo_owner, repo_name, mode_override: int 
                     manifest_url = asset.get("browser_download_url")
             
             if not download_url or not manifest_url:
-                print("[-] Error: Missing distribution executable or master manifest.txt in release.")
+                print("[-] Error: Missing distribution executable or master manifest in release.")
                 return
 
             # ─── 3. EVALUATE BITMASK: VERIFY MANIFEST FILES (Bit 2) ───
             # Download and parse manifest fields if either manifest check (2) or execution update (4) bits are set
             if mode_override & 2 or mode_override & 4:
-                print(f"[*] Fetching delivery assets for integrity verification...")
+                print(f"[*] Pre-Fetching Project Saver MANIFEST for integrity verification...")
                 with urllib.request.urlopen(manifest_url) as stream:
                     manifest_lines = stream.read().decode('utf-8').splitlines()
                     target_platform_found = False
