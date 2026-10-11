@@ -1,6 +1,6 @@
 # ==========================================================================
 # Project Saver Core: Cross-Platform Unified Shared Framework (project_saver_x.py)
-# Copyright (c) 2026 by Gunther Voet. All Rights Reserved.
+# Copyright (c) 2026 by Gunther Voet. All Rights Reserved. 
 # ==========================================================================
 import os
 import sys
