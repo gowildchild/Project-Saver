@@ -171,9 +171,6 @@ jobs:
         print("[+] Sync complete. Windows binaries moved into modules/")
         EOF
 
-    - name: Install Inno Setup Compiler Client
-      uses: kocherovc/install-inno-setup@v1
-
     - name: Generate blueprints
       shell: bash
       env:
