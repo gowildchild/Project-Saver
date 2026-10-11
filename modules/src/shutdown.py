@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.59",
+        "version": "v0.0.60",
         "requires": "v0.0.81",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -28,7 +28,7 @@ MODULE_MANIFEST = {
         "box_style_mask": 145,     # Standard high-density layout view
         "align_mask": 16,           # Inline Default
         "fg_color": "",            
-        "bg_color": ""             
+        "bg_color": "#330000"             
     },
     "display_multi": [
         {
@@ -44,13 +44,13 @@ MODULE_MANIFEST = {
             "menu_shortcut": "c",
             "display_menu": "Cancel",
             "display_desc": "Aborts any started shutdowns.",
-            "mask_bits": 2
+            "mask_bits": 19
         },
         {
             "callback_key": "timed_shutdown",
             "menu_shortcut": "t",
             "display_menu": "Timed",
-            "display_desc": "Schedules machine shutdown sequence in minutes.",
+            "display_desc": "Schedules machine shutdown sequence in",
             "mask_bits": 6         # Bit 1 (Title) + Bit 4 (Live Value)
 
         },
@@ -58,7 +58,7 @@ MODULE_MANIFEST = {
             "callback_key": "emg_shutdown",
             "menu_shortcut": "e",
             "display_menu": "EMG",
-            "display_desc": "Emergency shutdown sequencing.",
+            "display_desc": "Emergency shutdown sequence",
             "mask_bits": 0         # Bit 1 (Title) + Bit 4 (Live Value)
 
         },        
@@ -67,8 +67,8 @@ MODULE_MANIFEST = {
             "menu_shortcut": "s",
             "menu_toggles": 3,
             "display_menu": "Shutdown Now",
-            "display_desc": "Triggers instant system power-down routine.",
-            "mask_bits": 5        # Bit 1 (Title) + Bit 4 (Live value tracking progress counts)
+            "display_desc": "Instant system power-down routine.",
+            "mask_bits": 6        # Bit 1 (Title) + Bit 4 (Live value tracking progress counts)
         }
     ],
     "defaults": {
@@ -90,8 +90,12 @@ LIVE_DAEMON_STATE = {
 
 STRIKE_STATE = {"current_count": 0}
 
+_WIN32_WC_REF = None
+_WIN32_ATOM_REF = None
+_WIN32_HWND_REF = None
+
 def _windows_power_message_pump():
-    global LIVE_DAEMON_STATE
+    global LIVE_DAEMON_STATE, _WIN32_WC_REF, _WIN32_ATOM_REF, _WIN32_HWND_REF
     try:
         import win32gui
         import win32con
@@ -170,7 +174,8 @@ def _macos_cocoa_message_pump():
 
 
 def register_module_callbacks(server_reference=None):
-    """Auto-detects the host system ecosystem and maps hooks cleanly."""
+    """Auto-detects the host system ecosystem and maps background hooks cleanly on boot."""
+    global LIVE_DAEMON_STATE
     if os.name == 'nt':
         t = threading.Thread(target=_windows_power_message_pump, daemon=True)
     elif sys.platform == 'darwin':
