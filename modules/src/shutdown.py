@@ -21,9 +21,15 @@ MODULE_MANIFEST = {
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
-        "menu": 3
+        "menu": 19
     },
     "autostart": True,            # Manually loaded via workspace hotkey selections
+    "display_profile": {
+        "box_style_mask": 145,     # Standard high-density layout view
+        "align_mask": 0,           # Inline Default
+        "fg_color": "",            
+        "bg_color": ""             
+    },
     "display_multi": [
         {
             "callback_key": "daemon_status_info", 
