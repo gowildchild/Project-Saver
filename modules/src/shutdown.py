@@ -6,8 +6,8 @@ import os
 import sys
 import time
 import subprocess
+import threading
 import module_library
-
 # ─── MODULE SYSTEM MANIFEST REGISTRY ───
 MODULE_MANIFEST = {
     "name": "shutdown",
@@ -17,25 +17,32 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.42",
+        "version": "v0.0.48",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
         "menu": 3
     },
-    "autostart": False,            # Manually loaded via workspace hotkey selections
+    "autostart": True,            # Manually loaded via workspace hotkey selections
     "display_multi": [
+        {
+            "callback_key": "daemon_status_info", 
+            "menu_shortcut": "",
+            "display_menu": " Daemon State:",
+            "display_desc": "Live capture stream status from host operating system.",
+            "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
+        },        
         {
             "callback_key": "cancel_shutdown",
             "menu_shortcut": "c",
-            "display_menu": "  [C] Cancel:",
+            "display_menu": "  Cancel:",
             "display_desc": "Aborts any currently active scheduled countdowns.",
             "mask_bits": 13
         },
         {
             "callback_key": "timed_shutdown",
             "menu_shortcut": "t",
-            "display_menu": "  [T] Timed:",
+            "display_menu": "  Timed:",
             "display_desc": "Schedules machine shutdown sequence in minutes.",
             "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
 
@@ -43,7 +50,7 @@ MODULE_MANIFEST = {
         {
             "callback_key": "emg_shutdown",
             "menu_shortcut": "e",
-            "display_menu": "  [E] EMG:",
+            "display_menu": "  EMG",
             "display_desc": "Emergency shutdown sequencing.",
             "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
 
@@ -52,7 +59,7 @@ MODULE_MANIFEST = {
             "callback_key": "instant_shutdown",
             "menu_shortcut": "s",
             "menu_toggles": 3,
-            "display_menu": "   [S] Shutdown Now:",
+            "display_menu": "   Shutdown Now:",
             "display_desc": "Triggers instant system power-down routine.",
             "mask_bits": 5        # Bit 1 (Title) + Bit 4 (Live value tracking progress counts)
         }
@@ -68,16 +75,121 @@ MODULE_MANIFEST = {
     }
 }
 
+LIVE_DAEMON_STATE = {
+    "status_text": "Monitoring OS...",
+    "lock": threading.Lock()
+}
+
 STRIKE_STATE = {"current_count": 0}
 
+def _windows_power_message_pump():
+    global LIVE_DAEMON_STATE
+    try:
+        import win32gui
+        import win32con
+    except ImportError:
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "Missing win32 modules"
+        return
+
+    def wndproc(hwnd, msg, wparam, lparam):
+        if msg == win32con.WM_QUERYENDSESSION:
+            with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "🚨 WIN SHUTDOWN!"
+            return True 
+        elif msg == win32con.WM_ENDSESSION:
+            if wparam is True:
+                with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "⚠️ WIN CLOSING!"
+            return 0
+        return win32gui.DefWindowProc(hwnd, msg, wparam, lparam)
+
+    wc = win32gui.WNDCLASS()
+    wc.lpfnWndProc = wndproc
+    wc.lpszClassName = "ProjectSaverShutdownWatcher"
+    hinst = win32gui.GetModuleHandle(None)
+    try:
+        class_atom = win32gui.RegisterClass(wc)
+        hwnd = win32gui.CreateWindow(class_atom, "Project Saver Hook", 0, 0, 0, 0, 0, 0, 0, hinst, None)
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "Active (Windows) 🟢"
+        win32gui.PumpMessages()
+    except Exception as err:
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = f"Win Hook Error: {err}"
+
+# ─── LINUX D-BUS (SYSTEMD) SUBTHREAD ENGINE ───
+def _linux_dbus_message_pump():
+    global LIVE_DAEMON_STATE
+    try:
+        import dbus
+        from gi.repository import GLib
+    except ImportError:
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "Missing dbus/gobject libs"
+        return
+
+    def shutdown_signal_handler(preparing):
+        if preparing:
+            with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "🚨 LNX SHUTDOWN!"
+
+    try:
+        bus = dbus.SystemBus()
+        bus.add_signal_receiver(shutdown_signal_handler, bus_name="org.freedesktop.login1", signal_name="PrepareForShutdown")
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "Active (Linux DBus) 🟢"
+        loop = GLib.MainLoop()
+        loop.run()
+    except Exception as err:
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = f"Linux Hook Error: {err}"
+
+# ─── MACOS COCOA RUNLOOP SUBTHREAD ENGINE ───
+def _macos_cocoa_message_pump():
+    global LIVE_DAEMON_STATE
+    try:
+        from AppKit import NSWorkspace
+        from Foundation import NSObject
+        from PyObjCTools import AppHelper
+    except ImportError:
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "Missing PyObjC modules"
+        return
+
+    class ShutdownObserver(NSObject):
+        def receiveWillPowerOff_(self, notification):
+            with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "🚨 MAC SHUTDOWN!"
+
+    try:
+        nc = NSWorkspace.sharedWorkspace().notificationCenter()
+        observer = ShutdownObserver.alloc().init()
+        nc.addObserver_selector_name_object_(observer, "receiveWillPowerOff:", "NSWorkspaceWillPowerOffNotification", None)
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = "Active (macOS Cocoa) 🟢"
+        AppHelper.runConsoleEventLoop()
+    except Exception as err:
+        with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = f"Mac Hook Error: {err}"
+
+
 def register_module_callbacks(server_reference=None):
-    pass
+    """Auto-detects the host system ecosystem and maps hooks cleanly."""
+    if os.name == 'nt':
+        t = threading.Thread(target=_windows_power_message_pump, daemon=True)
+    elif sys.platform == 'darwin':
+        t = threading.Thread(target=_macos_cocoa_message_pump, daemon=True)
+    else:
+        t = threading.Thread(target=_linux_dbus_message_pump, daemon=True)
+    t.start()
+
+def register_module_callbacks(server_reference=None):
+    """Executed on system boot. Spawns our platform-specific feedback monitors."""
+    if os.name == 'nt':
+        t = threading.Thread(target=_windows_power_message_pump, daemon=True)
+        t.start()
+    else:
+        with LIVE_DAEMON_STATE["lock"]:
+            LIVE_DAEMON_STATE["status_text"] = "Unsupported OS Platform"
+
 
 def get_live_display_value(callback_key, cli_dict=None):
     """
     Resolves active local runtime parameters dynamically on every frame pass, 
     feeding live string counters directly into the centralized workspace loop.
     """
+    if callback_key == "daemon_status_info":
+        with LIVE_DAEMON_STATE["lock"]:
+            return LIVE_DAEMON_STATE["status_text"]
+            
     if callback_key == "timed_shutdown":
         timer_min = module_library.get_setting("shutdown", "default_timer_minutes", "5")
         return f"{timer_min} minutes"
@@ -158,6 +270,10 @@ def handle_local_keyboard_action(user_input, cli_dict, manifest):
 def execute_interactive_menu(cli_dict, app_version, port_num):
     """Routes execution straight down into the centralized framework orchestrator loop."""
     import project_saver_x
+    
+    if MODULE_MANIFEST.get("autostart") and not cli_dict.get("engine_bootstrapped"):
+        register_module_callbacks(cli_dict)
+
     project_saver_x.run_interactive_workspace_loop(
         MODULE_MANIFEST, __file__, cli_dict, 
         get_live_display_value, handle_local_keyboard_action, 
