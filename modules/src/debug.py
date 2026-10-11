@@ -1,6 +1,6 @@
 # ==========================================================================
 # Project Saver Module: Diagnostic System Inspector (debug.py)
-# Copyright (c) 2026 by Gunther Voet. All Rights Reserved.
+# Copyright (c) 2026 by Gunther Voet. All Rights Reserved. 
 # ==========================================================================
 import os
 import sys
