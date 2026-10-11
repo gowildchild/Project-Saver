@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.58",
+        "version": "v0.0.59",
         "requires": "v0.0.81",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -35,7 +35,7 @@ MODULE_MANIFEST = {
             "callback_key": "daemon_status_info", 
             "menu_shortcut": "",
             "display_menu": "Daemon State",
-            "display_name": "Host OS",
+            # "display_name": "Host OS",
             "mask_bits": 6,   # 4 (MENU_VALUE) + 2 (MENU_DISPLAY_NAME)
             "action_type": "custom"
         },        
@@ -169,24 +169,15 @@ def _macos_cocoa_message_pump():
         with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = f"Mac Hook Error: {err}"
 
 
-
-
 def register_module_callbacks(server_reference=None):
-    """
-    Unified Background Thread Spawner.
-    """
-    import threading
-    
-    t = None
+    """Auto-detects the host system ecosystem and maps hooks cleanly."""
     if os.name == 'nt':
         t = threading.Thread(target=_windows_power_message_pump, daemon=True)
     elif sys.platform == 'darwin':
         t = threading.Thread(target=_macos_cocoa_message_pump, daemon=True)
     else:
         t = threading.Thread(target=_linux_dbus_message_pump, daemon=True)
-        
-    if t:
-        t.start()
+    t.start()
 
 
 def get_live_display_value(callback_key, cli_dict=None):
