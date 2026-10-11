@@ -24,13 +24,15 @@ jobs:
       run: |
         CORE_TAG=$(gh api repos/gowildchild/Project-Saver/releases/latest --jq '.tag_name' 2>/dev/null || echo "0.0.0")
         MODULES_TAG=$(gh api repos/${{ github.repository }}/releases --jq '.[] | select(.target_commitish=="modules") | .tag_name' 2>/dev/null | head -n 1)
+
         if [ -z "$MODULES_TAG" ]; then MODULES_TAG="0.0.0"; fi
+        
         echo "[*] Project Saver All-In-One Suite"
         echo "                  Release Version:    $CORE_TAG"
         echo "                  Modules Version:    $MODULES_TAG"
         echo "[ ]"
 
-        if [ "$CORE_TAG" != $MODULES_TAG" ]; then
+        if [ "$CORE_TAG" != "$MODULES_TAG" ]; then
           echo "⚠️ Repo out of sync ($CORE_TAG vs $MODULES_TAG). Failing."
           echo "MATCH_FOUND=false" >> $GITHUB_OUTPUT
           exit 0
@@ -111,8 +113,8 @@ jobs:
         AppPublisherURL=https://github.com/{2}/
         AppSupportURL=https://github.com/gowildchild/Project-Saver/issues
         AppUpdatesURL=https://github.com/gowildchild/Project-Saver/releases/latest
-        DefaultDirName={{localappdata}}\\ProjectSaver\\modules
-        DisableDirPage=yes
+        DefaultDirName={{localappdata}}\\ProjectSaver
+        DisableDirPage=no
         DisableProgramGroupPage=yes
         OutputDir=MasterOutput
         OutputBaseFilename=ProjectSaver_FullSetup_v{0}
@@ -139,20 +141,31 @@ jobs:
 
 
         [Run]
-        Filename: "{{app}}\\project_saver.exe"; Description: "🚀 Launch Project Saver Now"; Flags: nowait postinstall skipifsilent unchecked; Components: core; Check: FileExists("master_suite\\project_saver.exe")
+        Filename: "{{app}}\\project_saver.exe"; Description: "Launch Project Saver Now"; Flags: nowait postinstall skipifsilent unchecked; Components: core; Check: FileExists("master_suite\\project_saver.exe")
         """
-        
-        master_inno_template.format(clean_version, short_sha, os.environ.get("GITHUB_REPOSITORY", "gowildchild/Project-Saver"))
+        formatted_blueprint = master_inno_template.format(clean_version, short_sha, os.environ.get("GITHUB_REPOSITORY", "gowildchild/Project-Saver"))
         cleaned_blueprint = "\n".join([line.strip() for line in formatted_blueprint.split("\n") if line.strip()])
         with open("master_suite_installer.iss", "w", encoding="utf-8") as f:
             f.write(cleaned_blueprint)
         print(f"[+] Master blueprint created for {clean_version}.")
         EOF
 
-    - name: Compile Master Suite Setup Installer
+    - name: Compile Unified Master Suite Setup
       if: steps.check_versions.outputs.MATCH_FOUND == 'true'
       run: |
         iscc master_suite_installer.iss
+
+    - name: Fetch Existing GitHub Release Notes
+      if: steps.check_versions.outputs.MATCH_FOUND == 'true'
+      id: fetch_release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        TAG_NAME="${{ steps.check_versions.outputs.SUITE_VERSION }}"
+        EXISTING_BODY=$(gh api repos/${{ github.repository }}/releases/tags/$TAG_NAME --jq '.body' 2>/dev/null || echo "")
+        echo "OLD_BODY<<EOF" >> $GITHUB_OUTPUT
+        echo "$EXISTING_BODY" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Update Official GitHub Release
       if: steps.check_versions.outputs.MATCH_FOUND == 'true'
@@ -161,12 +174,13 @@ jobs:
         allowUpdates: true
         tag: ${{ steps.check_versions.outputs.SUITE_VERSION }}
         body: |
-          ## This is the best of both worlds!
-          The suite and the available newest modules!
+          ${{ steps.fetch_release.outputs.OLD_BODY }}
 
+          ***
+          
           ## All-in-One Master Suite Release Validated!
-          Core and Modules are synchronized at version ${{ steps.check_versions.outputs.SUITE_VERSION }}.
-
+          Core Daemon and Modules are synchronized at version ${{ steps.check_versions.outputs.SUITE_VERSION }}.
+          
           ### Master Installation Setup Suite
           - **All-in-One Master Suite Setup Wizard Installer (.exe)**: `ProjectSaver_FullSetup_v${{ steps.check_versions.outputs.SUITE_VERSION }}.exe` (Installs Core + Pluggable Modules simultaneously)
         artifacts: "MasterOutput/ProjectSaver_FullSetup_*.exe"
