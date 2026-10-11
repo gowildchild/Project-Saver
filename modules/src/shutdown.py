@@ -17,7 +17,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "h",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.48",
+        "version": "v0.0.49",
         "requires": "v0.0.76",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -30,7 +30,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "",
             "display_menu": " Daemon State:",
             "display_desc": "Live capture stream status from host operating system.",
-            "mask_bits": 5,         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 17,         # Bit 1 (Title) + Bit 4 (Live Value)
             "action_type": "custom"
         },        
         {
@@ -53,7 +53,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "e",
             "display_menu": "  EMG",
             "display_desc": "Emergency shutdown sequencing.",
-            "mask_bits": 5         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 17         # Bit 1 (Title) + Bit 4 (Live Value)
 
         },        
         {
@@ -66,6 +66,7 @@ MODULE_MANIFEST = {
         }
     ],
     "defaults": {
+        "daemon_status_info": "Detecting...",
         "timed_shutdown": "5 minutes",
         "emg_shutdown": "3 minutes",
         "instant_shutdown": "Requires 3 presses.",        
