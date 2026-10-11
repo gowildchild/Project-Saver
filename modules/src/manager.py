@@ -19,7 +19,7 @@ MODULE_MANIFEST = {
     "menu_shortcut": "m",          # Direct hotkey trigger from the master dashboard menu
     "meta": {
         "author": "Gunther Voet",
-        "version": "v0.0.36",
+        "version": "v0.0.45",
         "requires": "v0.0.79",     # Minimal version required of the core engine
         "enabled": True,           # Hard toggle to switch the module on/off
         "available": True,         # Sets availability for cloud installation/use
@@ -106,7 +106,7 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         import project_saver_x
         for idx, m in enumerate(discovered_pool):
-            print(f"{idx} {m}")
+            # print(f"{idx} {m}")
 
             mod_ref = None
             for reg_key, reg_val in active_registry.items():
@@ -155,9 +155,8 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
 
         readable_total = project_saver_x.format_human_readable_bytes(total_allocated_bytes)       
         manager_panel = [
-            f" Module Name:          {MODULE_MANIFEST['display_name']}",
-            f" Repository:           https://github.com/{target_repo}",
-            f" Branch:               {target_branch.upper()}",
+            f" {target_branch.upper()} : {MODULE_MANIFEST['display_name']} {version_str}",
+            f" Repository:           https://github.com/{target_repo}"
             "---"
         ]
 
@@ -171,18 +170,18 @@ def execute_interactive_menu(cli_dict, app_version, port_num):
             f" Total Active Footprint Cache Size:  {readable_total}",
             "---",
             " MODULE MANAGER OPTIONS:",
+            "---",
             "   [I] Install    - Download Project Saver module through GitHub.",
             "   [U] Uninstall  - Unload and erase module.",
             "   [C] Configure  - Configure Module in project_saver.cfg.",
-            "---",
-            " [-] Return to Main Menu..."
+            "   [-] Return   to  Main   Menu..."
         ])
 
         import project_saver_x
         project_saver_x.render_better_box(
             manager_panel,
             title_str="Module Manager",
-            box_width_override=74
+            box_width_override=75
         )
 
         sys.stdout.write("\x1b[2K\r[Manager] Ready for key: ")
