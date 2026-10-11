@@ -38,11 +38,11 @@ class ConfirmationTypes(IntFlag):
     TIMED_10S         = 2048 # 10S timer
     TIMED_15S         = 4096 # 15S Timer Down
 
-_SHARED_NET_STATE = {
-    "connected": False, 
-    "msg": "Initializing...", 
-    "lock": __import__("threading").Lock()
-}
+#_SHARED_NET_STATE = {
+#    "connected": False, 
+#    "msg": "Initializing...", 
+#    "lock": __import__("threading").Lock()
+#}
 
 class AlignFlags:
     NONE    = 0
@@ -1113,74 +1113,6 @@ def run_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val
 
         time.sleep(0.05)
 
-
-def _net_check_worker(host, port):
-    global _SHARED_NET_STATE
-    import socket
-    import time
-    while True:
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(1.5)
-            s.connect((host, port))
-            s.close()
-            with _SHARED_NET_STATE["lock"]:
-                _SHARED_NET_STATE["connected"] = True
-                _SHARED_NET_STATE["msg"] = "🟢 Ready"
-            break
-        except:
-            with _SHARED_NET_STATE["lock"]:
-                _SHARED_NET_STATE["msg"] = "🔴 Not Ready"
-            time.sleep(1.0)
-
-def execute_shared_network_loader(target_host: str = "1.1.1.1", target_port: int = 53, title_tag: str = "NETWORK CHECK"):
-    """
-    Spins a synchronized 40-character wide Teletext loading screen on the active terminal.
-    Blocks the calling thread smoothly until a background handshake passes.
-    """
-    import sys
-    import os
-    import time
-    import threading
-    
-    global _SHARED_NET_STATE
-    with _SHARED_NET_STATE["lock"]:
-        _SHARED_NET_STATE["connected"] = False
-        _SHARED_NET_STATE["msg"] = "Network Check..."
-        
-    sys.stdout.write("\x1b[?25l")
-    sys.stdout.flush()
-    
-    t = threading.Thread(target=_net_check_worker, args=(target_host, target_port), daemon=True)
-    t.start()
-    
-    frame_counter = 0
-    blocks = ["░░░░", "▒░░░", "▓▒░░", "█▓▒░", "██▓▒", "███▓", "████", "░███", "░░██", "░░░█"]
-    
-    while True:
-        with _SHARED_NET_STATE["lock"]:
-            is_done = _SHARED_NET_STATE["connected"]
-            status_text = _SHARED_NET_STATE["msg"]
-            
-        if is_done:
-            break
-            
-        os.system('cls' if os.name == 'nt' else 'clear')
-        pulse = blocks[frame_counter % len(blocks)]
-        
-        # Construct and print the Teletext frame matrix right in-place
-        loader_frame = [
-            f"  {status_text:<34}"[:36],
-            f"  [LOAD]: {pulse:<26}"[:36]
-        ]
-        render_bitmask_box(loader_frame, title_left=title_tag, title_right="TELETEXT", box_style_mask=1028)
-        
-        frame_counter += 1
-        time.sleep(0.15)
-        
-    os.system('cls' if os.name == 'nt' else 'clear')
-    sys.stdout.write("\x1b[?25h")
-    sys.stdout.flush()
 
 
 def run_old_interactive_workspace_loop(manifest, caller_file, cli_dict, get_live_val_callback, handle_key_callback, box_title="Pluggable Extension"):
