@@ -43,7 +43,7 @@ MODULE_MANIFEST = {
             "callback_key": "cancel_shutdown",
             "menu_shortcut": "c",
             "display_menu": "Cancel",
-            "display_desc": "Aborts any currently active scheduled countdowns.",
+            "display_desc": "Aborts any started shutdowns.",
             "mask_bits": 2
         },
         {
@@ -59,7 +59,7 @@ MODULE_MANIFEST = {
             "menu_shortcut": "e",
             "display_menu": "EMG",
             "display_desc": "Emergency shutdown sequencing.",
-            "mask_bits": 6         # Bit 1 (Title) + Bit 4 (Live Value)
+            "mask_bits": 0         # Bit 1 (Title) + Bit 4 (Live Value)
 
         },        
         {
@@ -169,6 +169,8 @@ def _macos_cocoa_message_pump():
         with LIVE_DAEMON_STATE["lock"]: LIVE_DAEMON_STATE["status_text"] = f"Mac Hook Error: {err}"
 
 
+
+
 def register_module_callbacks(server_reference=None):
     """Auto-detects the host system ecosystem and maps hooks cleanly."""
     if os.name == 'nt':
@@ -182,6 +184,20 @@ def register_module_callbacks(server_reference=None):
 def register_module_callbacks(server_reference=None):
     """Executed on system boot. Spawns our platform-specific feedback monitors."""
     if os.name == 'nt':
+        t = threading.Thread(target=_windows_power_message_pump, daemon=True)
+        t.start()
+    else:
+        with LIVE_DAEMON_STATE["lock"]:
+            LIVE_DAEMON_STATE["status_text"] = "Unsupported OS Platform"
+
+def register_module_callbacks(server_reference=None):
+    """
+    Executed on system boot. Safely spawns our platform-specific feedback monitors 
+    inside an isolated background sub-thread wrapper to prevent main loop locking.
+    """
+    import threading
+    if os.name == 'nt':
+        # Spawning an explicit daemonized sub-thread unblocks your main core application loop instantly!
         t = threading.Thread(target=_windows_power_message_pump, daemon=True)
         t.start()
     else:
